@@ -1,0 +1,181 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════
+   MEDITRACK BD — LIGHT MODE THEME OVERRIDES
+   Activated when <html> has class "light"
+═══════════════════════════════════════════════════════════ */
+
+html.light {
+  color-scheme: light;
+}
+
+/* ── Body ─────────────────────────────────────────────── */
+html.light body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* ── Dark backgrounds → light surfaces ────────────────── */
+html.light [class*="bg-black"],
+html.light [class*="min-h-screen"],
+html.light footer {
+  background-color: #f8fafc !important;
+}
+
+html.light [class*="bg-zinc-950"] {
+  background-color: #ffffff !important;
+}
+
+html.light [class*="bg-\[#030303\]"],
+html.light [class*="bg-\[#000\]"] {
+  background-color: #f1f5f9 !important;
+}
+
+html.light [class*="bg-neutral-9"] {
+  background-color: #f1f5f9 !important;
+}
+
+/* ── Transparent white surfaces → real white cards ─────── */
+html.light [class*="bg-white\/"] {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(15,23,42,0.06) !important;
+}
+
+/* ── Gradient text elements → solid dark text ─────────── */
+html.light [class*="bg-clip-text"] {
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  background-image: none !important;
+  color: #0f172a !important;
+}
+
+/* ── Borders → visible light gray ─────────────────────── */
+html.light [class*="border-white\/"] {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* ── Text overrides (exclude buttons so colored btns keep white text) ── */
+html.light :not(button):not(a)[class*="text-white"] {
+  color: #0f172a !important;
+}
+
+html.light :not(button):not(a)[class*="text-transparent"] {
+  color: #0f172a !important;
+}
+
+html.light [class*="text-zinc-3"] {
+  color: #475569 !important;
+}
+
+html.light [class*="text-zinc-4"] {
+  color: #374151 !important;
+}
+
+html.light [class*="text-zinc-5"] {
+  color: #6b7280 !important;
+}
+
+html.light [class*="text-zinc-6"] {
+  color: #9ca3af !important;
+}
+
+html.light [class*="text-zinc-7"] {
+  color: #9ca3af !important;
+}
+
+/* ── Nav bar ──────────────────────────────────────────── */
+html.light nav {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  border-bottom-color: rgba(15, 23, 42, 0.08) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+/* ── Sidebar ──────────────────────────────────────────── */
+html.light aside {
+  background-color: #ffffff !important;
+  border-right-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* ── Topbar in dashboards ─────────────────────────────── */
+html.light main > div:first-child {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  border-bottom-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* ── Form inputs ──────────────────────────────────────── */
+html.light input,
+html.light select,
+html.light textarea {
+  background-color: #f8fafc !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  color: #0f172a !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+html.light option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+/* ── Backdrop overlay for modals ─────────────────────── */
+html.light [class*="bg-black\/80"][class*="backdrop"] {
+  background-color: rgba(15, 23, 42, 0.5) !important;
+}
+
+/* ── Ambient glow blobs – tone down ─────────────────── */
+html.light .fixed.rounded-full.pointer-events-none[class*="blur-"] {
+  opacity: 0.06 !important;
+}
+
+/* ── Noise overlay – hide in light ───────────────────── */
+html.light .fixed.inset-0.pointer-events-none.z-50 {
+  display: none !important;
+}
+
+/* ── Preserve accent / status colors ────────────────── */
+html.light [class*="text-red-5"],
+html.light [class*="text-red-4"],
+html.light [class*="text-blue-4"],
+html.light [class*="text-emerald-4"],
+html.light [class*="text-violet-4"],
+html.light [class*="text-green-4"],
+html.light [class*="text-amber-4"] {
+  /* Let theme-specific accent colors through — no override */
+  color: inherit;
+}
+
+/* ── Table rows ──────────────────────────────────────── */
+html.light tbody tr:hover {
+  background-color: rgba(15, 23, 42, 0.02) !important;
+}
+
+html.light thead tr {
+  border-bottom-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* ── Dashed upload zone ──────────────────────────────── */
+html.light [class*="border-dashed"] {
+  border-color: rgba(15, 23, 42, 0.15) !important;
+}
+
+/* ── Scrollbar ───────────────────────────────────────── */
+html.light ::-webkit-scrollbar {
+  width: 6px;
+}
+html.light ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+/* ── Selection ───────────────────────────────────────── */
+html.light ::selection {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #0f172a;
+}
