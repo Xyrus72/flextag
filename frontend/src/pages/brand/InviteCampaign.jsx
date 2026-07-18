@@ -1,29 +1,47 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { getUsers } from '../../services/users'
+import api from '../../services/api'
 
-const creators = [
-  { id: 1, name: 'Priya Das', handle: '@priya.styles', followers: 15000, er: 5.8, tier: 'diamond', campaigns: 42, avgLikes: 1200, invited: false },
-  { id: 2, name: 'Tasnim Rahman', handle: '@tasnim.styles', followers: 12400, er: 4.7, tier: 'gold', campaigns: 18, avgLikes: 850, invited: false },
-  { id: 3, name: 'Ayesha Karim', handle: '@ayesha.glow', followers: 9800, er: 5.2, tier: 'gold', campaigns: 35, avgLikes: 780, invited: false },
-  { id: 4, name: 'Tamanna Akter', handle: '@tamanna.style', followers: 11000, er: 4.1, tier: 'gold', campaigns: 22, avgLikes: 690, invited: true },
-  { id: 5, name: 'Rafiq Hossain', handle: '@rafiq.tech', followers: 3500, er: 6.1, tier: 'silver', campaigns: 12, avgLikes: 420, invited: false },
-  { id: 6, name: 'Nusrat Jahan', handle: '@nusrat.beauty', followers: 8200, er: 4.3, tier: 'gold', campaigns: 28, avgLikes: 650, invited: true },
-]
-
-const tierGrad = { diamond: 'from-cyan-300 to-blue-400', gold: 'from-yellow-400 to-amber-500', silver: 'from-gray-300 to-gray-500', bronze: 'from-amber-700 to-amber-900' }
+const tierGrad = {
+  diamond: 'from-cyan-300 to-blue-400',
+  gold:    'from-yellow-400 to-amber-500',
+  silver:  'from-gray-300 to-gray-500',
+  bronze:  'from-amber-700 to-amber-900',
+}
 
 const InviteCampaign = () => {
-  const [items, setItems] = useState(creators)
+  const [creators, setCreators] = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [invited, setInvited]   = useState({})
+  const [sending, setSending]   = useState({})
   const [tierFilter, setTierFilter] = useState('all')
-  const [minER, setMinER] = useState(0)
-  const [search, setSearch] = useState('')
+  const [minER, setMinER]       = useState(0)
+  const [search, setSearch]     = useState('')
 
-  const filtered = items
+  useEffect(() => {
+    getUsers({ role: 'creator' })
+      .then(d => setCreators(d.users || []))
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = creators
     .filter(c => tierFilter === 'all' || c.tier === tierFilter)
-    .filter(c => c.er >= minER)
-    .filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.handle.toLowerCase().includes(search.toLowerCase()))
+    .filter(c => (c.engagementRate || 0) >= minER)
+    .filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || (c.instagramHandle || '').includes(search.toLowerCase()))
 
-  const toggleInvite = (id) => setItems(items.map(c => c.id === id ? { ...c, invited: !c.invited } : c))
-  const invitedCount = items.filter(c => c.invited).length
+  const toggleInvite = async (id) => {
+    setSending(s => ({ ...s, [id]: true }))
+    try {
+      // In a real implementation, this would send an invite notification
+      await new Promise(r => setTimeout(r, 500)) // simulate API call
+      setInvited(inv => ({ ...inv, [id]: !inv[id] }))
+    } finally {
+      setSending(s => ({ ...s, [id]: false }))
+    }
+  }
+
+  const invitedCount = Object.values(invited).filter(Boolean).length
 
   return (
     <div className="p-4 lg:p-8 min-h-screen">
@@ -51,7 +69,7 @@ const InviteCampaign = () => {
         </div>
       </div>
 
-      {/* Invited count */}
+      {/* Invited count banner */}
       {invitedCount > 0 && (
         <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/15 mb-6 flex items-center justify-between">
           <p className="text-sm text-emerald-400 font-semibold">{invitedCount} creator{invitedCount > 1 ? 's' : ''} selected for invite</p>
@@ -61,35 +79,51 @@ const InviteCampaign = () => {
         </div>
       )}
 
-      {/* Creator list */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map(c => (
-          <div key={c.id} className={`rounded-2xl border p-5 transition-all hover:-translate-y-1 ${c.invited ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-white/[0.03] border-white/5'}`}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${tierGrad[c.tier]} flex items-center justify-center text-white font-bold flex-shrink-0`}>{c.name[0]}</div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-white truncate">{c.name}</p>
-                <p className="text-xs text-zinc-500">{c.handle}</p>
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="w-10 h-10 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-20">
+          <p className="text-4xl mb-3">👥</p>
+          <p className="text-lg text-zinc-400">No creators found</p>
+          <p className="text-sm text-zinc-600">Adjust your filters or wait for creators to register</p>
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map(c => (
+            <div key={c._id} className={`rounded-2xl border p-5 transition-all hover:-translate-y-1 ${invited[c._id] ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-white/[0.03] border-white/5'}`}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${tierGrad[c.tier] || tierGrad.bronze} flex items-center justify-center text-white font-bold flex-shrink-0`}>{c.name[0]}</div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">{c.name}</p>
+                  <p className="text-xs text-zinc-500">{c.instagramHandle || '@' + c.name.split(' ')[0].toLowerCase()}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {[
+                  { l: 'Followers',  v: c.followersCount >= 1000 ? `${(c.followersCount / 1000).toFixed(1)}K` : (c.followersCount || 0) },
+                  { l: 'Engagement', v: `${c.engagementRate || 0}%` },
+                  { l: 'Campaigns',  v: c.completedCampaigns || 0 },
+                  { l: 'Earned',     v: `৳${((c.totalEarnings || 0) / 1000).toFixed(1)}K` },
+                ].map(s => (
+                  <div key={s.l} className="text-center p-2 rounded-lg bg-white/[0.02]">
+                    <p className="text-xs text-zinc-500">{s.l}</p>
+                    <p className="text-sm font-bold text-white">{s.v}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${c.tier === 'diamond' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : c.tier === 'gold' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'}`}>{c.tier || 'bronze'}</span>
+                <button onClick={() => toggleInvite(c._id)} disabled={sending[c._id]}
+                  className={`ml-auto px-4 py-2 rounded-lg text-xs font-semibold transition-all ${invited[c._id] ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25' : 'bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500/20'}`}>
+                  {sending[c._id] ? '...' : invited[c._id] ? '✓ Invited' : 'Invite'}
+                </button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {[{ l: 'Followers', v: `${(c.followers / 1000).toFixed(1)}K` }, { l: 'Engagement', v: `${c.er}%` }, { l: 'Campaigns', v: c.campaigns }, { l: 'Avg Likes', v: c.avgLikes }].map(s => (
-                <div key={s.l} className="text-center p-2 rounded-lg bg-white/[0.02]">
-                  <p className="text-xs text-zinc-500">{s.l}</p>
-                  <p className="text-sm font-bold text-white">{s.v}</p>
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${c.tier === 'diamond' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : c.tier === 'gold' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'}`}>{c.tier}</span>
-              <button onClick={() => toggleInvite(c.id)}
-                className={`ml-auto px-4 py-2 rounded-lg text-xs font-semibold transition-all ${c.invited ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25' : 'bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500/20'}`}>
-                {c.invited ? '✓ Invited' : 'Invite'}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -1,23 +1,70 @@
 import React, { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { updateUser } from '../../services/users'
 
 const Profile = () => {
-  const { user } = useAuth()
-  const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ name: user?.name || '', email: user?.email || '', phone: user?.phone || '', instagram: user?.instagramHandle || '' })
-  const [addresses, setAddresses] = useState([
-    { id: 1, label: 'Home', street: 'House 24, Road 7, Dhanmondi', city: 'Dhaka', zip: '1205', isDefault: true },
-    { id: 2, label: 'Office', street: 'Flat 5B, Green Tower, Gulshan-2', city: 'Dhaka', zip: '1212', isDefault: false },
-  ])
+  const { user, setUser } = useAuth()
+  const [editing, setEditing]   = useState(false)
+  const [saving, setSaving]     = useState(false)
+  const [saveMsg, setSaveMsg]   = useState('')
+  const [form, setForm] = useState({
+    name:             user?.name              || '',
+    phone:            user?.phone             || '',
+    instagramHandle:  user?.instagramHandle   || '',
+    tiktokHandle:     user?.tiktokHandle      || '',
+    followersCount:   user?.followersCount    || '',
+    engagementRate:   user?.engagementRate    || '',
+  })
+
+  // Local-only shipping addresses (stored in localStorage since there's no dedicated model)
+  const ADDR_KEY = `flextag_addresses_${user?._id}`
+  const [addresses, setAddresses] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(ADDR_KEY) || '[]') }
+    catch { return [] }
+  })
   const [showAddForm, setShowAddForm] = useState(false)
   const [newAddr, setNewAddr] = useState({ label: '', street: '', city: '', zip: '' })
 
+  const saveAddresses = (updated) => {
+    setAddresses(updated)
+    localStorage.setItem(ADDR_KEY, JSON.stringify(updated))
+  }
+
   const addAddress = () => {
     if (newAddr.label && newAddr.street) {
-      setAddresses([...addresses, { ...newAddr, id: Date.now(), isDefault: false }])
+      saveAddresses([...addresses, { ...newAddr, id: Date.now(), isDefault: addresses.length === 0 }])
       setNewAddr({ label: '', street: '', city: '', zip: '' })
       setShowAddForm(false)
     }
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    setSaveMsg('')
+    try {
+      const { user: updated } = await updateUser(user._id, {
+        name:            form.name,
+        phone:           form.phone,
+        instagramHandle: form.instagramHandle,
+        tiktokHandle:    form.tiktokHandle,
+        followersCount:  form.followersCount ? Number(form.followersCount) : undefined,
+        engagementRate:  form.engagementRate  ? Number(form.engagementRate)  : undefined,
+      })
+      if (setUser) setUser(updated)
+      setSaveMsg('Profile saved!')
+      setEditing(false)
+    } catch (err) {
+      setSaveMsg(err.response?.data?.message || 'Failed to save.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const tierBg = {
+    diamond: 'from-cyan-300 to-blue-400',
+    gold:    'from-yellow-400 to-amber-500',
+    silver:  'from-gray-300 to-gray-500',
+    bronze:  'from-amber-700 to-amber-900',
   }
 
   return (
@@ -35,40 +82,49 @@ const Profile = () => {
           </div>
 
           <div className="flex items-center gap-4 mb-6 pb-6 border-b border-white/5">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-white text-2xl font-bold">
+            <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${tierBg[user?.tier] || tierBg.bronze} flex items-center justify-center text-white text-2xl font-bold`}>
               {user?.name?.[0] || 'C'}
             </div>
             <div>
               <p className="text-lg font-bold text-white">{user?.name}</p>
-              <p className="text-sm text-zinc-500">{user?.instagramHandle} · {user?.followers?.toLocaleString()} followers</p>
+              <p className="text-sm text-zinc-500">{user?.instagramHandle && `${user.instagramHandle} · `}{(user?.followersCount || 0).toLocaleString()} followers</p>
               <div className="flex items-center gap-2 mt-1">
-                <span className="px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 text-[10px] font-bold border border-yellow-500/20 uppercase">{user?.tier}</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/20">Verified ✓</span>
+                <span className="px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 text-[10px] font-bold border border-yellow-500/20 uppercase">{user?.tier || 'Bronze'}</span>
               </div>
             </div>
           </div>
 
+          {saveMsg && <p className={`text-xs mb-4 p-3 rounded-lg ${saveMsg.includes('saved') ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>{saveMsg}</p>}
+
           <div className="space-y-4">
-            {[{ label: 'Full Name', key: 'name' }, { label: 'Email', key: 'email' }, { label: 'Phone', key: 'phone' }, { label: 'Instagram', key: 'instagram' }].map(f => (
+            {[
+              { label: 'Full Name',         key: 'name',           type: 'text' },
+              { label: 'Phone',             key: 'phone',          type: 'tel' },
+              { label: 'Instagram Handle',  key: 'instagramHandle', type: 'text' },
+              { label: 'TikTok Handle',     key: 'tiktokHandle',   type: 'text' },
+              { label: 'Follower Count',    key: 'followersCount', type: 'number' },
+              { label: 'Engagement Rate (%)', key: 'engagementRate', type: 'number' },
+            ].map(f => (
               <div key={f.key}>
                 <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">{f.label}</label>
                 {editing ? (
-                  <input value={form[f.key]} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                  <input type={f.type} value={form[f.key]} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all" />
                 ) : (
-                  <p className="text-sm text-zinc-300 py-3">{form[f.key]}</p>
+                  <p className="text-sm text-zinc-300 py-3">{form[f.key] || <span className="text-zinc-600">Not set</span>}</p>
                 )}
               </div>
             ))}
             {editing && (
-              <button onClick={() => setEditing(false)} className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all">
-                Save Changes
+              <button onClick={handleSave} disabled={saving}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all disabled:opacity-40">
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
             )}
           </div>
         </div>
 
-        {/* Shipping Addresses */}
+        {/* Shipping Addresses (localStorage) */}
         <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-white">Shipping Addresses</h2>
@@ -76,6 +132,13 @@ const Profile = () => {
               + Add New
             </button>
           </div>
+
+          {addresses.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-8 rounded-xl border border-dashed border-white/10 mb-3">
+              <p className="text-3xl mb-2">🏠</p>
+              <p className="text-sm text-zinc-500">No addresses yet</p>
+            </div>
+          )}
 
           <div className="space-y-3">
             {addresses.map(addr => (
@@ -85,13 +148,13 @@ const Profile = () => {
                   {addr.isDefault && <span className="px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 text-[10px] font-bold">Default</span>}
                 </div>
                 <p className="text-sm text-zinc-400">{addr.street}</p>
-                <p className="text-xs text-zinc-500">{addr.city} — {addr.zip}</p>
+                <p className="text-xs text-zinc-500">{addr.city}{addr.zip && ` — ${addr.zip}`}</p>
                 <div className="flex gap-2 mt-3">
                   {!addr.isDefault && (
-                    <button onClick={() => setAddresses(addresses.map(a => ({ ...a, isDefault: a.id === addr.id })))}
+                    <button onClick={() => saveAddresses(addresses.map(a => ({ ...a, isDefault: a.id === addr.id })))}
                       className="text-xs text-zinc-500 hover:text-orange-400 transition-colors">Set Default</button>
                   )}
-                  <button onClick={() => setAddresses(addresses.filter(a => a.id !== addr.id))}
+                  <button onClick={() => saveAddresses(addresses.filter(a => a.id !== addr.id))}
                     className="text-xs text-zinc-500 hover:text-red-400 transition-colors">Remove</button>
                 </div>
               </div>

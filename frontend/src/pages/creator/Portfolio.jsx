@@ -1,19 +1,38 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-
-const pastCampaigns = [
-  { brand: 'GlowUp Cosmetics', product: 'Matte Lipstick Set', cashback: 600, likes: 842, comments: 56, date: '2026-06-28', image: '💄' },
-  { brand: 'UrbanFit BD', product: 'Gym Tank Top', cashback: 320, likes: 621, comments: 38, date: '2026-06-20', image: '👕' },
-  { brand: 'SkinLab BD', product: 'Face Wash Gel', cashback: 270, likes: 534, comments: 42, date: '2026-06-10', image: '🫧' },
-  { brand: 'TechNova', product: 'Bluetooth Speaker', cashback: 720, likes: 1203, comments: 89, date: '2026-05-28', image: '🔊' },
-  { brand: 'StreetWear Co.', product: 'Canvas Tote Bag', cashback: 350, likes: 456, comments: 31, date: '2026-05-15', image: '👜' },
-]
+import { getPosts } from '../../services/posts'
+import { getMyStats } from '../../services/users'
 
 const Portfolio = () => {
   const { user } = useAuth()
+  const [posts, setPosts]     = useState([])
+  const [stats, setStats]     = useState({})
+  const [loading, setLoading] = useState(true)
 
-  const avgEngagement = (pastCampaigns.reduce((s, c) => s + c.likes + c.comments, 0) / pastCampaigns.length).toFixed(0)
-  const totalLikes = pastCampaigns.reduce((s, c) => s + c.likes, 0)
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [postsData, statsData] = await Promise.all([
+          getPosts({ status: 'approved' }),
+          getMyStats(),
+        ])
+        setPosts(postsData.posts || [])
+        setStats(statsData)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  const tierBg = {
+    diamond: 'from-cyan-300 to-blue-400',
+    gold:    'from-yellow-400 to-amber-500',
+    silver:  'from-gray-300 to-gray-500',
+    bronze:  'from-amber-700 to-amber-900',
+  }
 
   return (
     <div className="p-4 lg:p-8 min-h-screen">
@@ -22,53 +41,65 @@ const Portfolio = () => {
       {/* Public profile card */}
       <div className="rounded-2xl bg-gradient-to-br from-orange-500/10 to-pink-500/10 border border-orange-500/15 p-8 mb-8">
         <div className="flex flex-col sm:flex-row items-center gap-6">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-white text-4xl font-bold shadow-xl shadow-yellow-500/20">
+          <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${tierBg[user?.tier] || tierBg.bronze} flex items-center justify-center text-white text-4xl font-bold shadow-xl`}>
             {user?.name?.[0] || 'C'}
           </div>
           <div className="text-center sm:text-left">
             <h2 className="text-2xl font-bold text-white">{user?.name}</h2>
-            <p className="text-zinc-400">{user?.instagramHandle}</p>
+            <p className="text-zinc-400">{user?.instagramHandle || 'No handle set'}</p>
             <div className="flex flex-wrap items-center gap-3 mt-3 justify-center sm:justify-start">
-              <span className="px-3 py-1 rounded-full bg-yellow-500/15 text-yellow-400 text-xs font-bold border border-yellow-500/20 capitalize">{user?.tier} Tier</span>
-              <span className="text-sm text-zinc-500">{user?.followers?.toLocaleString()} followers</span>
-              <span className="text-sm text-zinc-500">ER: {user?.engagementRate}%</span>
+              <span className="px-3 py-1 rounded-full bg-yellow-500/15 text-yellow-400 text-xs font-bold border border-yellow-500/20 capitalize">{user?.tier || 'Bronze'} Tier</span>
+              <span className="text-sm text-zinc-500">{(user?.followersCount || 0).toLocaleString()} followers</span>
+              {user?.engagementRate > 0 && <span className="text-sm text-zinc-500">ER: {user.engagementRate}%</span>}
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-4 gap-4 mt-8">
           {[
-            { label: 'Campaigns', value: pastCampaigns.length },
-            { label: 'Avg Engagement', value: avgEngagement },
-            { label: 'Total Likes', value: totalLikes.toLocaleString() },
-            { label: 'Cashback Earned', value: `৳${user?.totalEarnings?.toLocaleString()}` },
+            { label: 'Campaigns',       value: stats.completedPosts || 0 },
+            { label: 'Active Now',      value: stats.activeCampaigns || 0 },
+            { label: 'Approved Posts',  value: posts.length },
+            { label: 'Cashback Earned', value: `৳${(stats.totalEarned || 0).toLocaleString()}` },
           ].map(s => (
             <div key={s.label} className="text-center">
-              <p className="text-xl font-extrabold text-white">{s.value}</p>
+              <p className="text-xl font-extrabold text-white">{loading ? '...' : s.value}</p>
               <p className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">{s.label}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Past campaigns grid */}
-      <h2 className="text-lg font-bold text-white mb-4">Completed Campaigns</h2>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {pastCampaigns.map((c, i) => (
-          <div key={i} className="rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden hover:border-orange-500/15 hover:-translate-y-1 transition-all">
-            <div className="aspect-video bg-white/[0.02] flex items-center justify-center text-5xl">{c.image}</div>
-            <div className="p-4">
-              <p className="text-xs text-zinc-500">{c.brand}</p>
-              <p className="text-sm font-semibold text-white mb-2">{c.product}</p>
-              <div className="flex items-center gap-3 text-xs text-zinc-400">
-                <span>❤️ {c.likes.toLocaleString()}</span>
-                <span>💬 {c.comments}</span>
-                <span className="ml-auto text-emerald-400 font-semibold">+৳{c.cashback}</span>
+      {/* Approved posts */}
+      <h2 className="text-lg font-bold text-white mb-4">Approved Posts</h2>
+      {loading ? (
+        <div className="flex justify-center py-10">
+          <div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="text-center py-16 rounded-2xl border border-dashed border-white/10">
+          <p className="text-4xl mb-3">📭</p>
+          <p className="text-zinc-400 text-sm">No approved posts yet</p>
+          <p className="text-zinc-600 text-xs mt-1">Submit posts after ordering to build your portfolio</p>
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {posts.map(p => (
+            <div key={p._id} className="rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden hover:border-orange-500/15 hover:-translate-y-1 transition-all">
+              <div className="aspect-video bg-white/[0.02] flex items-center justify-center text-5xl">📱</div>
+              <div className="p-4">
+                <p className="text-xs text-zinc-500 mb-1">{p.campaignId?.brand || p.campaignId?.title || 'Campaign'}</p>
+                <p className="text-sm font-semibold text-white mb-2">{p.campaignId?.title || 'Approved Post'}</p>
+                <div className="flex items-center gap-3 text-xs text-zinc-400">
+                  <span className="capitalize">{p.platform}</span>
+                  <span>{new Date(p.createdAt).toLocaleDateString()}</span>
+                  <a href={p.postUrl} target="_blank" rel="noopener noreferrer" className="ml-auto text-blue-400 hover:text-blue-300 text-xs">View Post →</a>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

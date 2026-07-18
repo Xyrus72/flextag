@@ -6,19 +6,35 @@ import { useTheme } from '../../context/ThemeContext'
 const Login = () => {
   const { login } = useAuth()
   const { theme } = useTheme()
-  const navigate = useNavigate()
-  const isDark = theme === 'dark'
-  const [role, setRole] = useState('creator')
-  const [loading, setLoading] = useState(false)
+  const navigate  = useNavigate()
+  const isDark    = theme === 'dark'
+
+  const [email,    setEmail]    = useState('')
+  const [password, setPassword] = useState('')
+  const [loading,  setLoading]  = useState(false)
+  const [error,    setError]    = useState('')
 
   const handleLogin = async (e) => {
     e.preventDefault()
+    setError('')
+    if (!email || !password) { setError('Please enter your email and password.'); return }
+
     setLoading(true)
-    const user = await login(role)
-    setLoading(false)
-    const dest = { creator: '/creator', brand: '/brand', admin: '/admin' }[user.role]
-    navigate(dest)
+    try {
+      const user = await login(email, password)
+      const dest = { creator: '/creator', brand: '/brand', admin: '/admin' }[user.role] || '/'
+      navigate(dest, { replace: true })
+    } catch (err) {
+      setError(err.response?.data?.message || 'Login failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
+
+  const inputClass = `w-full bg-transparent border-b pb-2 text-sm focus:outline-none transition-colors placeholder:opacity-30 ${
+    isDark ? 'border-white/10 text-white focus:border-white' : 'border-black/10 text-zinc-900 focus:border-black'
+  }`
+  const labelClass = `text-[10px] uppercase tracking-widest ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`
 
   return (
     <div className={`min-h-screen flex items-center justify-center px-6 relative overflow-hidden ${isDark ? 'bg-black' : 'bg-[#fafafa]'}`}>
@@ -41,40 +57,48 @@ const Login = () => {
         </div>
 
         <div className="glass-panel rounded-3xl p-8 space-y-6">
-          {/* Role selector */}
-          <div>
-            <label className={`text-[10px] uppercase tracking-widest font-medium block mb-3 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Sign in as</label>
-            <div className={`flex gap-2 p-1 rounded-xl border ${isDark ? 'border-white/5 bg-white/[0.02]' : 'border-black/5 bg-black/[0.02]'}`}>
-              {['creator', 'brand', 'admin'].map(r => (
-                <button key={r} onClick={() => setRole(r)}
-                  className={`flex-1 py-2 rounded-lg text-xs font-medium uppercase tracking-widest transition-all capitalize
-                    ${role === r
-                      ? 'bg-orange-500/90 text-white shadow-lg shadow-orange-500/20'
-                      : isDark ? 'text-zinc-500 hover:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600'
-                    }`}>
-                  {r}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label className={`text-[10px] uppercase tracking-widest ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Email Address</label>
-              <input type="email" defaultValue={`${role}@example.com`}
-                className={`w-full bg-transparent border-b pb-2 text-sm focus:outline-none transition-colors placeholder:opacity-30 ${isDark ? 'border-white/10 text-white focus:border-white' : 'border-black/10 text-zinc-900 focus:border-black'}`}
-                placeholder="you@example.com" />
+              <label className={labelClass}>Email Address</label>
+              <input
+                id="login-email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className={inputClass}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+              />
             </div>
             <div className="space-y-2">
-              <label className={`text-[10px] uppercase tracking-widest ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Password</label>
-              <input type="password" defaultValue="••••••••"
-                className={`w-full bg-transparent border-b pb-2 text-sm focus:outline-none transition-colors ${isDark ? 'border-white/10 text-white focus:border-white' : 'border-black/10 text-zinc-900 focus:border-black'}`} />
+              <label className={labelClass}>Password</label>
+              <input
+                id="login-password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className={inputClass}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+              />
             </div>
 
-            <div className="pt-4">
-              <button type="submit" disabled={loading}
-                className="w-full py-3.5 rounded-xl bg-white text-black text-xs font-medium uppercase tracking-widest hover:bg-zinc-200 transition-all disabled:opacity-50">
-                {loading ? 'Signing in...' : `Continue as ${role.charAt(0).toUpperCase() + role.slice(1)}`}
+            {error && (
+              <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                <p className="text-xs text-red-400">{error}</p>
+              </div>
+            )}
+
+            <div className="pt-2">
+              <button
+                id="login-submit"
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 rounded-xl bg-white text-black text-xs font-medium uppercase tracking-widest hover:bg-zinc-200 transition-all disabled:opacity-50"
+              >
+                {loading ? 'Signing in…' : 'Sign In →'}
               </button>
             </div>
           </form>
@@ -83,11 +107,12 @@ const Login = () => {
             Don't have an account?{' '}
             <Link to="/register" className="text-orange-500 hover:text-orange-400 transition-colors">Sign up free</Link>
           </p>
-        </div>
 
-        <p className={`text-center text-[10px] mt-8 ${isDark ? 'text-zinc-700' : 'text-zinc-300'}`}>
-          Demo mode — click Continue to enter the platform
-        </p>
+          {/* Quick hint for admin */}
+          <p className={`text-center text-[10px] ${isDark ? 'text-zinc-700' : 'text-zinc-300'}`}>
+            Admin: admin@flextag.com / admin123
+          </p>
+        </div>
       </div>
     </div>
   )

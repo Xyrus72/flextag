@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import PageLoader from './components/PageLoader'
 
 // Layouts
 import MainLayout from './layouts/MainLayout'
@@ -45,6 +46,7 @@ import DisputePortal from './pages/admin/DisputePortal'
 import CommissionSettings from './pages/admin/CommissionSettings'
 import FinancialDashboard from './pages/admin/FinancialDashboard'
 import PlatformAnalytics from './pages/admin/PlatformAnalytics'
+import PostReview from './pages/admin/PostReview'
 
 // Support Pages
 import FAQ from './pages/support/FAQ'
@@ -52,7 +54,9 @@ import Tickets from './pages/support/Tickets'
 import Chat from './pages/support/Chat'
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, isLoading, user } = useAuth()
+  // While checking session on mount, render nothing (avoids flash redirect)
+  if (isLoading) return null
   if (!isAuthenticated) return <Navigate to="/login" replace />
   if (allowedRoles && !allowedRoles.includes(user?.role)) return <Navigate to="/" replace />
   return children
@@ -106,6 +110,7 @@ const AppRoutes = () => (
       <Route path="/admin/commission" element={<CommissionSettings />} />
       <Route path="/admin/financial" element={<FinancialDashboard />} />
       <Route path="/admin/analytics" element={<PlatformAnalytics />} />
+      <Route path="/admin/post-review" element={<PostReview />} />
     </Route>
 
     {/* ── Catch-all ───────────────────────────── */}
@@ -113,14 +118,27 @@ const AppRoutes = () => (
   </Routes>
 )
 
-const App = () => (
-  <BrowserRouter>
-    <ThemeProvider>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </ThemeProvider>
-  </BrowserRouter>
-)
+const App = () => {
+  const alreadyLoaded = sessionStorage.getItem('ft_loaded')
+  const [loaded, setLoaded] = useState(!!alreadyLoaded)
+
+  const handleLoaderDone = useCallback(() => {
+    sessionStorage.setItem('ft_loaded', '1')
+    setLoaded(true)
+  }, [])
+
+  return (
+    <BrowserRouter>
+      <ThemeProvider>
+        <AuthProvider>
+          {!loaded && <PageLoader onDone={handleLoaderDone} />}
+          <div style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.4s ease 0.1s' }}>
+            <AppRoutes />
+          </div>
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  )
+}
 
 export default App

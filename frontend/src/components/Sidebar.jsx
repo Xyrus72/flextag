@@ -11,7 +11,7 @@ const Sidebar = ({ links = [] }) => {
   const [mobileOpen, setMobileOpen] = useState(false)
   const isDark = theme === 'dark'
 
-  const handleLogout = () => { logout(); navigate('/') }
+  const handleLogout = () => logout(navigate)
 
   return (
     <>

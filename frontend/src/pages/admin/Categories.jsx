@@ -1,30 +1,60 @@
-import React, { useState } from 'react'
-
-const initialCategories = [
-  { id: 1, name: 'Beauty', products: 124, icon: '💄', active: true },
-  { id: 2, name: 'Fashion', products: 89, icon: '👗', active: true },
-  { id: 3, name: 'Tech', products: 56, icon: '🎧', active: true },
-  { id: 4, name: 'Lifestyle', products: 34, icon: '🏡', active: true },
-  { id: 5, name: 'Food & Grocery', products: 12, icon: '🍕', active: true },
-  { id: 6, name: 'Health & Wellness', products: 23, icon: '💪', active: false },
-]
+import React, { useState, useEffect } from 'react'
+import { getCategories, createCategory, updateCategory, deleteCategory } from '../../services/admin'
 
 const Categories = () => {
-  const [categories, setCategories] = useState(initialCategories)
-  const [showAdd, setShowAdd] = useState(false)
-  const [editId, setEditId] = useState(null)
-  const [form, setForm] = useState({ name: '', icon: '📦' })
+  const [categories, setCategories] = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [showAdd, setShowAdd]   = useState(false)
+  const [form, setForm]         = useState({ name: '', icon: '📦' })
+  const [adding, setAdding]     = useState(false)
+  const [toggling, setToggling] = useState({})
 
-  const addCategory = () => {
-    if (form.name) {
-      setCategories([...categories, { id: Date.now(), name: form.name, products: 0, icon: form.icon, active: true }])
+  const load = () => {
+    setLoading(true)
+    getCategories()
+      .then(d => setCategories(d.categories || []))
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { load() }, [])
+
+  const addCat = async () => {
+    if (!form.name.trim()) return
+    setAdding(true)
+    try {
+      const d = await createCategory({ name: form.name.trim(), icon: form.icon })
+      setCategories(prev => [...prev, d.category])
       setForm({ name: '', icon: '📦' })
       setShowAdd(false)
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to add category.')
+    } finally {
+      setAdding(false)
     }
   }
 
-  const deleteCategory = (id) => setCategories(categories.filter(c => c.id !== id))
-  const toggleActive = (id) => setCategories(categories.map(c => c.id === id ? { ...c, active: !c.active } : c))
+  const toggleActive = async (id, currentActive) => {
+    setToggling(t => ({ ...t, [id]: true }))
+    try {
+      const d = await updateCategory(id, { active: !currentActive })
+      setCategories(categories.map(c => c._id === id ? d.category : c))
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setToggling(t => ({ ...t, [id]: false }))
+    }
+  }
+
+  const deleteCat = async (id) => {
+    if (!confirm('Delete this category?')) return
+    try {
+      await deleteCategory(id)
+      setCategories(categories.filter(c => c._id !== id))
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete.')
+    }
+  }
 
   return (
     <div className="p-4 lg:p-8 min-h-screen">
@@ -51,30 +81,43 @@ const Categories = () => {
             <input value={form.icon} onChange={e => setForm({ ...form, icon: e.target.value })}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm text-center focus:border-orange-500 outline-none" />
           </div>
-          <button onClick={addCategory} className="px-6 py-3 rounded-xl bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/25 hover:bg-emerald-500/25 transition-all">Add</button>
+          <button onClick={addCat} disabled={adding || !form.name.trim()}
+            className="px-6 py-3 rounded-xl bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/25 hover:bg-emerald-500/25 transition-all disabled:opacity-40">
+            {adding ? 'Adding...' : 'Add'}
+          </button>
         </div>
       )}
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {categories.map(c => (
-          <div key={c.id} className={`p-5 rounded-2xl border transition-all hover:-translate-y-1 ${c.active ? 'bg-white/[0.03] border-white/5' : 'bg-white/[0.01] border-white/[0.03] opacity-60'}`}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-3xl">{c.icon}</span>
-              <div className="flex items-center gap-1">
-                <button onClick={() => toggleActive(c.id)} className={`w-10 h-5 rounded-full transition-all ${c.active ? 'bg-emerald-500' : 'bg-zinc-700'} relative`}>
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="w-10 h-10 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+        </div>
+      ) : categories.length === 0 ? (
+        <div className="text-center py-20">
+          <p className="text-4xl mb-3">📦</p>
+          <p className="text-lg text-zinc-400">No categories yet</p>
+          <p className="text-sm text-zinc-600">Click "Add Category" to create one</p>
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories.map(c => (
+            <div key={c._id} className={`p-5 rounded-2xl border transition-all hover:-translate-y-1 ${c.active ? 'bg-white/[0.03] border-white/5' : 'bg-white/[0.01] border-white/[0.03] opacity-60'}`}>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-3xl">{c.icon}</span>
+                <button onClick={() => toggleActive(c._id, c.active)} disabled={toggling[c._id]}
+                  className={`w-10 h-5 rounded-full transition-all ${c.active ? 'bg-emerald-500' : 'bg-zinc-700'} relative`}>
                   <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${c.active ? 'left-5' : 'left-0.5'}`} />
                 </button>
               </div>
+              <p className="text-lg font-bold text-white">{c.name}</p>
+              <p className="text-xs text-zinc-500 mt-1">{c.products || 0} products · {c.active ? 'Active' : 'Inactive'}</p>
+              <div className="flex gap-2 mt-4">
+                <button onClick={() => deleteCat(c._id)} className="text-xs text-zinc-500 hover:text-red-400 transition-colors">Delete</button>
+              </div>
             </div>
-            <p className="text-lg font-bold text-white">{c.name}</p>
-            <p className="text-xs text-zinc-500 mt-1">{c.products} products</p>
-            <div className="flex gap-2 mt-4">
-              <button className="text-xs text-zinc-500 hover:text-orange-400 transition-colors">Edit</button>
-              <button onClick={() => deleteCategory(c.id)} className="text-xs text-zinc-500 hover:text-red-400 transition-colors">Delete</button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

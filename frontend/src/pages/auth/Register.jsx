@@ -3,27 +3,79 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 
-const steps = ['Account Type', 'Personal Info', 'Social Profile', 'Done']
+const steps = ['Account Type', 'Personal Info', 'Profile Details', 'Done']
 
 const Register = () => {
-  const { login } = useAuth()
-  const { theme } = useTheme()
-  const navigate = useNavigate()
-  const isDark = theme === 'dark'
+  const { register } = useAuth()
+  const { theme }    = useTheme()
+  const navigate     = useNavigate()
+  const isDark       = theme === 'dark'
+
   const [step, setStep] = useState(0)
   const [role, setRole] = useState('creator')
-  const [form, setForm] = useState({ name: '', email: '', phone: '', instagram: '', followers: '' })
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState('')
+
+  const [form, setForm] = useState({
+    name: '', email: '', password: '', phone: '',
+    instagramHandle: '', followersCount: '', tiktokHandle: '',
+    companyName: '', website: '', productCategory: 'Beauty',
+  })
 
   const set = k => e => setForm({ ...form, [k]: e.target.value })
 
+  // ── Validate each step before advancing ────────────────────────────────────
+  const validate = () => {
+    if (step === 1) {
+      if (!form.name.trim())  return 'Full name is required.'
+      if (!form.email.trim()) return 'Email address is required.'
+      if (!form.password || form.password.length < 6) return 'Password must be at least 6 characters.'
+    }
+    return null
+  }
+
   const next = async () => {
-    if (step < 3) { setStep(step + 1); return }
-    const user = await login(role)
-    navigate({ creator: '/creator', brand: '/brand' }[role] || '/creator')
+    setError('')
+    const err = validate()
+    if (err) { setError(err); return }
+
+    if (step < 2) { setStep(step + 1); return }
+
+    if (step === 2) {
+      // Final step → submit to backend
+      setLoading(true)
+      try {
+        const user = await register({
+          name:            form.name,
+          email:           form.email,
+          password:        form.password,
+          phone:           form.phone,
+          role,
+          instagramHandle: form.instagramHandle,
+          followersCount:  form.followersCount ? Number(form.followersCount) : 0,
+          tiktokHandle:    form.tiktokHandle,
+          companyName:     form.companyName,
+          website:         form.website,
+          productCategory: form.productCategory,
+        })
+        setStep(3)
+      } catch (err) {
+        setError(err.response?.data?.message || 'Registration failed. Please try again.')
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+
+    if (step === 3) {
+      const dest = { creator: '/creator', brand: '/brand' }[role] || '/'
+      navigate(dest, { replace: true })
+    }
   }
 
   const inputClass = `w-full bg-transparent border-b pb-2 text-sm focus:outline-none transition-colors placeholder:opacity-30 ${isDark ? 'border-white/10 text-white focus:border-white' : 'border-black/10 text-zinc-900 focus:border-black'}`
   const labelClass = `text-[10px] uppercase tracking-widest block mb-2 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`
+  const selectClass = `w-full bg-transparent border-b pb-2 text-sm focus:outline-none transition-colors appearance-none ${isDark ? 'border-white/10 text-zinc-400 focus:border-white' : 'border-black/10 text-zinc-500 focus:border-black'}`
 
   return (
     <div className={`min-h-screen flex items-center justify-center px-6 py-20 relative overflow-hidden ${isDark ? 'bg-black' : 'bg-[#fafafa]'}`}>
@@ -60,15 +112,17 @@ const Register = () => {
         </div>
 
         <div className="glass-panel rounded-3xl p-8 space-y-6">
+
+          {/* ── Step 0: Account Type ── */}
           {step === 0 && (
             <div className="space-y-6">
               <h2 className={`text-xl font-medium tracking-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>Account Type</h2>
               <div className="grid grid-cols-2 gap-4">
                 {[
                   { r: 'creator', icon: '🎯', title: 'Creator', desc: 'Shop products and earn cashback by sharing authentic content' },
-                  { r: 'brand', icon: '🏢', title: 'Brand', desc: 'Launch performance-based campaigns with verified influencers' },
+                  { r: 'brand',   icon: '🏢', title: 'Brand',   desc: 'Launch performance-based campaigns with verified influencers' },
                 ].map(o => (
-                  <button key={o.r} onClick={() => setRole(o.r)}
+                  <button key={o.r} id={`role-${o.r}`} onClick={() => setRole(o.r)}
                     className={`p-6 rounded-2xl border text-left transition-all ${
                       role === o.r
                         ? 'border-orange-500/40 bg-orange-500/5 ring-1 ring-orange-500/20'
@@ -83,36 +137,61 @@ const Register = () => {
             </div>
           )}
 
+          {/* ── Step 1: Personal Info ── */}
           {step === 1 && (
             <div className="space-y-6">
               <h2 className={`text-xl font-medium tracking-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>Personal Info</h2>
               <div className="space-y-6">
-                <div><label className={labelClass}>Full Name</label><input value={form.name} onChange={set('name')} placeholder="Tasnim Rahman" className={inputClass} /></div>
-                <div><label className={labelClass}>Email Address</label><input type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" className={inputClass} /></div>
-                <div><label className={labelClass}>Phone Number</label><input value={form.phone} onChange={set('phone')} placeholder="+880 1700-000000" className={inputClass} /></div>
+                <div>
+                  <label className={labelClass}>Full Name</label>
+                  <input id="reg-name" value={form.name} onChange={set('name')} placeholder="Your full name" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Email Address</label>
+                  <input id="reg-email" type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Password</label>
+                  <input id="reg-password" type="password" value={form.password} onChange={set('password')} placeholder="Min. 6 characters" className={inputClass} autoComplete="new-password" />
+                </div>
+                <div>
+                  <label className={labelClass}>Phone Number <span className="normal-case opacity-50">(optional)</span></label>
+                  <input id="reg-phone" value={form.phone} onChange={set('phone')} placeholder="+880 1700-000000" className={inputClass} />
+                </div>
               </div>
             </div>
           )}
 
+          {/* ── Step 2: Profile Details ── */}
           {step === 2 && (
             <div className="space-y-6">
-              <h2 className={`text-xl font-medium tracking-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>{role === 'creator' ? 'Social Profile' : 'Company Info'}</h2>
+              <h2 className={`text-xl font-medium tracking-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                {role === 'creator' ? 'Social Profile' : 'Company Info'}
+              </h2>
+
               {role === 'creator' ? (
                 <div className="space-y-6">
-                  <div><label className={labelClass}>Instagram Handle</label><input value={form.instagram} onChange={set('instagram')} placeholder="@yourhandle" className={inputClass} /></div>
-                  <div><label className={labelClass}>Followers Count</label><input type="number" value={form.followers} onChange={set('followers')} placeholder="10000" className={inputClass} /></div>
-                  <div className={`p-4 rounded-xl ${isDark ? 'bg-white/[0.02] border border-white/5' : 'bg-black/[0.02] border border-black/5'}`}>
-                    <p className={`text-[10px] uppercase tracking-widest font-medium mb-2 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Minimum requirement</p>
-                    <p className={`text-xs font-light ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>1,000+ public followers on Instagram or TikTok to qualify as a creator.</p>
+                  <div>
+                    <label className={labelClass}>Instagram Handle <span className="normal-case opacity-50">(optional)</span></label>
+                    <input id="reg-instagram" value={form.instagramHandle} onChange={set('instagramHandle')} placeholder="@yourhandle" className={inputClass} />
                   </div>
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <div><label className={labelClass}>Company Name</label><input placeholder="Acme Ltd." className={inputClass} /></div>
-                  <div><label className={labelClass}>Website</label><input placeholder="https://yourcompany.com" className={inputClass} /></div>
-                  <div><label className={labelClass}>Product Category</label>
-                    <select className={`w-full bg-transparent border-b pb-2 text-sm focus:outline-none transition-colors appearance-none ${isDark ? 'border-white/10 text-zinc-400 focus:border-white' : 'border-black/10 text-zinc-500 focus:border-black'}`}>
-                      {['Beauty', 'Fashion', 'Tech', 'Lifestyle', 'Food & Grocery'].map(c => <option key={c} className="bg-black">{c}</option>)}
+                  <div>
+                    <label className={labelClass}>Company Name</label>
+                    <input id="reg-company" value={form.companyName} onChange={set('companyName')} placeholder="Acme Ltd." className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Website</label>
+                    <input id="reg-website" value={form.website} onChange={set('website')} placeholder="https://yourcompany.com" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Product Category</label>
+                    <select id="reg-category" value={form.productCategory} onChange={set('productCategory')} className={selectClass}>
+                      {['Beauty', 'Fashion', 'Tech', 'Lifestyle', 'Food & Grocery'].map(c => (
+                        <option key={c} value={c} className="bg-zinc-900 text-white">{c}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -120,24 +199,46 @@ const Register = () => {
             </div>
           )}
 
+          {/* ── Step 3: Done ── */}
           {step === 3 && (
             <div className="text-center space-y-6 py-4">
               <div className="text-6xl">🎉</div>
               <div>
                 <h2 className={`text-2xl font-medium tracking-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>You're all set!</h2>
-                <p className={`text-sm font-light mt-2 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Your account is ready. Let's get you started on the platform.</p>
+                <p className={`text-sm font-light mt-2 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Your account has been created. Let's get you started on the platform.</p>
               </div>
             </div>
           )}
 
+          {/* Error */}
+          {error && (
+            <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20">
+              <p className="text-xs text-red-400">{error}</p>
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
           <div className="flex gap-3 pt-2">
             {step > 0 && step < 3 && (
-              <button onClick={() => setStep(step - 1)} className={`flex-1 py-3.5 rounded-xl text-xs font-medium uppercase tracking-widest transition-all border ${isDark ? 'border-white/10 text-zinc-400 hover:bg-white/5' : 'border-black/10 text-zinc-500 hover:bg-black/5'}`}>
+              <button onClick={() => { setError(''); setStep(step - 1) }}
+                className={`flex-1 py-3.5 rounded-xl text-xs font-medium uppercase tracking-widest transition-all border ${isDark ? 'border-white/10 text-zinc-400 hover:bg-white/5' : 'border-black/10 text-zinc-500 hover:bg-black/5'}`}>
                 ← Back
               </button>
             )}
-            <button onClick={next} className="flex-1 py-3.5 rounded-xl bg-white text-black text-xs font-medium uppercase tracking-widest hover:bg-zinc-200 transition-all">
-              {step === 3 ? 'Enter Dashboard →' : step === 2 ? 'Create Account →' : 'Continue →'}
+            <button
+              id="register-next"
+              onClick={next}
+              disabled={loading}
+              className="flex-1 py-3.5 rounded-xl bg-white text-black text-xs font-medium uppercase tracking-widest hover:bg-zinc-200 transition-all disabled:opacity-50"
+            >
+              {loading
+                ? 'Creating Account…'
+                : step === 3
+                  ? 'Enter Dashboard →'
+                  : step === 2
+                    ? 'Create Account →'
+                    : 'Continue →'
+              }
             </button>
           </div>
 

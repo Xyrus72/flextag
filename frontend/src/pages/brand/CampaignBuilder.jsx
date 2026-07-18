@@ -1,8 +1,15 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { createCampaign } from '../../services/campaigns'
+import { useAuth } from '../../context/AuthContext'
 
 const CampaignBuilder = () => {
-  const [step, setStep] = useState(1)
-  const [form, setForm] = useState({
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const [step, setStep]       = useState(1)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError]     = useState('')
+  const [form, setForm]       = useState({
     title: '', category: 'Beauty', product: '', price: '', cashbackRate: 50, stock: '',
     minFollowers: 1000, hashtags: '', handles: '', deadline: '', retentionDays: 7,
     budgetCap: '', isPrivate: false,
@@ -10,6 +17,32 @@ const CampaignBuilder = () => {
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
 
   const steps = ['Campaign Details', 'Product & Pricing', 'Creator Requirements', 'Review & Launch']
+
+  const handleLaunch = async () => {
+    setSubmitting(true)
+    setError('')
+    try {
+      await createCampaign({
+        title:       form.title,
+        category:    form.category,
+        product:     form.product,
+        price:       Number(form.price),
+        cashbackRate: Number(form.cashbackRate),
+        stock:       Number(form.stock) || 100,
+        minFollowers: Number(form.minFollowers),
+        hashtags:    form.hashtags,
+        handles:     form.handles,
+        deadline:    form.deadline || undefined,
+        retentionDays: Number(form.retentionDays),
+        budgetCap:   form.budgetCap ? Number(form.budgetCap) : 0,
+        isPrivate:   form.isPrivate,
+      })
+      navigate('/brand')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to create campaign. Please try again.')
+      setSubmitting(false)
+    }
+  }
 
   return (
     <div className="p-4 lg:p-8 min-h-screen">
@@ -33,6 +66,8 @@ const CampaignBuilder = () => {
 
       <div className="max-w-2xl">
         <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
+          {error && <p className="text-xs text-red-400 mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20">{error}</p>}
+
           {step === 1 && (
             <div className="space-y-4">
               <h2 className="text-lg font-bold text-white mb-4">Campaign Details</h2>
@@ -40,7 +75,7 @@ const CampaignBuilder = () => {
                 <input value={form.title} onChange={set('title')} placeholder="e.g. Summer Glow Collection" className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 outline-none placeholder:text-zinc-600" /></div>
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Category</label>
                 <select value={form.category} onChange={set('category')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 outline-none">
-                  {['Beauty', 'Fashion', 'Tech', 'Lifestyle', 'Food'].map(c => <option key={c} value={c}>{c}</option>)}
+                  {['Beauty', 'Fashion', 'Tech', 'Lifestyle', 'Food', 'Health'].map(c => <option key={c} value={c}>{c}</option>)}
                 </select></div>
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Campaign Deadline</label>
                 <input type="date" value={form.deadline} onChange={set('deadline')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 outline-none" /></div>
@@ -71,7 +106,7 @@ const CampaignBuilder = () => {
               {form.price && form.cashbackRate && (
                 <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
                   <p className="text-xs text-zinc-500">Net cost for creators</p>
-                  <p className="text-xl font-bold text-emerald-400">৳{Math.round(form.price * (1 - form.cashbackRate / 100)).toLocaleString()}</p>
+                  <p className="text-xl font-bold text-emerald-400">৳{Math.round(Number(form.price) * (1 - Number(form.cashbackRate) / 100)).toLocaleString()}</p>
                 </div>
               )}
             </div>
@@ -98,11 +133,17 @@ const CampaignBuilder = () => {
               <h2 className="text-lg font-bold text-white mb-4">Review & Launch</h2>
               <div className="space-y-3">
                 {[
-                  ['Campaign', form.title || '—'], ['Category', form.category], ['Product', form.product || '—'],
-                  ['Price', form.price ? `৳${Number(form.price).toLocaleString()}` : '—'], ['Cashback', `${form.cashbackRate}%`],
-                  ['Budget Cap', form.budgetCap ? `৳${Number(form.budgetCap).toLocaleString()}` : 'Unlimited'],
-                  ['Min Followers', form.minFollowers.toLocaleString()], ['Hashtags', form.hashtags || '—'],
-                  ['Private', form.isPrivate ? 'Yes ★' : 'No'], ['Retention', `${form.retentionDays} days`],
+                  ['Campaign',     form.title || '—'],
+                  ['Category',     form.category],
+                  ['Product',      form.product || '—'],
+                  ['Price',        form.price ? `৳${Number(form.price).toLocaleString()}` : '—'],
+                  ['Cashback',     `${form.cashbackRate}%`],
+                  ['Stock',        form.stock || '100'],
+                  ['Budget Cap',   form.budgetCap ? `৳${Number(form.budgetCap).toLocaleString()}` : 'Unlimited'],
+                  ['Min Followers',Number(form.minFollowers).toLocaleString()],
+                  ['Hashtags',     form.hashtags || '—'],
+                  ['Private',      form.isPrivate ? 'Yes ★' : 'No'],
+                  ['Retention',    `${form.retentionDays} days`],
                 ].map(([l, v]) => (
                   <div key={l} className="flex justify-between py-2 border-b border-white/[0.03]">
                     <span className="text-sm text-zinc-500">{l}</span>
@@ -116,9 +157,16 @@ const CampaignBuilder = () => {
           <div className="flex gap-3 mt-6">
             {step > 1 && <button onClick={() => setStep(step - 1)} className="flex-1 py-3.5 rounded-xl bg-white/5 border border-white/10 text-zinc-300 font-semibold hover:bg-white/10 transition-all">← Back</button>}
             {step < 4 ? (
-              <button onClick={() => setStep(step + 1)} className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all">Continue →</button>
+              <button onClick={() => setStep(step + 1)}
+                disabled={step === 1 && !form.title || step === 2 && (!form.product || !form.price)}
+                className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all disabled:opacity-40">
+                Continue →
+              </button>
             ) : (
-              <button className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all">🚀 Launch Campaign</button>
+              <button onClick={handleLaunch} disabled={submitting}
+                className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all disabled:opacity-40">
+                {submitting ? 'Launching...' : '🚀 Launch Campaign'}
+              </button>
             )}
           </div>
         </div>
