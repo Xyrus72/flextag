@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 385" width="640" height="385">
+<defs>
+<linearGradient id="fg" gradientUnits="userSpaceOnUse" x1="88" y1="18" x2="370" y2="320">
+  <stop offset="0%"   stop-color="#5B78FF"/>
+  <stop offset="42%"  stop-color="#8E3FF0"/>
+  <stop offset="100%" stop-color="#E838C0"/>
+</linearGradient>
+<linearGradient id="fd" gradientUnits="userSpaceOnUse" x1="175" y1="18" x2="370" y2="165">
+  <stop offset="0%"   stop-color="#1A2EA8" stop-opacity="0.62"/>
+  <stop offset="100%" stop-color="#3A0E90" stop-opacity="0.18"/>
+</linearGradient>
+<linearGradient id="sh" gradientUnits="userSpaceOnUse" x1="88" y1="18" x2="88" y2="165">
+  <stop offset="0%"   stop-color="white" stop-opacity="0.30"/>
+  <stop offset="100%" stop-color="white" stop-opacity="0"/>
+</linearGradient>
+<linearGradient id="tg" gradientUnits="userSpaceOnUse" x1="163" y1="215" x2="295" y2="335">
+  <stop offset="0%"   stop-color="#C535E2"/>
+  <stop offset="100%" stop-color="#F038A8"/>
+</linearGradient>
+<linearGradient id="tt" x1="0%" y1="0%" x2="100%" y2="0%">
+  <stop offset="0%"   stop-color="#F035B5"/>
+  <stop offset="100%" stop-color="#7820E8"/>
+</linearGradient>
+<linearGradient id="sl" x1="0%" y1="0%" x2="100%" y2="0%">
+  <stop offset="0%"   stop-color="#E035C0"/>
+  <stop offset="100%" stop-color="#8025E8"/>
+</linearGradient>
+</defs>
+<path d="M 98,18 Q 98,10 108,10 L 282,10 C 318,10 350,22 365,50 C 375,70 370,95 355,112 C 340,130 316,148 284,158 C 268,163 250,166 228,166 L 175,166 L 175,182 L 262,182 C 280,182 292,193 290,210 C 288,228 274,238 256,238 L 175,238 L 175,312 Q 175,324 161,328 L 102,316 Q 88,310 88,296 L 88,32 Q 88,18 98,18 Z" fill="url(#fg)"/>
+<path d="M 175,105 L 265,10 L 282,10 C 318,10 350,22 365,50 C 375,70 370,95 355,112 C 340,130 316,148 284,158 C 268,163 250,166 228,166 L 175,166 Z" fill="url(#fd)"/>
+<path d="M 98,18 Q 98,10 108,10 L 265,10 L 175,105 L 175,166 L 88,166 L 88,32 Q 88,18 98,18 Z" fill="url(#sh)"/>
+<rect x="163" y="218" width="118" height="110" rx="22" ry="22" fill="url(#tg)"/>
+<circle cx="190" cy="245" r="11"  fill="#000" opacity="0.38"/>
+<circle cx="190" cy="245" r="6.5" fill="#000" opacity="0.55"/>
+<text x="95" y="354" font-family="'Arial Black','Franklin Gothic Heavy',Impact,sans-serif" font-size="76" font-weight="900" fill="white" letter-spacing="2">FLEX</text>
+<text x="308" y="354" font-family="'Arial Black','Franklin Gothic Heavy',Impact,sans-serif" font-size="76" font-weight="900" fill="url(#tt)" letter-spacing="2">TAG</text>
+<text x="320" y="376" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="600" fill="url(#sl)" letter-spacing="6">SHOP. SHARE. EARN.</text>
+</svg>

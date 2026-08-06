@@ -56,14 +56,14 @@ const PostReview = () => {
   }
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
+    <div className="page-root">
       <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Post Review</h1>
       <p className="text-zinc-500 mb-6">Approve or reject creator post submissions</p>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {['pending', 'approved', 'rejected', 'all'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${filter === f ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white' : 'bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10'}`}>
+            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${filter === f ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white' : 'bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10'}`}>
             {f} {f !== 'all' && `(${counts[f] || 0})`}
           </button>
         ))}
@@ -71,7 +71,7 @@ const PostReview = () => {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+          <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
         </div>
       ) : posts.length === 0 ? (
         <div className="text-center py-20">
@@ -86,7 +86,7 @@ const PostReview = () => {
             return (
               <div key={p._id} className="rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden hover:border-white/10 transition-all">
                 <div className="flex items-center gap-4 p-5 cursor-pointer" onClick={() => setExpandedId(expanded ? null : p._id)}>
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-500/20 to-pink-500/20 border border-orange-500/20 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500/20 to-cyan-500/20 border border-violet-500/20 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                     {(p.creatorId?.name || 'C')[0]}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -138,7 +138,7 @@ const PostReview = () => {
                           <label className="text-xs text-zinc-500 font-medium block mb-1.5">Rejection reason (if rejecting)</label>
                           <input value={rejectReasons[p._id] || ''} onChange={e => setRejectReasons(r => ({ ...r, [p._id]: e.target.value }))}
                             placeholder="e.g. Missing required hashtag..."
-                            className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 outline-none placeholder:text-zinc-600" />
+                            className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" />
                         </div>
                         <div className="flex gap-3">
                           <button onClick={() => handleApprove(p._id)} disabled={!!actioning[p._id]}

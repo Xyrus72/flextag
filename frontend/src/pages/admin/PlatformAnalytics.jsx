@@ -21,7 +21,7 @@ const PlatformAnalytics = () => {
   const totalCategories = (data.categoryBreakdown || []).reduce((s, c) => s + c.count, 0)
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
+    <div className="page-root">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-white">Platform Analytics</h1>
@@ -30,7 +30,7 @@ const PlatformAnalytics = () => {
         <div className="flex bg-white/5 rounded-xl p-1">
           {['3mo', '6mo', '1yr'].map(p => (
             <button key={p} onClick={() => setPeriod(p)}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${period === p ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
+              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${period === p ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
               {p}
             </button>
           ))}
@@ -41,7 +41,7 @@ const PlatformAnalytics = () => {
       <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6 mb-6">
         <h2 className="text-lg font-bold text-white mb-6">Monthly GMV (৳)</h2>
         {loading ? (
-          <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" /></div>
+          <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
         ) : monthlyData.length === 0 ? (
           <div className="text-center py-10 text-zinc-500 text-sm">No transactions recorded yet</div>
         ) : (
@@ -49,7 +49,7 @@ const PlatformAnalytics = () => {
             {monthlyData.slice(-6).map(m => (
               <div key={m.month} className="flex-1 flex flex-col items-center gap-2">
                 <span className="text-xs text-zinc-400 font-semibold">৳{m.value >= 1000 ? (m.value / 1000).toFixed(1) + 'K' : m.value}</span>
-                <div className="w-full rounded-t-lg bg-gradient-to-t from-orange-500 to-pink-500 hover:opacity-80 transition-all cursor-pointer"
+                <div className="w-full rounded-t-lg bg-gradient-to-t from-violet-600 to-cyan-500 hover:opacity-80 transition-all cursor-pointer"
                   style={{ height: `${(m.value / maxGmv) * 100}%`, minHeight: '4px' }} />
                 <span className="text-xs text-zinc-600">{m.month}</span>
               </div>
@@ -63,7 +63,7 @@ const PlatformAnalytics = () => {
         <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
           <h2 className="text-lg font-bold text-white mb-5">Monthly Breakdown</h2>
           {loading ? (
-            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" /></div>
+            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
           ) : monthlyData.length === 0 ? (
             <div className="text-center py-10 text-zinc-500 text-sm">No data yet</div>
           ) : (
@@ -97,7 +97,7 @@ const PlatformAnalytics = () => {
         <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
           <h2 className="text-lg font-bold text-white mb-5">Category Distribution</h2>
           {loading ? (
-            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" /></div>
+            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
           ) : (data.categoryBreakdown || []).length === 0 ? (
             <div className="text-center py-10 text-zinc-500 text-sm">No campaign categories yet</div>
           ) : (

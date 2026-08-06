@@ -44,11 +44,11 @@ const InviteCampaign = () => {
   const invitedCount = Object.values(invited).filter(Boolean).length
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
+    <div className="page-root">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           <h1 className="text-2xl lg:text-3xl font-bold text-white">Private Campaign Invites</h1>
-          <span className="px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 text-[10px] font-bold border border-orange-500/20">★ NEW</span>
+          <span className="px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400 text-[10px] font-bold border border-violet-500/20">★ NEW</span>
         </div>
         <p className="text-zinc-500">Invite specific creators to your exclusive campaigns</p>
       </div>
@@ -56,16 +56,16 @@ const InviteCampaign = () => {
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-6">
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search creators..."
-          className="flex-1 min-w-[200px] px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 outline-none placeholder:text-zinc-600" />
+          className="flex-1 min-w-[200px] px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" />
         <select value={tierFilter} onChange={e => setTierFilter(e.target.value)}
-          className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-zinc-300 text-sm focus:border-orange-500 outline-none">
+          className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-zinc-300 text-sm focus:border-violet-500 outline-none">
           <option value="all">All Tiers</option>
           {['diamond', 'gold', 'silver', 'bronze'].map(t => <option key={t} value={t} className="capitalize">{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
         </select>
         <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10">
           <span className="text-xs text-zinc-500 whitespace-nowrap">Min ER:</span>
-          <input type="range" min="0" max="8" step="0.5" value={minER} onChange={e => setMinER(Number(e.target.value))} className="w-20 accent-orange-500" />
-          <span className="text-xs text-orange-400 font-bold w-8">{minER}%</span>
+          <input type="range" min="0" max="8" step="0.5" value={minER} onChange={e => setMinER(Number(e.target.value))} className="w-20 accent-violet-500" />
+          <span className="text-xs text-violet-400 font-bold w-8">{minER}%</span>
         </div>
       </div>
 
@@ -81,7 +81,7 @@ const InviteCampaign = () => {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+          <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">
@@ -116,7 +116,7 @@ const InviteCampaign = () => {
               <div className="flex items-center gap-2">
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${c.tier === 'diamond' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : c.tier === 'gold' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'}`}>{c.tier || 'bronze'}</span>
                 <button onClick={() => toggleInvite(c._id)} disabled={sending[c._id]}
-                  className={`ml-auto px-4 py-2 rounded-lg text-xs font-semibold transition-all ${invited[c._id] ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25' : 'bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500/20'}`}>
+                  className={`ml-auto px-4 py-2 rounded-lg text-xs font-semibold transition-all ${invited[c._id] ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25' : 'bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20'}`}>
                   {sending[c._id] ? '...' : invited[c._id] ? '✓ Invited' : 'Invite'}
                 </button>
               </div>

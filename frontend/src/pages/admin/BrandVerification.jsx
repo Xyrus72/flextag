@@ -45,14 +45,14 @@ const BrandVerification = () => {
   }
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
+    <div className="page-root">
       <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Brand Verification</h1>
       <p className="text-zinc-500 mb-6">Review and approve brand partner applications</p>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {['pending', 'approved', 'rejected', 'all'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${filter === f ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white' : 'bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10'}`}>
+            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${filter === f ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white' : 'bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10'}`}>
             {f} ({f === 'all' ? brands.length : brands.filter(b => getStatus(b) === f).length})
           </button>
         ))}
@@ -60,7 +60,7 @@ const BrandVerification = () => {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+          <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
         </div>
       ) : filteredBrands.length === 0 ? (
         <div className="text-center py-20">

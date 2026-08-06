@@ -66,7 +66,7 @@ const Analytics = () => {
   const maxOrders = Math.max(...monthlyData.map(d => d.orders), 1)
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
+    <div className="page-root">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-white">Campaign Analytics</h1>
@@ -75,7 +75,7 @@ const Analytics = () => {
         <div className="flex bg-white/5 rounded-xl p-1">
           {['week', 'month', 'year'].map(p => (
             <button key={p} onClick={() => setPeriod(p)}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all ${period === p ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
+              className={`px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all ${period === p ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
               {p}
             </button>
           ))}
@@ -102,7 +102,7 @@ const Analytics = () => {
       <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6 mb-8">
         <h2 className="text-lg font-bold text-white mb-6">Monthly Orders</h2>
         {loading ? (
-          <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" /></div>
+          <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
         ) : monthlyData.length === 0 ? (
           <div className="text-center py-10 text-zinc-500 text-sm">No data yet — place orders to see analytics</div>
         ) : (
@@ -110,7 +110,7 @@ const Analytics = () => {
             {monthlyData.map(d => (
               <div key={d.month} className="flex-1 flex flex-col items-center gap-2">
                 <span className="text-xs text-zinc-400 font-semibold">{d.orders}</span>
-                <div className="w-full rounded-t-lg bg-gradient-to-t from-orange-500 to-pink-500 hover:opacity-80 transition-all cursor-pointer"
+                <div className="w-full rounded-t-lg bg-gradient-to-t from-violet-600 to-cyan-500 hover:opacity-80 transition-all cursor-pointer"
                   style={{ height: `${(d.orders / maxOrders) * 100}%`, minHeight: '4px' }} />
                 <span className="text-xs text-zinc-600">{d.month}</span>
               </div>
@@ -123,7 +123,7 @@ const Analytics = () => {
       <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
         <h2 className="text-lg font-bold text-white mb-5">Campaign Breakdown</h2>
         {loading ? (
-          <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" /></div>
+          <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
         ) : campaigns.length === 0 ? (
           <div className="text-center py-10 text-zinc-500 text-sm">No campaigns yet</div>
         ) : (
@@ -141,7 +141,7 @@ const Analytics = () => {
                     <tr key={i} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
                       <td className="px-3 py-3 text-sm font-medium text-white">{c.name}</td>
                       <td className="px-3 py-3 text-sm text-zinc-300">{c.posts}</td>
-                      <td className="px-3 py-3 text-sm text-orange-400 font-semibold">৳{(c.cashbackPaid || 0).toLocaleString()}</td>
+                      <td className="px-3 py-3 text-sm text-violet-400 font-semibold">৳{(c.cashbackPaid || 0).toLocaleString()}</td>
                       <td className="px-3 py-3">
                         {c.budget > 0 ? (
                           <div className="flex items-center gap-2">

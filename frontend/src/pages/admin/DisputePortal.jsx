@@ -50,14 +50,14 @@ const DisputePortal = () => {
   }
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
+    <div className="page-root">
       <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Dispute Resolution</h1>
       <p className="text-zinc-500 mb-6">Handle creator and brand conflicts</p>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {['open', 'investigating', 'resolved', 'all'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${filter === f ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white' : 'bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10'}`}>
+            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${filter === f ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white' : 'bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10'}`}>
             {f} ({f === 'all' ? disputes.length : disputes.filter(d => d.status === f).length})
           </button>
         ))}
@@ -65,7 +65,7 @@ const DisputePortal = () => {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+          <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">
@@ -90,7 +90,7 @@ const DisputePortal = () => {
                     <p className="text-sm text-white">{d.creatorId?.name || 'Creator'} vs {d.brandId?.companyName || d.brandId?.name || 'Brand'}</p>
                     <p className="text-xs text-zinc-500">{new Date(d.createdAt).toLocaleDateString()}</p>
                   </div>
-                  <span className="text-sm font-bold text-orange-400">৳{d.amount?.toLocaleString()}</span>
+                  <span className="text-sm font-bold text-violet-400">৳{d.amount?.toLocaleString()}</span>
                 </div>
 
                 {expanded && (
@@ -110,7 +110,7 @@ const DisputePortal = () => {
                       <div className="space-y-3">
                         <textarea value={resolutionText[d._id] || ''} onChange={e => setResolutionText(t => ({ ...t, [d._id]: e.target.value }))}
                           placeholder="Resolution notes..." rows={2}
-                          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 outline-none resize-none placeholder:text-zinc-600" />
+                          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none resize-none placeholder:text-zinc-600" />
                         <div className="flex gap-2">
                           <button onClick={() => handleResolve(d._id)} disabled={actioning[d._id]}
                             className="px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-semibold border border-emerald-500/20 hover:bg-emerald-500/20 transition-all disabled:opacity-40">

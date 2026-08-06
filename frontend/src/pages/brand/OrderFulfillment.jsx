@@ -47,14 +47,14 @@ const OrderFulfillment = () => {
   }
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
+    <div className="page-root">
       <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Order Fulfillment</h1>
       <p className="text-zinc-500 mb-6">Manage creator orders, shipping and tracking</p>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {['all', ...statusFlow].map(f => (
           <button key={f} onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${filter === f ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white' : 'bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10'}`}>
+            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${filter === f ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white' : 'bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10'}`}>
             {f === 'all' ? `All (${orders.length})` : `${f} (${orders.filter(o => o.status === f).length})`}
           </button>
         ))}
@@ -62,7 +62,7 @@ const OrderFulfillment = () => {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+          <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">
@@ -102,7 +102,7 @@ const OrderFulfillment = () => {
                       <input value={trackingInputs[oid] !== undefined ? trackingInputs[oid] : (o.tracking || '')}
                         onChange={e => setTrackingInputs(t => ({ ...t, [oid]: e.target.value }))}
                         placeholder="Enter tracking number..."
-                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 outline-none placeholder:text-zinc-600" />
+                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" />
                     </div>
 
                     {/* Status progress */}
@@ -123,7 +123,7 @@ const OrderFulfillment = () => {
                     <div className="flex gap-2">
                       {o.status !== 'delivered' && o.status !== 'cancelled' && (
                         <button onClick={() => advanceStatus(oid, o.status)} disabled={saving[oid]}
-                          className="px-4 py-2 rounded-lg bg-orange-500/10 text-orange-400 text-xs font-semibold border border-orange-500/20 hover:bg-orange-500/20 transition-all disabled:opacity-40">
+                          className="px-4 py-2 rounded-lg bg-violet-500/10 text-violet-400 text-xs font-semibold border border-violet-500/20 hover:bg-violet-500/20 transition-all disabled:opacity-40">
                           {saving[oid] ? 'Saving...' : o.status === 'processing' ? 'Mark as Packed' : o.status === 'packed' ? 'Mark as Shipped' : 'Mark as Delivered'}
                         </button>
                       )}

@@ -1,47 +1,164 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  motion, useScroll, useTransform, useMotionValue,
+  useSpring, AnimatePresence, useInView, animate
+} from 'framer-motion'
 
-/* ─── Particle Canvas ─────────────────────────────────────────────────────── */
-const ParticleCanvas = () => {
+/* ─── GLOBAL STYLES ────────────────────────────────────────────────────────── */
+const GLOBAL_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #050816;
+    --purple: #7c3aed;
+    --cyan: #06b6d4;
+    --pink: #ec4899;
+    --glass: rgba(255,255,255,0.04);
+    --glass-border: rgba(255,255,255,0.08);
+  }
+
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+  @keyframes floatY {
+    0%,100% { transform: translateY(0px); }
+    50%      { transform: translateY(-12px); }
+  }
+  @keyframes floatYSlow {
+    0%,100% { transform: translateY(0px); }
+    50%      { transform: translateY(-6px); }
+  }
+  @keyframes orbitCW {
+    from { transform: rotate(var(--start-angle)) translateX(var(--orbit-r)) rotate(calc(-1 * var(--start-angle))); }
+    to   { transform: rotate(calc(var(--start-angle) + 360deg)) translateX(var(--orbit-r)) rotate(calc(-1 * (var(--start-angle) + 360deg))); }
+  }
+  @keyframes pulseRing {
+    0%   { transform: scale(1); opacity: 0.5; }
+    50%  { transform: scale(1.05); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 0.5; }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+  }
+  @keyframes gradShift {
+    0%,100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+  }
+  @keyframes coinBurst {
+    0%   { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-120px) scale(0.5); opacity: 0; }
+  }
+  @keyframes scanLine {
+    0%   { top: 0%; }
+    100% { top: 100%; }
+  }
+  @keyframes heartFloat {
+    0%   { transform: translateY(0) scale(1); opacity: 0.9; }
+    100% { transform: translateY(-200px) scale(0.5) rotate(15deg); opacity: 0; }
+  }
+  @keyframes connectionPulse {
+    0%,100% { opacity: 0.2; }
+    50%      { opacity: 0.6; }
+  }
+  @keyframes rotateSlow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  @keyframes glowPulse {
+    0%,100% { box-shadow: 0 0 40px rgba(124,58,237,0.3), 0 0 80px rgba(6,182,212,0.15); }
+    50%      { box-shadow: 0 0 80px rgba(124,58,237,0.6), 0 0 160px rgba(6,182,212,0.3); }
+  }
+  @keyframes borderGlow {
+    0%,100% { border-color: rgba(124,58,237,0.3); }
+    50%      { border-color: rgba(6,182,212,0.5); }
+  }
+  @keyframes networkLine {
+    0%   { stroke-dashoffset: 1000; opacity: 0; }
+    50%  { opacity: 0.6; }
+    100% { stroke-dashoffset: 0; opacity: 0; }
+  }
+  @keyframes countUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .shimmer-text {
+    background: linear-gradient(90deg, #7c3aed, #06b6d4, #ec4899, #7c3aed);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s linear infinite;
+  }
+  .grad-btn {
+    background: linear-gradient(135deg, #7c3aed, #06b6d4);
+    background-size: 200% 200%;
+    animation: gradShift 3s ease infinite;
+  }
+  .glass-panel {
+    background: rgba(255,255,255,0.03);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .neon-purple { color: #7c3aed; text-shadow: 0 0 20px rgba(124,58,237,0.8); }
+  .neon-cyan   { color: #06b6d4; text-shadow: 0 0 20px rgba(6,182,212,0.8); }
+`
+
+/* ─── PARTICLE CANVAS ──────────────────────────────────────────────────────── */
+const ParticleCanvas = ({ mouseX, mouseY }) => {
   const ref = useRef(null)
   useEffect(() => {
     const canvas = ref.current
+    if (!canvas) return
     const ctx = canvas.getContext('2d')
     let raf, W, H
+    const N = 120
     const particles = []
-    const COUNT = 90
     const resize = () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight }
     resize()
     window.addEventListener('resize', resize)
-    for (let i = 0; i < COUNT; i++) {
+    for (let i = 0; i < N; i++) {
       particles.push({
-        x: Math.random() * W, y: Math.random() * H,
-        r: Math.random() * 1.5 + 0.3,
-        vx: (Math.random() - 0.5) * 0.35, vy: (Math.random() - 0.5) * 0.35,
-        o: Math.random() * 0.5 + 0.15,
-        hue: 20 + Math.random() * 30
+        x: Math.random() * (window.innerWidth || 1920),
+        y: Math.random() * (window.innerHeight || 1080),
+        r: Math.random() * 1.8 + 0.2,
+        vx: (Math.random() - 0.5) * 0.25,
+        vy: (Math.random() - 0.5) * 0.25,
+        o: Math.random() * 0.6 + 0.1,
+        hue: Math.random() > 0.5 ? 270 : 190,
       })
     }
     const draw = () => {
       ctx.clearRect(0, 0, W, H)
+      const mx = mouseX.get(), my = mouseY.get()
       particles.forEach((p, i) => {
+        // Slight attraction toward mouse
+        const dx = mx - p.x, dy = my - p.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (dist < 200) { p.vx += dx * 0.00002; p.vy += dy * 0.00002 }
+        p.vx = Math.max(-0.5, Math.min(0.5, p.vx))
+        p.vy = Math.max(-0.5, Math.min(0.5, p.vy))
         p.x += p.vx; p.y += p.vy
         if (p.x < 0) p.x = W; if (p.x > W) p.x = 0
         if (p.y < 0) p.y = H; if (p.y > H) p.y = 0
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-        ctx.fillStyle = `hsla(${p.hue}, 90%, 70%, ${p.o})`
+        ctx.fillStyle = `hsla(${p.hue}, 80%, 70%, ${p.o})`
         ctx.fill()
-        // Draw connections
         for (let j = i + 1; j < particles.length; j++) {
           const q = particles[j]
-          const dx = p.x - q.x, dy = p.y - q.y
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist < 130) {
+          const ex = p.x - q.x, ey = p.y - q.y
+          const d2 = Math.sqrt(ex * ex + ey * ey)
+          if (d2 < 110) {
             ctx.beginPath()
             ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y)
-            ctx.strokeStyle = `hsla(25, 90%, 65%, ${0.06 * (1 - dist / 130)})`
-            ctx.lineWidth = 0.5
+            ctx.strokeStyle = `hsla(${p.hue}, 80%, 70%, ${0.07 * (1 - d2 / 110)})`
+            ctx.lineWidth = 0.4
             ctx.stroke()
           }
         }
@@ -51,687 +168,1662 @@ const ParticleCanvas = () => {
     draw()
     return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
   }, [])
-  return <canvas ref={ref} className="fixed inset-0 z-0 pointer-events-none" />
+  return <canvas ref={ref} style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }} />
 }
 
-/* ─── Tilt Card ───────────────────────────────────────────────────────────── */
-const TiltCard = ({ children, className = '', depth = 20 }) => {
-  const ref = useRef(null)
-  const onMove = useCallback(e => {
-    const el = ref.current; if (!el) return
-    const r = el.getBoundingClientRect()
-    const x = ((e.clientX - r.left) / r.width - 0.5) * depth
-    const y = ((e.clientY - r.top) / r.height - 0.5) * -depth
-    el.style.transform = `perspective(900px) rotateY(${x}deg) rotateX(${y}deg) translateZ(10px)`
-    el.style.boxShadow = `${-x * 0.5}px ${y * 0.5}px 40px rgba(255,120,50,0.15)`
-  }, [depth])
-  const onLeave = useCallback(() => {
-    const el = ref.current; if (!el) return
-    el.style.transform = 'perspective(900px) rotateY(0deg) rotateX(0deg) translateZ(0)'
-    el.style.boxShadow = ''
-  }, [])
-  return (
-    <div ref={ref} onMouseMove={onMove} onMouseLeave={onLeave}
-      style={{ transition: 'transform 0.08s ease, box-shadow 0.08s ease', willChange: 'transform' }}
-      className={className}>
+/* ─── PHONE MOCKUP ─────────────────────────────────────────────────────────── */
+const PhoneMockup = ({ children, style = {}, className = '' }) => (
+  <div className={className} style={{
+    width: 220, height: 420,
+    borderRadius: 36,
+    background: 'linear-gradient(145deg, #1a1a2e, #0d0d1a)',
+    border: '2px solid rgba(124,58,237,0.4)',
+    boxShadow: '0 0 60px rgba(124,58,237,0.3), 0 0 120px rgba(6,182,212,0.1), inset 0 1px 0 rgba(255,255,255,0.1)',
+    position: 'relative',
+    overflow: 'hidden',
+    flexShrink: 0,
+    ...style
+  }}>
+    {/* Notch */}
+    <div style={{
+      position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)',
+      width: 60, height: 18, borderRadius: 10,
+      background: '#0d0d1a', border: '1px solid rgba(124,58,237,0.3)',
+      zIndex: 10
+    }} />
+    {/* Screen */}
+    <div style={{
+      position: 'absolute', inset: 4, borderRadius: 32,
+      background: 'linear-gradient(180deg, #0f0f23, #050816)',
+      overflow: 'hidden'
+    }}>
       {children}
     </div>
-  )
-}
-
-/* ─── Scroll Reveal ───────────────────────────────────────────────────────── */
-const Reveal = ({ children, delay = 0, className = '', dir = 'up' }) => {
-  const ref = useRef(null)
-  const [vis, setVis] = useState(false)
-  useEffect(() => {
-    const ob = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVis(true) }, { threshold: 0.15 })
-    if (ref.current) ob.observe(ref.current)
-    return () => ob.disconnect()
-  }, [])
-  const transforms = { up: 'translateY(40px)', down: 'translateY(-40px)', left: 'translateX(-40px)', right: 'translateX(40px)' }
-  return (
-    <div ref={ref} className={className}
-      style={{ transition: `opacity 0.75s ease ${delay}ms, transform 0.75s ease ${delay}ms`,
-        opacity: vis ? 1 : 0, transform: vis ? 'none' : (transforms[dir] || 'translateY(40px)') }}>
-      {children}
-    </div>
-  )
-}
-
-/* ─── 3D Floating Ring ────────────────────────────────────────────────────── */
-const Ring3D = () => (
-  <div className="relative w-56 h-56 mx-auto" style={{ perspective: '600px' }}>
-    {[...Array(4)].map((_, i) => (
-      <div key={i} className="absolute inset-0 rounded-full border border-orange-500/20"
-        style={{
-          animation: `spin3d ${8 + i * 3}s linear infinite ${i % 2 === 0 ? '' : 'reverse'}`,
-          transform: `rotateX(${i * 45}deg) rotateY(${i * 30}deg)`,
-          boxShadow: i === 0 ? '0 0 30px rgba(255,120,50,0.2)' : 'none'
-        }} />
-    ))}
-    <div className="absolute inset-0 flex items-center justify-center">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center text-3xl shadow-2xl shadow-orange-500/40"
-        style={{ animation: 'floatY 3s ease-in-out infinite' }}>
-        💰
-      </div>
-    </div>
+    {/* Home bar */}
+    <div style={{
+      position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+      width: 60, height: 4, borderRadius: 2,
+      background: 'rgba(255,255,255,0.3)', zIndex: 10
+    }} />
   </div>
 )
 
-/* ─── Animated Counter ────────────────────────────────────────────────────── */
-const Counter = ({ target, suffix = '', prefix = '', duration = 1800 }) => {
-  const [val, setVal] = useState(0)
-  const ref = useRef(null)
-  const started = useRef(false)
-  useEffect(() => {
-    const ob = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting && !started.current) {
-        started.current = true
-        const num = parseFloat(target.replace(/[^0-9.]/g, ''))
-        const start = performance.now()
-        const tick = (now) => {
-          const p = Math.min((now - start) / duration, 1)
-          const ease = 1 - Math.pow(1 - p, 3)
-          setVal(Math.floor(ease * num))
-          if (p < 1) requestAnimationFrame(tick)
-          else setVal(num)
-        }
-        requestAnimationFrame(tick)
-      }
-    }, { threshold: 0.5 })
-    if (ref.current) ob.observe(ref.current)
-    return () => ob.disconnect()
-  }, [target, duration])
-  return <span ref={ref}>{prefix}{typeof val === 'number' && val < 1000 && target.includes('.') ? val.toFixed(1) : val.toLocaleString()}{suffix}</span>
+/* ─── FLOATING PRODUCT ITEM ────────────────────────────────────────────────── */
+const PRODUCT_COLORS = {
+  Sneakers: { glow: '#f97316', border: 'rgba(249,115,22,0.5)', bg: 'rgba(249,115,22,0.08)' },
+  Hoodie:   { glow: '#7c3aed', border: 'rgba(124,58,237,0.5)', bg: 'rgba(124,58,237,0.08)' },
+  Makeup:   { glow: '#ec4899', border: 'rgba(236,72,153,0.5)', bg: 'rgba(236,72,153,0.08)' },
+  Watch:    { glow: '#06b6d4', border: 'rgba(6,182,212,0.5)',  bg: 'rgba(6,182,212,0.08)'  },
+  Bag:      { glow: '#a78bfa', border: 'rgba(167,139,250,0.5)', bg: 'rgba(167,139,250,0.08)' },
 }
 
-/* ─── 3D Card Stack (hero right side) ────────────────────────────────────── */
-const HeroCardStack = () => {
-  const cards = [
-    { bg: 'from-orange-600/20 to-pink-600/10', zIdx: 3, rot: 'rotateY(-6deg) rotateX(4deg)', tx: '0px', tz: '0px', delay: '0s', emoji: '🏆', label: 'Cashback Earned', val: '৳18,400', sub: 'Gold Creator · @tasnim' },
-    { bg: 'from-blue-600/15 to-violet-600/10', zIdx: 2, rot: 'rotateY(-8deg) rotateX(6deg)', tx: '20px', tz: '-60px', delay: '0.3s', emoji: '📈', label: 'Campaign ROI', val: '4.8×', sub: 'Brand average this month' },
-    { bg: 'from-emerald-600/15 to-teal-600/10', zIdx: 1, rot: 'rotateY(-10deg) rotateX(8deg)', tx: '40px', tz: '-120px', delay: '0.6s', emoji: '✅', label: 'Cashback Released', val: '৳2,340', sub: 'Post approved instantly' },
-  ]
+const OrbitItem = ({ img, label, angle, radius, duration, delay = 0 }) => {
+  const rad = (angle * Math.PI) / 180
+  const clr = PRODUCT_COLORS[label] || PRODUCT_COLORS.Sneakers
   return (
-    <div className="relative h-80 w-full" style={{ perspective: '1000px', perspectiveOrigin: '40% 50%' }}>
-      {cards.map((c, i) => (
-        <div key={i} className={`absolute inset-0 rounded-3xl border border-white/10 bg-gradient-to-br ${c.bg} backdrop-blur-xl p-6 flex flex-col justify-between`}
-          style={{
-            transform: c.rot,
-            translateX: c.tx,
-            translateZ: c.tz,
-            zIndex: c.zIdx,
-            animation: `floatCard ${3 + i}s ease-in-out ${c.delay} infinite alternate`,
-            boxShadow: '0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)'
+    <motion.div
+      style={{ position: 'absolute', left: '50%', top: '50%', marginLeft: -52, marginTop: -60 }}
+      animate={{
+        x: [
+          Math.cos(rad) * radius, Math.cos(rad + Math.PI / 2) * radius,
+          Math.cos(rad + Math.PI) * radius, Math.cos(rad + (3 * Math.PI) / 2) * radius,
+          Math.cos(rad + 2 * Math.PI) * radius,
+        ],
+        y: [
+          Math.sin(rad) * radius, Math.sin(rad + Math.PI / 2) * radius,
+          Math.sin(rad + Math.PI) * radius, Math.sin(rad + (3 * Math.PI) / 2) * radius,
+          Math.sin(rad + 2 * Math.PI) * radius,
+        ],
+      }}
+      transition={{ duration, delay, repeat: Infinity, ease: 'linear' }}
+    >
+      <motion.div
+        animate={{ y: [0, -10, 0], rotate: [-1, 1, -1] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: delay * 0.4 }}
+        style={{ position: 'relative' }}
+      >
+        {/* Outer glow halo */}
+        <div style={{
+          position: 'absolute', inset: -12, borderRadius: 28,
+          background: `radial-gradient(circle at 50% 80%, ${clr.glow}30 0%, transparent 70%)`,
+          filter: 'blur(8px)', pointerEvents: 'none',
+        }} />
+        {/* Card */}
+        <div style={{
+          width: 104, height: 120,
+          borderRadius: 22,
+          background: `linear-gradient(145deg, ${clr.bg} 0%, rgba(5,8,22,0.9) 100%)`,
+          backdropFilter: 'blur(20px)',
+          border: `1px solid ${clr.border}`,
+          boxShadow: `0 20px 60px rgba(0,0,0,0.6), 0 0 30px ${clr.glow}22, inset 0 1px 0 rgba(255,255,255,0.1)`,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          gap: 6, overflow: 'hidden', position: 'relative', padding: '10px 8px 8px',
+        }}>
+          {/* Shine streak */}
+          <div style={{
+            position: 'absolute', top: 0, left: '-40%', width: '30%', height: '100%',
+            background: 'linear-gradient(105deg, transparent, rgba(255,255,255,0.06), transparent)',
+            transform: 'skewX(-20deg)', pointerEvents: 'none',
+          }} />
+          <img
+            src={img} alt={label}
+            style={{ width: 72, height: 72, objectFit: 'contain', filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.5))' }}
+          />
+          <div style={{
+            background: `${clr.glow}22`,
+            border: `1px solid ${clr.border}`,
+            borderRadius: 8, padding: '2px 8px',
           }}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-xl">{c.emoji}</div>
-            <p className="text-xs text-zinc-400 font-medium uppercase tracking-widest">{c.label}</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-white">{c.val}</p>
-            <p className="text-xs text-zinc-500 mt-1">{c.sub}</p>
+            <span style={{ fontSize: 8, color: clr.glow, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{label}</span>
           </div>
         </div>
-      ))}
+      </motion.div>
+    </motion.div>
+  )
+}
+
+/* ─── FLOATING SOCIAL ITEM ─────────────────────────────────────────────────── */
+const FloatingBadge = ({ icon, label, style }) => (
+  <motion.div
+    animate={{ y: [0, -8, 0] }}
+    transition={{ duration: 3 + Math.random() * 2, repeat: Infinity, ease: 'easeInOut' }}
+    style={{
+      position: 'absolute',
+      background: 'rgba(255,255,255,0.06)',
+      backdropFilter: 'blur(16px)',
+      border: '1px solid rgba(255,255,255,0.1)',
+      borderRadius: 12, padding: '6px 12px',
+      display: 'flex', alignItems: 'center', gap: 6,
+      fontSize: 12, color: 'rgba(255,255,255,0.8)',
+      fontWeight: 600, whiteSpace: 'nowrap',
+      boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+      ...style
+    }}
+  >
+    <span>{icon}</span><span>{label}</span>
+  </motion.div>
+)
+
+/* ─── GLASS CARD ───────────────────────────────────────────────────────────── */
+const GlassCard = ({ children, style = {}, glow = 'purple' }) => {
+  const glowColor = glow === 'purple' ? '124,58,237' : glow === 'cyan' ? '6,182,212' : '236,72,153'
+  return (
+    <div style={{
+      background: 'rgba(255,255,255,0.04)',
+      backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      borderRadius: 24,
+      boxShadow: `0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06), 0 0 60px rgba(${glowColor},0.08)`,
+      position: 'relative',
+      overflow: 'hidden',
+      ...style
+    }}>
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        background: `radial-gradient(ellipse at 30% 0%, rgba(${glowColor},0.06) 0%, transparent 60%)`,
+      }} />
+      <div style={{ position: 'relative', zIndex: 1 }}>{children}</div>
     </div>
   )
 }
 
-/* ─── Steps 3D ────────────────────────────────────────────────────────────── */
-const steps = [
-  { n: '01', title: 'Shop', desc: 'Browse curated brand products and purchase what you love from our verified catalog.', icon: '🛍️', color: 'from-orange-500/20 to-amber-500/10', glow: '255,150,50' },
-  { n: '02', title: 'Share', desc: 'Create authentic Reels, Stories, or posts featuring the product on your socials.', icon: '📱', color: 'from-pink-500/20 to-rose-500/10', glow: '255,80,150' },
-  { n: '03', title: 'Earn', desc: 'AI verifies your post. Once approved, cashback lands in your wallet instantly.', icon: '💸', color: 'from-emerald-500/20 to-teal-500/10', glow: '50,200,150' },
-]
-
-const tiers = [
-  { name: 'Bronze', icon: '🥉', range: '1K–5K', cashback: '30–40%', color: 'from-amber-900/30 to-amber-700/10', border: 'border-amber-700/30', glow: '180,100,30' },
-  { name: 'Silver', icon: '🥈', range: '5K–10K', cashback: '40–55%', color: 'from-zinc-600/30 to-zinc-400/10', border: 'border-zinc-500/30', glow: '150,150,180' },
-  { name: 'Gold', icon: '🥇', range: '10K–50K', cashback: '55–65%', color: 'from-yellow-500/30 to-amber-400/10', border: 'border-yellow-500/40', glow: '255,200,50', highlight: true },
-  { name: 'Diamond', icon: '💎', range: '50K+', cashback: '65–70%', color: 'from-cyan-500/30 to-blue-500/10', border: 'border-cyan-500/30', glow: '50,200,255' },
-]
-
-const testimonials = [
-  { quote: 'I earned ৳18,000 in just one month posting products I genuinely love. This is the future of creator monetization.', name: 'Tasnim Rahman', role: 'Gold Creator · 12K followers', img: 'T', color: 'from-orange-500 to-pink-600' },
-  { quote: 'The ROI from Flextag creators is 4× better than our old agency campaigns. Zero ad waste, real engagement.', name: 'GlowUp Cosmetics', role: 'Brand Partner', img: 'G', color: 'from-emerald-500 to-teal-600' },
-  { quote: 'The cashback verification is seamless. Post it, tag it, get paid. No chasing anyone ever.', name: 'Priya Das', role: 'Diamond Creator · 58K followers', img: 'P', color: 'from-violet-500 to-blue-600' },
-]
-
-/* ─── MAIN LANDING ────────────────────────────────────────────────────────── */
-const Landing = () => {
-  const [price, setPrice] = useState(1200)
-  const [cashback, setCashback] = useState(55)
-  const netEarn = Math.round(price * cashback / 100)
-  const mousePos = useRef({ x: 0, y: 0 })
-  const heroRef = useRef(null)
-
-  // Parallax hero background
+/* ─── ANIMATED COUNTER ─────────────────────────────────────────────────────── */
+const AnimCounter = ({ values, interval = 1200, prefix = '', suffix = '' }) => {
+  const [idx, setIdx] = useState(0)
+  const [display, setDisplay] = useState(values[0])
   useEffect(() => {
-    const onMove = e => { mousePos.current = { x: e.clientX, y: e.clientY } }
+    const t = setInterval(() => setIdx(i => (i + 1) % values.length), interval)
+    return () => clearInterval(t)
+  }, [values, interval])
+  return (
+    <AnimatePresence mode="wait">
+      <motion.span
+        key={idx}
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -20, opacity: 0 }}
+        transition={{ duration: 0.4 }}
+        style={{ display: 'inline-block' }}
+      >
+        {prefix}{values[idx]}{suffix}
+      </motion.span>
+    </AnimatePresence>
+  )
+}
+
+/* ─── SECTION WRAPPER WITH SCROLL-BASED OPACITY ────────────────────────────── */
+const ScrollSection = ({ children, style = {} }) => {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: false, margin: '-10% 0px -10% 0px' })
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 60 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
+      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+      style={style}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+/* ─── MAIN LANDING ─────────────────────────────────────────────────────────── */
+export default function Landing() {
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+  const smoothX = useSpring(mouseX, { stiffness: 50, damping: 20 })
+  const smoothY = useSpring(mouseY, { stiffness: 50, damping: 20 })
+
+  const containerRef = useRef(null)
+
+  // Scroll progress for the whole page
+  const { scrollYProgress } = useScroll()
+
+  useEffect(() => {
+    const onMove = e => { mouseX.set(e.clientX); mouseY.set(e.clientY) }
     window.addEventListener('mousemove', onMove)
     return () => window.removeEventListener('mousemove', onMove)
   }, [])
 
+  /* ── Individual section refs for scroll-driven animations ── */
+  const heroRef     = useRef(null)
+  const s1Ref       = useRef(null)
+  const s2Ref       = useRef(null)
+  const s3Ref       = useRef(null)
+  const s4Ref       = useRef(null)
+  const s5Ref       = useRef(null)
+  const s6Ref       = useRef(null)
+  const ctaRef      = useRef(null)
+
+  // Hero scroll progress
+  const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
+  const heroScale  = useTransform(heroScroll, [0, 1], [1, 1.3])
+  const heroOpacity= useTransform(heroScroll, [0, 0.7], [1, 0])
+  const phoneY     = useTransform(heroScroll, [0, 1], [0, -80])
+  const camZ       = useTransform(heroScroll, [0, 1], ['perspective(1200px) scale(1)', 'perspective(1200px) scale(1.4)'])
+
+  // Parallax for hero content
+  const heroTitleY = useTransform(heroScroll, [0, 1], [0, -120])
+
+  // Mouse parallax
+  const pX = useTransform(smoothX, [0, typeof window !== 'undefined' ? window.innerWidth : 1920], [-20, 20])
+  const pY = useTransform(smoothY, [0, typeof window !== 'undefined' ? window.innerHeight : 1080], [-12, 12])
+
   return (
-    <div className="relative bg-[#050505] text-zinc-300 overflow-x-hidden">
-      {/* Global keyframes */}
-      <style>{`
-        @keyframes floatY {
-          0%,100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-14px) rotate(2deg); }
-        }
-        @keyframes floatCard {
-          from { transform: rotateY(-6deg) rotateX(4deg) translateY(0px); }
-          to   { transform: rotateY(-4deg) rotateX(6deg) translateY(-12px); }
-        }
-        @keyframes spin3d {
-          from { transform: rotateX(60deg) rotateZ(0deg); }
-          to   { transform: rotateX(60deg) rotateZ(360deg); }
-        }
-        @keyframes shimmer {
-          0%   { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        @keyframes orbit {
-          from { transform: rotate(0deg) translateX(90px) rotate(0deg); }
-          to   { transform: rotate(360deg) translateX(90px) rotate(-360deg); }
-        }
-        @keyframes orbitReverse {
-          from { transform: rotate(0deg) translateX(65px) rotate(0deg); }
-          to   { transform: rotate(-360deg) translateX(65px) rotate(360deg); }
-        }
-        @keyframes pulse3d {
-          0%,100% { transform: scale(1); opacity: 0.6; }
-          50%      { transform: scale(1.15); opacity: 1; }
-        }
-        @keyframes gradShift {
-          0%,100% { background-position: 0% 50%; }
-          50%      { background-position: 100% 50%; }
-        }
-        .shimmer-text {
-          background: linear-gradient(90deg, #ff6b35, #ff9a3c, #fff, #ff9a3c, #ff6b35);
-          background-size: 200% auto;
-          background-clip: text;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: shimmer 4s linear infinite;
-        }
-        .glow-orb {
-          background: radial-gradient(circle, rgba(255,120,50,0.15) 0%, transparent 70%);
-          animation: pulse3d 4s ease-in-out infinite;
-        }
-        .grad-animate {
-          background: linear-gradient(270deg, #ff6b35, #ff3ca0, #7c3aed, #ff6b35);
-          background-size: 300% 300%;
-          animation: gradShift 5s ease infinite;
-        }
-      `}</style>
+    <div style={{ background: 'var(--bg)', color: '#e2e8f0', minHeight: '100vh', overflowX: 'hidden', fontFamily: 'Inter, sans-serif' }}>
+      <style>{GLOBAL_CSS}</style>
+      <ParticleCanvas mouseX={mouseX} mouseY={mouseY} />
 
-      <ParticleCanvas />
-
-      {/* ── Ambient orbs ─────────────────────────────────────────────────── */}
-      <div className="fixed top-1/4 left-1/4 w-[600px] h-[600px] rounded-full glow-orb pointer-events-none z-0" />
-      <div className="fixed bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full pointer-events-none z-0"
-        style={{ background: 'radial-gradient(circle, rgba(150,50,255,0.08) 0%, transparent 70%)', animation: 'pulse3d 6s ease-in-out 2s infinite' }} />
+      {/* ── Ambient light orbs ─────────────────────────────────────────── */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
+        <motion.div style={{
+          position: 'absolute', width: 700, height: 700,
+          borderRadius: '50%', top: '10%', left: '15%', transform: 'translate(-50%,-50%)',
+          background: 'radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%)',
+          x: pX, y: pY,
+        }} />
+        <motion.div style={{
+          position: 'absolute', width: 500, height: 500,
+          borderRadius: '50%', bottom: '20%', right: '10%',
+          background: 'radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%)',
+          x: useTransform(pX, v => -v * 0.5),
+          y: useTransform(pY, v => -v * 0.5),
+        }} />
+      </div>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* HERO                                                                */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center px-6 pt-20 pb-16 z-10 overflow-hidden">
+      <section ref={heroRef} style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', position: 'relative',
+        overflow: 'hidden', zIndex: 10,
+      }}>
         {/* Grid overlay */}
-        <div className="absolute inset-0 z-0 pointer-events-none"
-          style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          backgroundImage: 'linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px)',
+          backgroundSize: '60px 60px',
+        }} />
 
-        <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-16 items-center relative z-10">
-          {/* Left */}
-          <div className="space-y-8">
-            <Reveal>
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/5 backdrop-blur-md">
-                <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-                <span className="text-xs text-orange-400 font-medium uppercase tracking-[0.15em]">Nano & Micro Influencer Platform</span>
-              </div>
-            </Reveal>
+        <motion.div style={{ opacity: heroOpacity, y: heroTitleY, position: 'relative', zIndex: 10, width: '100%', maxWidth: 1200, padding: '0 24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
 
-            <Reveal delay={100}>
-              <h1 className="text-[clamp(52px,9vw,110px)] font-black tracking-tighter uppercase italic leading-[0.9]">
-                <span className="shimmer-text">FLEX</span>
-                <br />
-                <span className="text-white">TAG™</span>
-              </h1>
-              <p className="text-[clamp(20px,3vw,36px)] font-light text-zinc-500 tracking-tight mt-3">
-                Shop. Share.<br />
-                <span className="text-zinc-300">Earn Cashback.</span>
-              </p>
-            </Reveal>
+            {/* LEFT TEXT */}
+            <div style={{ position: 'relative', zIndex: 5 }}>
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  padding: '6px 16px', borderRadius: 100,
+                  background: 'rgba(124,58,237,0.1)',
+                  border: '1px solid rgba(124,58,237,0.3)',
+                  marginBottom: 24, backdropFilter: 'blur(12px)'
+                }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#7c3aed', boxShadow: '0 0 8px #7c3aed', display: 'inline-block', animation: 'pulseRing 2s ease-in-out infinite' }} />
+                  <span style={{ fontSize: 11, color: '#a78bfa', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Nano & Micro Influencer Platform</span>
+                </div>
+              </motion.div>
 
-            <Reveal delay={200}>
-              <p className="text-sm text-zinc-500 leading-relaxed max-w-lg">
-                The creator-powered e-commerce platform where nano & micro-influencers earn
-                <span className="text-orange-400 font-semibold"> 30–70% cashback</span> by shopping and sharing products they genuinely love.
-              </p>
-            </Reveal>
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.9, delay: 0.35 }}
+              >
+                <h1 style={{
+                  fontSize: 'clamp(56px, 8vw, 104px)',
+                  fontWeight: 900,
+                  lineHeight: 0.9,
+                  letterSpacing: '-0.04em',
+                  marginBottom: 16,
+                  textTransform: 'uppercase',
+                  fontStyle: 'italic',
+                }}>
+                  <span className="shimmer-text">FLEX</span><br />
+                  <span style={{ color: '#fff' }}>TAG™</span>
+                </h1>
+                <p style={{ fontSize: 'clamp(18px, 2.5vw, 28px)', color: 'rgba(255,255,255,0.4)', fontWeight: 300, letterSpacing: '-0.02em' }}>
+                  Shop. Share.<br />
+                  <span style={{ color: 'rgba(255,255,255,0.8)' }}>Earn Cashback.</span>
+                </p>
+              </motion.div>
 
-            <Reveal delay={300}>
-              <div className="flex flex-wrap gap-4">
-                <Link to="/register"
-                  className="relative group overflow-hidden px-8 py-3.5 rounded-full text-sm font-bold uppercase tracking-widest text-black">
-                  <div className="absolute inset-0 grad-animate rounded-full" />
-                  <span className="relative z-10 text-white">Start Earning →</span>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.55 }}
+                style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.8, maxWidth: 460, marginTop: 20 }}
+              >
+                The creator-powered e-commerce platform where nano & micro-influencers earn{' '}
+                <span style={{ color: '#a78bfa', fontWeight: 600 }}>30–70% cashback</span> by shopping and sharing products they genuinely love.
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.75 }}
+                style={{ display: 'flex', gap: 16, marginTop: 36, flexWrap: 'wrap' }}
+              >
+                <Link to="/register" style={{ textDecoration: 'none' }}>
+                  <motion.button
+                    whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(124,58,237,0.6)' }}
+                    whileTap={{ scale: 0.97 }}
+                    style={{
+                      padding: '14px 32px', borderRadius: 100,
+                      background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
+                      border: 'none', color: '#fff', fontWeight: 700,
+                      fontSize: 13, letterSpacing: '0.12em', textTransform: 'uppercase',
+                      cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                    }}
+                  >Start Earning →</motion.button>
                 </Link>
-                <Link to="/register?role=brand"
-                  className="px-8 py-3.5 rounded-full text-xs font-medium uppercase tracking-widest border border-white/10 text-zinc-300 hover:border-orange-500/50 hover:text-orange-400 transition-all backdrop-blur-md">
-                  List Your Brand
+                <Link to="/register?role=brand" style={{ textDecoration: 'none' }}>
+                  <motion.button
+                    whileHover={{ borderColor: 'rgba(124,58,237,0.6)', color: '#a78bfa' }}
+                    style={{
+                      padding: '14px 32px', borderRadius: 100,
+                      background: 'transparent',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: 'rgba(255,255,255,0.6)', fontWeight: 600,
+                      fontSize: 13, letterSpacing: '0.12em', textTransform: 'uppercase',
+                      cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      transition: 'all 0.2s',
+                    }}
+                  >List Your Brand</motion.button>
                 </Link>
-              </div>
-            </Reveal>
+              </motion.div>
 
-            {/* Orbit graphic */}
-            <Reveal delay={400}>
-              <div className="flex items-center gap-8 pt-4">
-                <div className="relative w-48 h-12">
-                  {/* Micro orbit system */}
-                  <div className="absolute left-0 top-0 flex -space-x-3">
-                    {['T','P','A','R','N'].map((l, i) => (
-                      <div key={i} className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-500 to-pink-600 border-2 border-[#050505] flex items-center justify-center text-white text-xs font-bold"
-                        style={{ transform: `translateZ(${i * 2}px)` }}>
-                        {l}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 36 }}
+              >
+                <div style={{ display: 'flex' }}>
+                  {['T', 'P', 'A', 'R', 'N'].map((l, i) => (
+                    <div key={i} style={{
+                      width: 32, height: 32, borderRadius: '50%',
+                      background: `linear-gradient(135deg, hsl(${270 + i * 20}, 80%, 60%), hsl(${190 + i * 15}, 80%, 55%))`,
+                      border: '2px solid #050816',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 11, fontWeight: 800, color: '#fff',
+                      marginLeft: i > 0 ? -10 : 0,
+                    }}>{l}</div>
+                  ))}
+                </div>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                  Join <span style={{ color: '#fff', fontWeight: 700 }}>12,400+</span> creators already earning
+                </p>
+              </motion.div>
+            </div>
+
+            {/* RIGHT — PHONE + ORBITING PRODUCTS */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              style={{ position: 'relative', height: 520, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              {/* Glowing ring behind phone */}
+              <div style={{
+                position: 'absolute', width: 380, height: 380,
+                borderRadius: '50%',
+                border: '1px solid rgba(124,58,237,0.2)',
+                boxShadow: '0 0 80px rgba(124,58,237,0.15), inset 0 0 80px rgba(6,182,212,0.05)',
+                animation: 'pulseRing 4s ease-in-out infinite',
+              }} />
+              <div style={{
+                position: 'absolute', width: 300, height: 300,
+                borderRadius: '50%',
+                border: '1px solid rgba(6,182,212,0.15)',
+                animation: 'rotateSlow 20s linear infinite',
+              }}>
+                {/* Dot on ring */}
+                <div style={{
+                  position: 'absolute', top: -4, left: '50%', marginLeft: -4,
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: '#06b6d4', boxShadow: '0 0 12px #06b6d4',
+                }} />
+              </div>
+              <div style={{
+                position: 'absolute', width: 460, height: 460,
+                borderRadius: '50%',
+                border: '1px solid rgba(236,72,153,0.08)',
+                animation: 'rotateSlow 35s linear infinite reverse',
+              }} />
+
+              {/* Orbiting products */}
+              {[
+                { img: '/products/nike-shoe.png', label: 'Sneakers', angle: 0,   radius: 185, duration: 16 },
+                { img: '/products/hoodie.png',    label: 'Hoodie',   angle: 72,  radius: 185, duration: 18 },
+                { img: '/products/serum.png',     label: 'Makeup',   angle: 144, radius: 185, duration: 14 },
+                { img: '/products/watch.png',     label: 'Watch',    angle: 216, radius: 185, duration: 20 },
+                { img: '/products/bag.png',       label: 'Bag',      angle: 288, radius: 185, duration: 17 },
+              ].map((item, i) => (
+                <OrbitItem key={i} {...item} delay={i * 0.8} />
+              ))}
+
+              {/* Floating social badges */}
+              <FloatingBadge icon="❤️" label="+2.4K Likes"     style={{ top: 40,  right: -60 }} />
+              <FloatingBadge icon="💬" label="847 Comments"    style={{ bottom: 80, left: -80 }} />
+              <FloatingBadge icon="👥" label="+1.2K Followers" style={{ top: 120, left: -90 }} />
+              <FloatingBadge icon="💰" label="৳450 Cashback"   style={{ bottom: 160, right: -70 }} />
+
+              {/* Phone */}
+              <motion.div style={{ y: phoneY, position: 'relative', zIndex: 5 }}>
+                <PhoneMockup>
+                  {/* Phone screen content */}
+                  <div style={{ padding: 16, paddingTop: 30, height: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {/* App header */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 13, fontWeight: 800, background: 'linear-gradient(90deg, #7c3aed, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>FlexTag</span>
+                      <span style={{ fontSize: 18 }}>🔔</span>
+                    </div>
+                    {/* Balance card */}
+                    <div style={{
+                      background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(6,182,212,0.2))',
+                      border: '1px solid rgba(124,58,237,0.3)',
+                      borderRadius: 14, padding: '12px 14px',
+                    }}>
+                      <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Wallet Balance</p>
+                      <p style={{ fontSize: 22, fontWeight: 900, color: '#fff' }}>৳18,400</p>
+                      <p style={{ fontSize: 8, color: '#a78bfa', marginTop: 2 }}>↑ +৳2,340 this week</p>
+                    </div>
+                    {/* Stats row */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      {[{ l: 'Posts', v: '24' }, { l: 'Orders', v: '31' }].map(s => (
+                        <div key={s.l} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
+                          <p style={{ fontSize: 16, fontWeight: 900, color: '#fff' }}>{s.v}</p>
+                          <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)' }}>{s.l}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Product items */}
+                    {[
+                      { img: '/products/nike-shoe.png', name: 'Nike Air Max', cash: '৳560', badge: 'LIVE' },
+                      { img: '/products/serum.png',     name: 'Glow Serum',   cash: '৳380', badge: '✓ DONE' },
+                    ].map((p, i) => (
+                      <div key={i} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
+                        borderRadius: 12, padding: '8px 10px',
+                      }}>
+                        <img src={p.img} alt={p.name} style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 6, background: 'rgba(255,255,255,0.04)', flexShrink: 0 }} />
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: 10, color: '#fff', fontWeight: 600 }}>{p.name}</p>
+                          <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)' }}>Cashback: {p.cash}</p>
+                        </div>
+                        <div style={{
+                          fontSize: 7, padding: '2px 6px', borderRadius: 6,
+                          background: p.badge === 'LIVE' ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)',
+                          color: p.badge === 'LIVE' ? '#ef4444' : '#22c55e',
+                          fontWeight: 700, border: `1px solid ${p.badge === 'LIVE' ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`,
+                        }}>{p.badge}</div>
                       </div>
                     ))}
                   </div>
-                </div>
-                <p className="text-xs text-zinc-500">Join <span className="text-white font-semibold">12,400+</span> creators already earning</p>
-              </div>
-            </Reveal>
+                </PhoneMockup>
+              </motion.div>
+            </motion.div>
           </div>
+        </motion.div>
 
-          {/* Right — 3D Card Stack */}
-          <Reveal delay={150} dir="left" className="hidden lg:block">
-            <TiltCard className="rounded-3xl" depth={12}>
-              <HeroCardStack />
-            </TiltCard>
-          </Reveal>
-        </div>
-
-        {/* Bottom gradient fade */}
-        <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-[#050505] to-transparent pointer-events-none z-20" />
+        {/* Scroll indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2 }}
+          style={{
+            position: 'absolute', bottom: 40, left: '50%', transform: 'translateX(-50%)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+          }}
+        >
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Scroll to explore</span>
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+            style={{ width: 1, height: 40, background: 'linear-gradient(180deg, rgba(124,58,237,0.8), transparent)' }}
+          />
+        </motion.div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* STATS BAR                                                           */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <section className="relative z-10 border-y border-white/5 py-10 px-6">
-        <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {[
-            { value: '12400', suffix: '+', prefix: '', label: 'Active Creators' },
-            { value: '34', suffix: 'M+', prefix: '৳', label: 'Cashback Paid' },
-            { value: '48', suffix: '+', prefix: '', label: 'Brand Partners' },
-            { value: '4.8', suffix: '×', prefix: '', label: 'Avg Brand ROI' },
-          ].map((s, i) => (
-            <Reveal key={s.label} delay={i * 80} className="text-center">
-              <p className="text-3xl lg:text-5xl font-black text-white tracking-tighter">
-                <Counter target={s.value} suffix={s.suffix} prefix={s.prefix} />
-              </p>
-              <p className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] mt-2">{s.label}</p>
-            </Reveal>
-          ))}
-        </div>
+      <section style={{ position: 'relative', zIndex: 10, borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '40px 24px' }}>
+        <ScrollSection>
+          <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 32 }}>
+            {[
+              { value: '12,400+', label: 'Active Creators' },
+              { value: '৳34M+',  label: 'Cashback Paid' },
+              { value: '48+',    label: 'Brand Partners' },
+              { value: '4.8×',   label: 'Avg Brand ROI' },
+            ].map((s, i) => (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                style={{ textAlign: 'center' }}
+              >
+                <p style={{ fontSize: 'clamp(28px, 3vw, 44px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em' }}>{s.value}</p>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 6 }}>{s.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        </ScrollSection>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* HOW IT WORKS — 3D Cards                                            */}
+      {/* SCROLL ANIMATION 1 — BRAND CREATES CAMPAIGN                        */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-32 px-6 border-b border-white/5 overflow-hidden">
-        <div className="max-w-7xl mx-auto space-y-20">
-          <div className="flex flex-col md:flex-row justify-between items-end gap-8">
-            <Reveal className="space-y-3">
-              <p className="text-xs text-orange-500 uppercase tracking-[0.2em] font-medium">How It Works</p>
-              <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-white leading-tight">
-                Three Steps to<br />
-                <span className="text-zinc-600 italic font-light">Consistent Earnings</span>
+      <section ref={s1Ref} style={{ position: 'relative', zIndex: 10, padding: '120px 24px', overflow: 'hidden' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <ScrollSection>
+            <div style={{ textAlign: 'center', marginBottom: 80 }}>
+              <p style={{ fontSize: 11, color: '#7c3aed', letterSpacing: '0.25em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 16 }}>Scene 01</p>
+              <h2 style={{ fontSize: 'clamp(40px, 6vw, 80px)', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-0.04em', marginBottom: 16 }}>
+                Brand Creates<br /><span className="shimmer-text">Campaign</span>
               </h2>
-            </Reveal>
-            <Reveal delay={100} className="max-w-xs">
-              <p className="text-sm text-zinc-500 leading-relaxed">
-                No complex contracts, no upfront fees. Purchase, post, and get paid within 24 hours.
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16, maxWidth: 500, margin: '0 auto' }}>
+                A brand launches a campaign. Creators receive product boxes. The ecosystem activates.
               </p>
-            </Reveal>
-          </div>
+            </div>
+          </ScrollSection>
 
-          <div className="grid md:grid-cols-3 gap-6" style={{ perspective: '1200px' }}>
-            {steps.map((s, i) => (
-              <Reveal key={s.n} delay={i * 120} dir="up">
-                <TiltCard depth={15}
-                  className={`h-full rounded-3xl border border-white/8 bg-gradient-to-br ${s.color} backdrop-blur-xl p-8 md:p-10 overflow-hidden relative group`}>
-                  {/* Glow bg */}
-                  <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{ background: `radial-gradient(circle, rgba(${s.glow},0.2) 0%, transparent 70%)` }} />
-                  {/* Number */}
-                  <div className="absolute top-6 right-8 text-7xl font-black text-white/4 select-none">{s.n}</div>
-
-                  <div className="relative z-10 space-y-8 h-full flex flex-col justify-between">
-                    <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-3xl"
-                      style={{ animation: `floatY ${3 + i * 0.5}s ease-in-out ${i * 0.4}s infinite` }}>
-                      {s.icon}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
+            {/* Campaign card */}
+            <ScrollSection>
+              <motion.div
+                whileHover={{ y: -8, rotateY: 5 }}
+                transition={{ type: 'spring', stiffness: 200 }}
+                style={{ perspective: 1000 }}
+              >
+                <GlassCard style={{ padding: 40 }} glow="purple">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 16, background: '#000', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                      <img src="/products/nike-logo.png" alt="Nike" style={{ width: 38, height: 38, objectFit: 'contain' }} />
                     </div>
                     <div>
-                      <div className="flex items-baseline gap-3 mb-3">
-                        <span className="text-[10px] text-orange-500 font-bold tracking-widest uppercase">{s.n}</span>
-                        <h3 className="text-2xl font-black text-white tracking-tight">{s.title}</h3>
-                      </div>
-                      <p className="text-sm text-zinc-400 leading-relaxed">{s.desc}</p>
+                      <p style={{ fontWeight: 800, color: '#fff', fontSize: 18 }}>Nike Campaign</p>
+                      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Live · 34 days left</p>
+                    </div>
+                    <div style={{ marginLeft: 'auto', padding: '4px 12px', borderRadius: 100, background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', fontSize: 10, color: '#22c55e', fontWeight: 700 }}>ACTIVE</div>
+                  </div>
+
+                  {/* Cashback big number */}
+                  <div style={{ textAlign: 'center', padding: '32px 0', borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 32 }}>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Cashback Rate</p>
+                    <motion.p
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      style={{ fontSize: 72, fontWeight: 900, lineHeight: 1, background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+                    >70%</motion.p>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+                    <div style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: 12, padding: '12px 16px', textAlign: 'center' }}>
+                      <p style={{ fontSize: 22, fontWeight: 900, color: '#a78bfa' }}>100</p>
+                      <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.15em' }}>CREATORS</p>
+                    </div>
+                    <div style={{ background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.2)', borderRadius: 12, padding: '12px 16px', textAlign: 'center' }}>
+                      <p style={{ fontSize: 22, fontWeight: 900, color: '#67e8f9' }}>৳50K</p>
+                      <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.15em' }}>BUDGET</p>
                     </div>
                   </div>
-                </TiltCard>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* EARNINGS CALCULATOR — 3D Center piece                              */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-40 px-6 border-b border-white/5 overflow-hidden">
-        {/* Background grid */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(rgba(255,120,50,0.06) 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-
-        <div className="max-w-4xl mx-auto text-center relative z-10 space-y-16">
-          <Reveal>
-            <Ring3D />
-          </Reveal>
-
-          <Reveal delay={100}>
-            <h2 className="text-5xl md:text-7xl font-black tracking-tighter text-white leading-tight">
-              Calculate Your<br />
-              <span className="shimmer-text italic">Earnings</span>
-            </h2>
-            <p className="text-sm text-zinc-500 mt-4 max-w-md mx-auto leading-relaxed">
-              See exactly how much cashback you can earn per campaign.
-            </p>
-          </Reveal>
-
-          <Reveal delay={200}>
-            <TiltCard depth={8}
-              className="rounded-3xl border border-white/8 bg-white/[0.02] backdrop-blur-2xl p-8 md:p-12 text-left space-y-8 max-w-2xl mx-auto">
-              {[
-                { label: 'Product Price (৳)', value: price, setter: setPrice, min: 200, max: 5000, step: 100, display: `৳${price.toLocaleString()}` },
-                { label: 'Cashback Rate', value: cashback, setter: setCashback, min: 30, max: 70, step: 5, display: `${cashback}%` },
-              ].map(f => (
-                <div key={f.label}>
-                  <div className="flex justify-between mb-4">
-                    <label className="text-xs text-zinc-500 uppercase tracking-widest font-medium">{f.label}</label>
-                    <span className="text-sm font-black text-white">{f.display}</span>
-                  </div>
-                  <div className="relative h-2 rounded-full bg-white/5 overflow-hidden">
-                    <div className="absolute inset-y-0 left-0 rounded-full grad-animate transition-all"
-                      style={{ width: `${((f.value - f.min) / (f.max - f.min)) * 100}%` }} />
-                    <input type="range" min={f.min} max={f.max} step={f.step} value={f.value}
-                      onChange={e => f.setter(Number(e.target.value))}
-                      className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
-                  </div>
-                  <div className="flex justify-between mt-1.5">
-                    <span className="text-[10px] text-zinc-700">{f.min}</span>
-                    <span className="text-[10px] text-zinc-700">{f.max}</span>
-                  </div>
-                </div>
-              ))}
-
-              <div className="rounded-2xl p-6 border border-emerald-500/20 bg-emerald-500/5 flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest">You Earn Per Campaign</p>
-                  <p className="text-5xl font-black text-emerald-400 mt-1">৳{netEarn.toLocaleString()}</p>
-                  <p className="text-xs text-zinc-600 mt-1">You actually pay: ৳{(price - netEarn).toLocaleString()}</p>
-                </div>
-                <div className="w-20 h-20 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-4xl"
-                  style={{ animation: 'floatY 2.5s ease-in-out infinite' }}>
-                  🏆
-                </div>
-              </div>
-            </TiltCard>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* CREATOR TIERS — 3D perspective row                                 */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-32 px-6 border-b border-white/5">
-        <div className="max-w-7xl mx-auto space-y-16">
-          <Reveal>
-            <p className="text-xs text-orange-500 uppercase tracking-[0.2em] font-medium mb-3">Creator Tiers</p>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-white">
-              Grow Through the<br />
-              <span className="text-zinc-600 italic font-light">Flextag Ranks</span>
-            </h2>
-          </Reveal>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {tiers.map((t, i) => (
-              <Reveal key={t.name} delay={i * 100} dir="up">
-                <TiltCard depth={18}
-                  className={`relative rounded-3xl border bg-gradient-to-br ${t.color} ${t.border} p-8 overflow-hidden ${t.highlight ? 'ring-1 ring-yellow-500/40' : ''}`}>
-                  {t.highlight && (
-                    <div className="absolute -top-px inset-x-8 h-px grad-animate" />
-                  )}
-                  {/* Glow */}
-                  <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-3xl"
-                    style={{ boxShadow: `inset 0 0 40px rgba(${t.glow},0.1)` }} />
-
-                  {t.highlight && <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-yellow-500/15 border border-yellow-500/30 text-[9px] text-yellow-400 font-black uppercase tracking-widest whitespace-nowrap">Most Popular</div>}
-
-                  <div className="relative z-10">
-                    <div className="text-5xl mb-6" style={{ animation: `floatY ${3.5 + i * 0.4}s ease-in-out ${i * 0.5}s infinite` }}>{t.icon}</div>
-                    <p className="text-xl font-black text-white tracking-tight">{t.name}</p>
-                    <p className="text-[10px] text-zinc-600 uppercase tracking-widest mt-1 mb-6">{t.range} followers</p>
-                    <div className="h-px bg-white/5 mb-6" />
-                    <p className="text-3xl font-black shimmer-text">{t.cashback}</p>
-                    <p className="text-[10px] text-zinc-600 uppercase tracking-widest mt-1">cashback rate</p>
-                  </div>
-                </TiltCard>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* FOR BRANDS                                                          */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-32 px-6 border-b border-white/5 overflow-hidden">
-        {/* Decorative 3D cube lines */}
-        <div className="absolute right-10 top-20 w-64 h-64 pointer-events-none opacity-10" style={{ perspective: '400px' }}>
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="absolute inset-0 border border-orange-500/50 rounded-xl"
-              style={{ transform: `rotateX(${30 + i * 15}deg) rotateY(${20 + i * 10}deg) scale(${0.7 + i * 0.15})`, animation: `spin3d ${10 + i * 5}s linear infinite ${i % 2 === 0 ? '' : 'reverse'}` }} />
-          ))}
-        </div>
-
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
-          <div className="space-y-8">
-            <Reveal>
-              <div className="flex items-center gap-4 mb-2">
-                <span className="w-10 h-px bg-orange-500" />
-                <p className="text-xs text-zinc-500 uppercase tracking-[0.2em]">For Brands</p>
-              </div>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter text-white leading-tight">
-                Zero Ad Waste.<br />
-                <span className="text-zinc-600 italic font-light">Maximum Authentic Reach.</span>
-              </h2>
-            </Reveal>
-            <Reveal delay={100}>
-              <p className="text-sm text-zinc-500 leading-relaxed max-w-lg">
-                Traditional influencer campaigns cost ৳50K–60K upfront with no ROI guarantee. Flextag flips the script — you only pay when authenticated content goes live.
-              </p>
-            </Reveal>
-            <div className="space-y-4">
-              {[
-                'Performance-based: pay only for verified posts',
-                'AI-powered content authentication via Meta API',
-                'Set budget caps — campaigns auto-close on limit',
-                'Private campaigns with hand-picked creator invites',
-              ].map((f, i) => (
-                <Reveal key={f} delay={i * 80} dir="left">
-                  <div className="flex items-center gap-3 group">
-                    <div className="w-5 h-5 rounded-full bg-orange-500/15 border border-orange-500/30 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-500/25 transition-colors">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ff6b35" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                    </div>
-                    <p className="text-sm text-zinc-400">{f}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-            <Reveal delay={400}>
-              <Link to="/register?role=brand"
-                className="inline-flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-orange-400 border-b border-orange-400/30 pb-1 hover:border-orange-400 transition-all">
-                Apply as Brand Partner
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-              </Link>
-            </Reveal>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              { label: 'Cost Per Post', value: '৳380', sub: 'vs ৳12K+ agency avg', green: true },
-              { label: 'Avg Brand ROI', value: '4.8×', sub: '+0.3 vs last quarter', green: true },
-              { label: 'Active Campaigns', value: '48', sub: 'Across all brands', green: false },
-              { label: 'Creator Network', value: '12,400+', sub: 'Verified influencers', green: false },
-            ].map((s, i) => (
-              <Reveal key={s.label} delay={i * 100} dir="right">
-                <TiltCard depth={14}
-                  className="rounded-3xl border border-white/8 bg-white/[0.02] backdrop-blur-xl p-6 hover:border-white/15 transition-all">
-                  <p className={`text-3xl font-black mb-2 ${s.green ? 'text-emerald-400' : 'text-white'}`}>{s.value}</p>
-                  <p className="text-xs text-zinc-400 font-medium">{s.label}</p>
-                  <p className="text-[10px] text-zinc-700 mt-1">{s.sub}</p>
-                </TiltCard>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* TESTIMONIALS                                                        */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-32 px-6 border-b border-white/5">
-        <div className="max-w-7xl mx-auto space-y-20">
-          <Reveal>
-            <div className="max-w-3xl mx-auto text-center space-y-6">
-              <p className="text-zinc-600 text-4xl">"</p>
-              <p className="text-2xl md:text-3xl font-light text-zinc-300 leading-relaxed">
-                I earned ৳34,000 in my first two months — just by posting products I'd buy anyway. Flextag changed my definition of passive income.
-              </p>
-              <div>
-                <p className="text-xs font-black text-white uppercase tracking-widest">Ayesha Karim</p>
-                <p className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] mt-1">Diamond Creator · 58K Followers</p>
-              </div>
-            </div>
-          </Reveal>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <Reveal key={t.name} delay={i * 120}>
-                <TiltCard depth={16}
-                  className="rounded-3xl border border-white/8 bg-white/[0.02] backdrop-blur-xl p-7 hover:border-white/15 transition-all group relative overflow-hidden">
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-3xl"
-                    style={{ background: `linear-gradient(135deg, rgba(255,107,53,0.04) 0%, transparent 60%)` }} />
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${t.color} flex items-center justify-center text-white font-black text-sm flex-shrink-0`}>
-                        {t.img}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-white">{t.name}</p>
-                        <p className="text-[10px] text-zinc-600">{t.role}</p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-zinc-400 leading-relaxed">"{t.quote}"</p>
-                  </div>
-                </TiltCard>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* FINAL CTA                                                           */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-32 px-6 overflow-hidden">
-        {/* Animated gradient bg */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-10 grad-animate blur-3xl" />
-        </div>
-
-        <Reveal>
-          <div className="max-w-7xl mx-auto">
-            <TiltCard depth={6}
-              className="rounded-[2.5rem] border border-white/8 bg-white/[0.02] backdrop-blur-2xl p-8 md:p-16 overflow-hidden relative">
-              {/* Corner accents */}
-              <div className="absolute top-0 left-0 w-32 h-32 border-t border-l border-orange-500/20 rounded-tl-[2.5rem]" />
-              <div className="absolute bottom-0 right-0 w-32 h-32 border-b border-r border-orange-500/20 rounded-br-[2.5rem]" />
-
-              <div className="grid lg:grid-cols-2 gap-16 items-center relative z-10">
-                <div className="space-y-8">
-                  <div>
-                    <p className="text-xs text-orange-500 uppercase tracking-[0.2em] font-medium mb-3">Get Started</p>
-                    <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white leading-tight">
-                      Start Your<br />
-                      <span className="shimmer-text italic">Earning Journey</span>
-                    </h2>
-                    <p className="text-sm text-zinc-500 mt-4 leading-relaxed max-w-md">
-                      Join thousands of creators already earning. No minimum beyond 1,000 followers.
-                    </p>
-                  </div>
-                  <div className="space-y-3">
-                    {[{ e: '📱', t: 'Instagram · TikTok · YouTube' }, { e: '🌐', t: 'Available across Bangladesh' }, { e: '💳', t: 'Instant bKash withdrawal' }].map(i => (
-                      <div key={i.t} className="flex items-center gap-3">
-                        <span className="text-lg">{i.e}</span>
-                        <span className="text-sm text-zinc-400">{i.t}</span>
-                      </div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {['Beauty', 'Fashion', 'Lifestyle', 'Sports'].map(tag => (
+                      <span key={tag} style={{ padding: '4px 12px', borderRadius: 100, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{tag}</span>
                     ))}
                   </div>
-                </div>
+                </GlassCard>
+              </motion.div>
+            </ScrollSection>
 
-                <div className="rounded-3xl border border-white/8 bg-black/40 p-8 space-y-5 backdrop-blur-xl">
-                  <h3 className="text-lg font-black text-white">Quick Start</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Link to="/register?role=creator"
-                      className="group p-5 rounded-2xl border border-orange-500/20 bg-orange-500/5 hover:bg-orange-500/10 hover:border-orange-500/40 transition-all text-center">
-                      <p className="text-2xl mb-2" style={{ animation: 'floatY 3s ease-in-out infinite' }}>🎯</p>
-                      <p className="text-xs font-black text-white uppercase tracking-widest">Creator</p>
-                      <p className="text-[10px] text-zinc-600 mt-0.5">Shop & earn</p>
-                    </Link>
-                    <Link to="/register?role=brand"
-                      className="group p-5 rounded-2xl border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 hover:border-blue-500/40 transition-all text-center">
-                      <p className="text-2xl mb-2" style={{ animation: 'floatY 3.5s ease-in-out 0.5s infinite' }}>🏢</p>
-                      <p className="text-xs font-black text-white uppercase tracking-widest">Brand</p>
-                      <p className="text-[10px] text-zinc-600 mt-0.5">Launch campaigns</p>
-                    </Link>
-                  </div>
-                  <Link to="/register"
-                    className="block w-full text-center py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-white relative overflow-hidden group">
-                    <div className="absolute inset-0 grad-animate" />
-                    <span className="relative z-10">Create Free Account</span>
-                  </Link>
-                  <p className="text-center text-[10px] text-zinc-600">
-                    Already have an account?{' '}
-                    <Link to="/login" className="text-orange-500 hover:text-orange-400">Sign in</Link>
-                  </p>
-                </div>
+            {/* Product boxes flying out */}
+            <ScrollSection>
+              <div style={{ position: 'relative', height: 420, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {[
+                  { img: '/products/nike-shoe.png', label: 'Air Max 270', delay: 0,   x: 0,    y: -120 },
+                  { img: '/products/serum.png',     label: 'Glow Serum',  delay: 0.3, x: 110,  y: -40  },
+                  { img: '/products/hoodie.png',    label: 'Hoodie XL',   delay: 0.6, x: -120, y: 20   },
+                  { img: '/products/watch.png',     label: 'Watch Pro',   delay: 0.9, x: 70,   y: 110  },
+                  { img: '/products/bag.png',       label: 'City Bag',    delay: 1.2, x: -80,  y: 140  },
+                ].map((item, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+                    whileInView={{ opacity: 1, scale: 1, x: item.x, y: item.y }}
+                    viewport={{ once: false, margin: '-5%' }}
+                    transition={{ duration: 0.8, delay: item.delay, type: 'spring', stiffness: 120 }}
+                    style={{ position: 'absolute' }}
+                  >
+                    <motion.div
+                      animate={{ y: [0, -8, 0], rotate: [0, 2, -2, 0] }}
+                      transition={{ duration: 3 + i * 0.5, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                      <GlassCard style={{ padding: '12px 16px', textAlign: 'center', minWidth: 90 }}>
+                        <img src={item.img} alt={item.label} style={{ width: 56, height: 56, objectFit: 'contain', marginBottom: 6, borderRadius: 8 }} />
+                        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{item.label}</p>
+                        <div style={{ width: '100%', height: 1, background: 'rgba(255,255,255,0.06)', margin: '8px 0' }} />
+                        <p style={{ fontSize: 8, color: '#a78bfa' }}>📦 In Transit</p>
+                      </GlassCard>
+                    </motion.div>
+                  </motion.div>
+                ))}
+
+                {/* Center glow */}
+                <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.4) 0%, transparent 70%)', boxShadow: '0 0 60px rgba(124,58,237,0.3)' }} />
               </div>
-            </TiltCard>
+            </ScrollSection>
           </div>
-        </Reveal>
+        </div>
       </section>
 
-      {/* Footer strip */}
-      <div className="relative z-10 border-t border-white/5 py-8 px-6 text-center">
-        <p className="text-[10px] text-zinc-700 uppercase tracking-[0.2em]">© 2026 FlexTag™ · Bangladesh · All Rights Reserved</p>
-      </div>
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* SCROLL ANIMATION 2 — CREATOR JOURNEY                               */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <section ref={s2Ref} style={{ position: 'relative', zIndex: 10, padding: '120px 24px', background: 'rgba(124,58,237,0.02)', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <ScrollSection>
+            <div style={{ textAlign: 'center', marginBottom: 80 }}>
+              <p style={{ fontSize: 11, color: '#06b6d4', letterSpacing: '0.25em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 16 }}>Scene 02</p>
+              <h2 style={{ fontSize: 'clamp(40px, 6vw, 80px)', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-0.04em', marginBottom: 16 }}>
+                Creator<br /><span style={{ color: '#06b6d4' }}>Journey</span>
+              </h2>
+            </div>
+          </ScrollSection>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
+            {/* Journey steps */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {[
+                { icon: '🛍️', step: 'Buy Product',      desc: 'Browse & order from verified brand catalog',  color: '#7c3aed', delay: 0 },
+                { icon: '✅', step: 'Order Confirmed',   desc: 'Brand ships your product within 24 hours',    color: '#06b6d4', delay: 0.15 },
+                { icon: '📦', step: 'Delivered',         desc: 'Product arrives at your doorstep',            color: '#ec4899', delay: 0.3 },
+                { icon: '📱', step: 'Ready to Post',     desc: 'Create authentic content & share to socials', color: '#f59e0b', delay: 0.45 },
+              ].map((s, i) => (
+                <motion.div
+                  key={s.step}
+                  initial={{ opacity: 0, x: -40 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: s.delay }}
+                  style={{ display: 'flex', gap: 20, position: 'relative' }}
+                >
+                  {/* Connector line */}
+                  {i < 3 && (
+                    <div style={{
+                      position: 'absolute', left: 22, top: 52, bottom: -28,
+                      width: 2, background: `linear-gradient(180deg, ${s.color}40, transparent)`,
+                    }} />
+                  )}
+                  <div style={{ flexShrink: 0 }}>
+                    <motion.div
+                      whileInView={{ scale: [0, 1.2, 1] }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: s.delay + 0.1 }}
+                      style={{
+                        width: 44, height: 44, borderRadius: 14,
+                        background: `${s.color}20`,
+                        border: `2px solid ${s.color}50`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 20, boxShadow: `0 0 20px ${s.color}30`,
+                      }}
+                    >{s.icon}</motion.div>
+                  </div>
+                  <div style={{ paddingBottom: 32 }}>
+                    <p style={{ fontWeight: 800, color: '#fff', fontSize: 16, marginBottom: 4 }}>{s.step}</p>
+                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>{s.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Phone with journey screen */}
+            <ScrollSection>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <PhoneMockup>
+                  <div style={{ padding: '30px 16px 16px', height: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <p style={{ fontSize: 13, fontWeight: 800, color: '#fff', marginBottom: 8 }}>My Order</p>
+                    {/* Product preview */}
+                    <div style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.12), rgba(124,58,237,0.08))', border: '1px solid rgba(249,115,22,0.3)', borderRadius: 14, padding: 10, textAlign: 'center', marginBottom: 4, position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 100%, rgba(249,115,22,0.15) 0%, transparent 70%)' }} />
+                      <img src="/products/nike-shoe.png" alt="Nike Air Max" style={{ width: 60, height: 60, objectFit: 'contain', filter: 'drop-shadow(0 4px 12px rgba(249,115,22,0.4))' }} />
+                      <p style={{ fontSize: 12, color: '#fff', fontWeight: 700, marginTop: 4 }}>Nike Air Max 270</p>
+                      <p style={{ fontSize: 9, color: '#f97316' }}>Size 42 · Black/White</p>
+                    </div>
+                    {/* Order timeline */}
+                    {['Order Placed', 'Processing', 'Shipped', 'Delivered'].map((step, i) => (
+                      <motion.div
+                        key={step}
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.3 + 0.5 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}
+                      >
+                        <motion.div
+                          whileInView={{ scale: [0, 1.3, 1] }}
+                          viewport={{ once: true }}
+                          transition={{ delay: i * 0.3 + 0.6 }}
+                          style={{
+                            width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+                            background: i <= 2 ? 'linear-gradient(135deg, #7c3aed, #06b6d4)' : 'rgba(255,255,255,0.1)',
+                            border: i === 3 ? '2px dashed rgba(255,255,255,0.2)' : 'none',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}
+                        >
+                          {i <= 2 && <span style={{ fontSize: 9 }}>✓</span>}
+                        </motion.div>
+                        <span style={{ fontSize: 11, color: i <= 2 ? '#fff' : 'rgba(255,255,255,0.3)', fontWeight: i <= 2 ? 600 : 400 }}>{step}</span>
+                        {i === 2 && <span style={{ marginLeft: 'auto', fontSize: 9, color: '#22c55e', fontWeight: 700 }}>TODAY</span>}
+                      </motion.div>
+                    ))}
+                    {/* CTA */}
+                    <motion.button
+                      animate={{ boxShadow: ['0 0 20px rgba(124,58,237,0.3)', '0 0 40px rgba(124,58,237,0.6)', '0 0 20px rgba(124,58,237,0.3)'] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      style={{
+                        marginTop: 'auto', padding: '10px', borderRadius: 12,
+                        background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
+                        border: 'none', color: '#fff', fontWeight: 700,
+                        fontSize: 11, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      }}
+                    >📱 Create Post Now</motion.button>
+                  </div>
+                </PhoneMockup>
+              </div>
+            </ScrollSection>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* SCROLL ANIMATION 3 — INSTAGRAM REEL                                */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <section ref={s3Ref} style={{ position: 'relative', zIndex: 10, padding: '120px 24px', overflow: 'hidden' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <ScrollSection>
+            <div style={{ textAlign: 'center', marginBottom: 80 }}>
+              <p style={{ fontSize: 11, color: '#ec4899', letterSpacing: '0.25em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 16 }}>Scene 03</p>
+              <h2 style={{ fontSize: 'clamp(40px, 6vw, 80px)', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-0.04em', marginBottom: 16 }}>
+                Instagram<br /><span style={{ color: '#ec4899' }}>Reel Goes Viral</span>
+              </h2>
+            </div>
+          </ScrollSection>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
+            {/* Reel phone */}
+            <ScrollSection>
+              <div style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
+                {/* Floating hearts */}
+                {[...Array(8)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 0, x: Math.random() * 60 - 30 }}
+                    whileInView={{
+                      opacity: [0, 1, 0],
+                      y: -200,
+                      x: Math.random() * 100 - 50,
+                    }}
+                    viewport={{ once: false }}
+                    transition={{ duration: 2.5, delay: i * 0.4, repeat: Infinity, ease: 'easeOut' }}
+                    style={{ position: 'absolute', bottom: 100, fontSize: i % 3 === 0 ? 24 : 16, zIndex: 20 }}
+                  >
+                    {i % 3 === 0 ? '❤️' : i % 3 === 1 ? '💬' : '✨'}
+                  </motion.div>
+                ))}
+
+                <motion.div
+                  whileInView={{ rotateY: [0, 15, 0] }}
+                  viewport={{ once: false }}
+                  transition={{ duration: 2, ease: 'easeInOut' }}
+                  style={{ perspective: 1000 }}
+                >
+                  <PhoneMockup>
+                    {/* Actual Instagram Reels UI fills the entire screen */}
+                    <div style={{ position: 'absolute', inset: 0, borderRadius: 32, overflow: 'hidden' }}>
+                      <img
+                        src="/products/instagram-reel.png"
+                        alt="Instagram Reel"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      {/* Overlaid Instagram top bar */}
+                      <div style={{ position: 'absolute', top: 28, left: 12, right: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
+                        <span style={{ fontSize: 13, fontWeight: 900, color: '#fff', letterSpacing: '-0.01em', fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>Reels</span>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                          <span style={{ fontSize: 16, color: '#fff' }}>📷</span>
+                          <span style={{ fontSize: 16, color: '#fff' }}>➕</span>
+                        </div>
+                      </div>
+                      {/* Reel progress bar */}
+                      <div style={{ position: 'absolute', top: 24, left: 12, right: 12, height: 2, background: 'rgba(255,255,255,0.2)', borderRadius: 1 }}>
+                        <motion.div
+                          initial={{ width: 0 }}
+                          whileInView={{ width: '65%' }}
+                          viewport={{ once: false }}
+                          transition={{ duration: 3, ease: 'linear', repeat: Infinity }}
+                          style={{ height: '100%', background: 'linear-gradient(90deg, #ec4899, #c026d3)', borderRadius: 1 }}
+                        />
+                      </div>
+                      {/* Gradient overlay for bottom text */}
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%', background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)', borderRadius: '0 0 32px 32px' }} />
+                      {/* Creator info overlay */}
+                      <div style={{ position: 'absolute', bottom: 52, left: 10, right: 42, zIndex: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg, #f59e0b, #ec4899)', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900, color: '#fff' }}>T</div>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>@tasnim.creates</span>
+                          <div style={{ padding: '1px 7px', borderRadius: 100, border: '1px solid #fff', fontSize: 8, color: '#fff', fontWeight: 600 }}>Follow</div>
+                        </div>
+                        <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5 }}>Nike Air Max 270 🔥 Obsessed! #FlexTag #NikeCampaign</p>
+                      </div>
+                      {/* Right action icons */}
+                      <div style={{ position: 'absolute', bottom: 52, right: 6, display: 'flex', flexDirection: 'column', gap: 12, zIndex: 10, alignItems: 'center' }}>
+                        <motion.div animate={{ scale: [1, 1.25, 1] }} transition={{ duration: 1.5, repeat: Infinity }} style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: 20 }}>❤️</div><p style={{ fontSize: 7, color: '#fff', fontWeight: 700 }}>24K</p>
+                        </motion.div>
+                        <div style={{ textAlign: 'center' }}><div style={{ fontSize: 18 }}>💬</div><p style={{ fontSize: 7, color: '#fff', fontWeight: 700 }}>847</p></div>
+                        <div style={{ textAlign: 'center' }}><div style={{ fontSize: 18 }}>➤</div><p style={{ fontSize: 7, color: '#fff', fontWeight: 700 }}>1.2K</p></div>
+                        <div style={{ width: 22, height: 22, borderRadius: 6, border: '1.5px solid #fff', overflow: 'hidden' }}>
+                          <img src="/products/nike-shoe.png" alt="Nike" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      </div>
+                      {/* Home bar */}
+                      <div style={{ position: 'absolute', bottom: 6, left: '50%', transform: 'translateX(-50%)', width: 60, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.4)' }} />
+                    </div>
+                  </PhoneMockup>
+                </motion.div>
+              </div>
+            </ScrollSection>
+
+            {/* Follower stats */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <ScrollSection>
+                <GlassCard style={{ padding: 32 }} glow="pink">
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 16 }}>Follower Growth</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {['1.2K', '8.4K', '24K', '50K+'].map((val, i) => (
+                      <motion.div
+                        key={val}
+                        initial={{ opacity: 0, x: 30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.2 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 16 }}
+                      >
+                        <div style={{ width: 32, height: 32, borderRadius: 10, background: `rgba(236,72,153,${0.1 + i * 0.08})`, border: '1px solid rgba(236,72,153,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#ec4899', fontWeight: 800 }}>
+                          {i + 1}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ height: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' }}>
+                            <motion.div
+                              initial={{ width: 0 }}
+                              whileInView={{ width: `${(i + 1) * 22}%` }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.8, delay: i * 0.2 + 0.3 }}
+                              style={{ height: '100%', background: 'linear-gradient(90deg, #ec4899, #7c3aed)', borderRadius: 2 }}
+                            />
+                          </div>
+                        </div>
+                        <p style={{ fontSize: 18, fontWeight: 900, color: '#fff', minWidth: 55, textAlign: 'right' }}>{val}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </GlassCard>
+              </ScrollSection>
+
+              <ScrollSection>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  {[
+                    { icon: '❤️', val: '24K', label: 'Total Likes', color: '#ec4899' },
+                    { icon: '💬', val: '847', label: 'Comments', color: '#7c3aed' },
+                    { icon: '↗️', val: '1.2K', label: 'Shares', color: '#06b6d4' },
+                    { icon: '👁️', val: '120K', label: 'Reach', color: '#f59e0b' },
+                  ].map(s => (
+                    <motion.div key={s.label} whileHover={{ scale: 1.03 }}>
+                      <GlassCard style={{ padding: 20, textAlign: 'center' }}>
+                        <span style={{ fontSize: 24 }}>{s.icon}</span>
+                        <p style={{ fontSize: 22, fontWeight: 900, color: s.color, marginTop: 8 }}>{s.val}</p>
+                        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em' }}>{s.label}</p>
+                      </GlassCard>
+                    </motion.div>
+                  ))}
+                </div>
+              </ScrollSection>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* SCROLL ANIMATION 4 — AI VERIFICATION                               */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <section ref={s4Ref} style={{ position: 'relative', zIndex: 10, padding: '120px 24px', background: 'rgba(6,182,212,0.02)', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <ScrollSection>
+            <div style={{ textAlign: 'center', marginBottom: 80 }}>
+              <p style={{ fontSize: 11, color: '#06b6d4', letterSpacing: '0.25em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 16 }}>Scene 04</p>
+              <h2 style={{ fontSize: 'clamp(40px, 6vw, 80px)', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-0.04em', marginBottom: 16 }}>
+                AI<br /><span className="shimmer-text">Verification</span>
+              </h2>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16, maxWidth: 500, margin: '0 auto' }}>
+                Our AI engine scans every post in real-time, ensuring authenticity before cashback releases.
+              </p>
+            </div>
+          </ScrollSection>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
+            {/* AI scan phone */}
+            <ScrollSection>
+              <div style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
+                {/* AI beam effect */}
+                <motion.div
+                  animate={{ y: ['-100%', '100%'] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear', repeatDelay: 1 }}
+                  style={{
+                    position: 'absolute',
+                    left: '50%', transform: 'translateX(-50%)',
+                    width: 220, height: 4,
+                    background: 'linear-gradient(90deg, transparent, rgba(6,182,212,0.8), transparent)',
+                    boxShadow: '0 0 20px rgba(6,182,212,0.6)',
+                    zIndex: 30, pointerEvents: 'none',
+                  }}
+                />
+                <PhoneMockup style={{ boxShadow: '0 0 80px rgba(6,182,212,0.3), 0 0 40px rgba(124,58,237,0.2)' }}>
+                  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '30px 16px 16px', gap: 10 }}>
+                    <div style={{ textAlign: 'center', marginBottom: 8 }}>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                        style={{ display: 'inline-block' }}
+                      >
+                        <div style={{ width: 50, height: 50, borderRadius: '50%', background: 'linear-gradient(135deg, rgba(6,182,212,0.3), rgba(124,58,237,0.3))', border: '2px solid rgba(6,182,212,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, margin: '0 auto' }}>🤖</div>
+                      </motion.div>
+                      <p style={{ fontSize: 11, color: '#67e8f9', fontWeight: 700, marginTop: 6 }}>AI Scanner Active</p>
+                    </div>
+
+                    {/* Post preview */}
+                    <div style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.25)', borderRadius: 12, padding: 8, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 100%, rgba(249,115,22,0.1) 0%, transparent 70%)' }} />
+                      <img src="/products/nike-shoe.png" alt="Nike Air Max" style={{ width: 48, height: 48, objectFit: 'contain', filter: 'drop-shadow(0 4px 10px rgba(249,115,22,0.4))' }} />
+                      <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>@tasnim #NikeCampaign #FlexTag</p>
+                    </div>
+
+                    {/* Check items */}
+                    {[
+                      { label: 'Correct hashtag', delay: 0.5 },
+                      { label: 'Tagged brand',    delay: 1.0 },
+                      { label: 'Public post',     delay: 1.5 },
+                      { label: 'Retention active', delay: 2.0 },
+                    ].map((check, i) => (
+                      <motion.div
+                        key={check.label}
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: check.delay }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 10, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)' }}
+                      >
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          whileInView={{ scale: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: check.delay + 0.1, type: 'spring' }}
+                          style={{ fontSize: 14 }}
+                        >✅</motion.span>
+                        <span style={{ fontSize: 10, color: '#86efac', fontWeight: 600 }}>{check.label}</span>
+                      </motion.div>
+                    ))}
+
+                    {/* Verified badge */}
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      whileInView={{ scale: 1, opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 2.5, type: 'spring', stiffness: 200 }}
+                      style={{ marginTop: 'auto' }}
+                    >
+                      <div style={{
+                        textAlign: 'center', padding: '14px', borderRadius: 14,
+                        background: 'linear-gradient(135deg, rgba(6,182,212,0.2), rgba(124,58,237,0.2))',
+                        border: '2px solid rgba(6,182,212,0.5)',
+                        boxShadow: '0 0 30px rgba(6,182,212,0.3)',
+                        animation: 'glowPulse 2s ease-in-out infinite',
+                      }}>
+                        <p style={{ fontSize: 20 }}>🏅</p>
+                        <p style={{ fontSize: 12, fontWeight: 900, color: '#67e8f9' }}>VERIFIED</p>
+                        <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)' }}>Cashback releasing…</p>
+                      </div>
+                    </motion.div>
+                  </div>
+                </PhoneMockup>
+              </div>
+            </ScrollSection>
+
+            {/* Check list */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <ScrollSection>
+                <GlassCard style={{ padding: 40 }} glow="cyan">
+                  <div style={{ marginBottom: 28 }}>
+                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>AI Verification Engine</p>
+                    <h3 style={{ fontSize: 28, fontWeight: 900, color: '#fff' }}>Zero-fraud guarantee</h3>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {[
+                      { check: '✔ Correct hashtag used', desc: 'Matches campaign requirements exactly' },
+                      { check: '✔ Brand properly tagged', desc: 'Official brand handle verified' },
+                      { check: '✔ Post is public',        desc: 'Accessible to all Instagram users' },
+                      { check: '✔ Retention is active',   desc: 'Post remains live for 30 days' },
+                      { check: '✔ Authentic engagement',  desc: 'No bot-generated interactions' },
+                    ].map((item, i) => (
+                      <motion.div
+                        key={item.check}
+                        initial={{ opacity: 0, x: 30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: i * 0.12 }}
+                        style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}
+                      >
+                        <div style={{ width: 26, height: 26, borderRadius: 8, background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 12 }}>✓</div>
+                        <div>
+                          <p style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{item.check}</p>
+                          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{item.desc}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </GlassCard>
+              </ScrollSection>
+
+              <ScrollSection>
+                <motion.div
+                  animate={{ boxShadow: ['0 0 40px rgba(6,182,212,0.2)', '0 0 80px rgba(6,182,212,0.4)', '0 0 40px rgba(6,182,212,0.2)'] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                >
+                  <GlassCard style={{ padding: 28, textAlign: 'center' }} glow="cyan">
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                      style={{ fontSize: 48, marginBottom: 12 }}
+                    >🏅</motion.div>
+                    <p style={{ fontSize: 22, fontWeight: 900, color: '#67e8f9', marginBottom: 4 }}>Verified Badge</p>
+                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Unlocks automatic cashback transfer</p>
+                  </GlassCard>
+                </motion.div>
+              </ScrollSection>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* SCROLL ANIMATION 5 — CASHBACK                                      */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <section ref={s5Ref} style={{ position: 'relative', zIndex: 10, padding: '120px 24px', overflow: 'hidden' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <ScrollSection>
+            <div style={{ textAlign: 'center', marginBottom: 80 }}>
+              <p style={{ fontSize: 11, color: '#f59e0b', letterSpacing: '0.25em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 16 }}>Scene 05</p>
+              <h2 style={{ fontSize: 'clamp(40px, 6vw, 80px)', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-0.04em', marginBottom: 16 }}>
+                Cashback<br /><span style={{ color: '#f59e0b' }}>Hits Your Wallet</span>
+              </h2>
+            </div>
+          </ScrollSection>
+
+          {/* Coin burst center */}
+          <div style={{ position: 'relative', textAlign: 'center', marginBottom: 80 }}>
+            {/* Flying coins */}
+            {[...Array(12)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+                whileInView={{
+                  opacity: [0, 1, 0],
+                  scale: [0, 1.2, 0.5],
+                  x: Math.cos((i / 12) * Math.PI * 2) * (120 + Math.random() * 80),
+                  y: Math.sin((i / 12) * Math.PI * 2) * (100 + Math.random() * 60) - 60,
+                }}
+                viewport={{ once: false }}
+                transition={{ duration: 2, delay: i * 0.15, repeat: Infinity, repeatDelay: 1 }}
+                style={{
+                  position: 'absolute', left: '50%', top: '50%',
+                  marginLeft: -16, marginTop: -16,
+                  width: 32, height: 32, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #f59e0b, #fcd34d)',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 16, boxShadow: '0 0 12px rgba(245,158,11,0.5)',
+                  zIndex: 5,
+                }}
+              >💰</motion.div>
+            ))}
+
+            {/* Glass wallet */}
+            <ScrollSection>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <motion.div
+                  animate={{
+                    boxShadow: ['0 0 40px rgba(245,158,11,0.2)', '0 0 80px rgba(245,158,11,0.4)', '0 0 40px rgba(245,158,11,0.2)'],
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  style={{ display: 'inline-block' }}
+                >
+                  <GlassCard style={{ padding: '48px 64px', textAlign: 'center', minWidth: 320 }} glow="cyan">
+                    {/* Premium coin-stack icon built in SVG */}
+                    <div style={{ position: 'relative', width: 80, height: 80, margin: '0 auto 16px' }}>
+                      <div style={{ position: 'absolute', inset: -10, borderRadius: '50%', background: 'radial-gradient(circle, rgba(245,158,11,0.35) 0%, transparent 70%)', filter: 'blur(10px)' }} />
+                      <svg viewBox="0 0 80 80" width="80" height="80" style={{ position: 'relative' }}>
+                        {/* Bottom coin */}
+                        <ellipse cx="40" cy="62" rx="28" ry="9" fill="#b45309" />
+                        <rect x="12" y="52" width="56" height="10" fill="#d97706" rx="2" />
+                        <ellipse cx="40" cy="52" rx="28" ry="9" fill="#f59e0b" />
+                        {/* Middle coin */}
+                        <ellipse cx="40" cy="48" rx="24" ry="8" fill="#92400e" />
+                        <rect x="16" y="39" width="48" height="9" fill="#b45309" rx="2" />
+                        <ellipse cx="40" cy="39" rx="24" ry="8" fill="#d97706" />
+                        {/* Top coin */}
+                        <ellipse cx="40" cy="35" rx="20" ry="7" fill="#78350f" />
+                        <rect x="20" y="27" width="40" height="8" fill="#92400e" rx="2" />
+                        <ellipse cx="40" cy="27" rx="20" ry="7" fill="#fbbf24" />
+                        {/* Shine on top coin */}
+                        <ellipse cx="33" cy="24" rx="7" ry="3" fill="rgba(255,255,255,0.2)" />
+                        {/* ৳ symbol */}
+                        <text x="40" y="30" textAnchor="middle" fontSize="10" fontWeight="900" fill="#78350f" fontFamily="serif">৳</text>
+                      </svg>
+                    </div>
+                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 8 }}>Your Balance</p>
+                    <div style={{ fontSize: 'clamp(48px, 6vw, 72px)', fontWeight: 900, color: '#f59e0b', lineHeight: 1, marginBottom: 16 }}>
+                      <AnimCounter values={['৳0', '৳450', '৳980', '৳3,400']} interval={1000} />
+                    </div>
+                    <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '16px 0' }} />
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 32 }}>
+                      {[{ l: 'Campaigns', v: '7' }, { l: 'Posts', v: '24' }, { l: 'Earned', v: '৳18K' }].map(s => (
+                        <div key={s.l} style={{ textAlign: 'center' }}>
+                          <p style={{ fontSize: 18, fontWeight: 900, color: '#fff' }}>{s.v}</p>
+                          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>{s.l}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </GlassCard>
+                </motion.div>
+              </div>
+            </ScrollSection>
+          </div>
+
+          {/* Withdrawal options */}
+          <ScrollSection>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, maxWidth: 800, margin: '0 auto' }}>
+              {[
+                { img: '/products/bkash-logo.svg',  method: 'bKash',         desc: 'Instant transfer · 24/7', color: '#e91e7a', border: 'rgba(233,30,122,0.35)', bg: 'rgba(233,30,122,0.06)' },
+                { img: null,                         method: 'Bank Transfer', desc: 'All local banks · BEFTN', color: '#ef4444', border: 'rgba(239,68,68,0.35)',  bg: 'rgba(239,68,68,0.06)'  },
+                { img: '/products/nagad-logo.svg',   method: 'Nagad',         desc: 'Instant transfer · 24/7', color: '#e53935', border: 'rgba(229,57,53,0.35)',  bg: 'rgba(229,57,53,0.06)'  },
+              ].map(m => (
+                <motion.div key={m.method} whileHover={{ scale: 1.04, y: -6 }} transition={{ type: 'spring', stiffness: 300 }}>
+                  <GlassCard style={{ padding: 24, textAlign: 'center' }}>
+                    <div style={{ position: 'relative', width: 80, height: 56, margin: '0 auto 14px' }}>
+                      <div style={{ position: 'absolute', inset: -6, borderRadius: 16, background: `radial-gradient(circle, ${m.color}18 0%, transparent 70%)`, filter: 'blur(8px)' }} />
+                      <div style={{ width: 80, height: 56, borderRadius: 14, background: m.img ? 'white' : m.bg, border: `1px solid ${m.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+                        {m.img
+                          ? <img src={m.img} alt={m.method} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 6 }} />
+                          : <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                              <span style={{ fontSize: 20 }}>🏦</span>
+                              <span style={{ fontSize: 8, color: m.color, fontWeight: 800, letterSpacing: '0.05em' }}>BRAC BANK</span>
+                            </div>
+                        }
+                      </div>
+                    </div>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{m.method}</p>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>{m.desc}</p>
+                  </GlassCard>
+                </motion.div>
+              ))}
+            </div>
+          </ScrollSection>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* SCROLL ANIMATION 6 — BRAND ANALYTICS                               */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <section ref={s6Ref} style={{ position: 'relative', zIndex: 10, padding: '120px 24px', background: 'rgba(124,58,237,0.02)', borderTop: '1px solid rgba(255,255,255,0.04)', overflow: 'hidden' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <ScrollSection>
+            <div style={{ textAlign: 'center', marginBottom: 72 }}>
+              <p style={{ fontSize: 11, color: '#7c3aed', letterSpacing: '0.25em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 16 }}>Scene 06</p>
+              <h2 style={{ fontSize: 'clamp(40px, 6vw, 80px)', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-0.04em', marginBottom: 16 }}>
+                Brand<br /><span className="shimmer-text">Analytics Dashboard</span>
+              </h2>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16, maxWidth: 500, margin: '0 auto' }}>
+                One campaign. Hundreds of authentic creators. A connected ecosystem of real ROI.
+              </p>
+            </div>
+          </ScrollSection>
+
+          {/* ── Live Campaign Badge ── */}
+          <ScrollSection>
+            <div style={{ textAlign: 'center', marginBottom: 32 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 100, background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.3)' }}>
+                <motion.div animate={{ scale: [1, 1.4, 1] }} transition={{ duration: 1.5, repeat: Infinity }} style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e' }} />
+                <span style={{ fontSize: 11, color: '#a78bfa', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Live Campaign · Nike Air Max 270</span>
+              </div>
+            </div>
+
+            {/* ── Creator Cards Grid ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 40 }}>
+              {[
+                { init: 'T', name: '@tasnim.creates', followers: '42K', reach: '120K', badge: '🔥 Top',    color: '#7c3aed', border: 'rgba(124,58,237,0.45)', bg: 'rgba(124,58,237,0.08)', metric: '+340%', stat: 'REACH',  bars: [40,55,35,70,60,85,100] },
+                { init: 'R', name: '@rafi.lens',       followers: '18K', reach: '54K',  badge: '⭐ Rising', color: '#06b6d4', border: 'rgba(6,182,212,0.45)',  bg: 'rgba(6,182,212,0.08)',  metric: '+180%', stat: 'ENG.',   bars: [30,50,45,65,55,75,90]  },
+                { init: 'S', name: '@sadia.vibes',     followers: '31K', reach: '88K',  badge: '💎 Elite',  color: '#ec4899', border: 'rgba(236,72,153,0.45)', bg: 'rgba(236,72,153,0.08)', metric: '+220%', stat: 'ROI',   bars: [50,40,60,55,80,70,95]  },
+                { init: 'N', name: '@nadia.fits',      followers: '9K',  reach: '27K',  badge: '🚀 New',    color: '#f59e0b', border: 'rgba(245,158,11,0.45)', bg: 'rgba(245,158,11,0.08)', metric: '+60%',  stat: 'SALES', bars: [20,35,30,45,40,60,75]  },
+              ].map((c, i) => (
+                <motion.div
+                  key={c.name}
+                  initial={{ opacity: 0, y: 32 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.12 }}
+                  whileHover={{ y: -6 }}
+                >
+                  <div style={{
+                    borderRadius: 20, padding: 20,
+                    background: `linear-gradient(145deg, ${c.bg} 0%, rgba(5,8,22,0.95) 100%)`,
+                    border: `1px solid ${c.border}`,
+                    boxShadow: `0 16px 40px rgba(0,0,0,0.5), 0 0 20px ${c.color}10`,
+                    position: 'relative', overflow: 'hidden',
+                  }}>
+                    {/* Shine */}
+                    <div style={{ position: 'absolute', top: 0, left: '-40%', width: '30%', height: '100%', background: 'linear-gradient(105deg, transparent, rgba(255,255,255,0.04), transparent)', transform: 'skewX(-20deg)' }} />
+                    {/* Avatar + badge */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ width: 38, height: 38, borderRadius: '50%', background: `linear-gradient(135deg, ${c.color}, ${c.color}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 15, color: '#fff', border: '2px solid rgba(255,255,255,0.15)', flexShrink: 0 }}>{c.init}</div>
+                        <div>
+                          <p style={{ fontSize: 11, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>{c.name}</p>
+                          <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>{c.followers} followers</p>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 9, padding: '3px 8px', borderRadius: 100, background: `${c.color}20`, border: `1px solid ${c.border}`, color: c.color, fontWeight: 700, whiteSpace: 'nowrap' }}>{c.badge}</span>
+                    </div>
+                    {/* Stats */}
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+                      <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '8px 10px', textAlign: 'center' }}>
+                        <p style={{ fontSize: 15, fontWeight: 900, color: '#fff' }}>{c.reach}</p>
+                        <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em' }}>REACH</p>
+                      </div>
+                      <div style={{ flex: 1, background: `${c.color}15`, borderRadius: 10, padding: '8px 10px', textAlign: 'center', border: `1px solid ${c.border}` }}>
+                        <p style={{ fontSize: 15, fontWeight: 900, color: c.color }}>{c.metric}</p>
+                        <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em' }}>{c.stat}</p>
+                      </div>
+                    </div>
+                    {/* Mini bar chart */}
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 28 }}>
+                      {c.bars.map((h, j) => (
+                        <motion.div
+                          key={j}
+                          initial={{ height: 0 }}
+                          whileInView={{ height: `${h * 0.28}px` }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: i * 0.1 + j * 0.05 }}
+                          style={{ flex: 1, borderRadius: 3, background: j === 6 ? c.color : `${c.color}30` }}
+                        />
+                      ))}
+                    </div>
+                    {/* Status */}
+                    <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity }} style={{ width: 5, height: 5, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 5px #22c55e', flexShrink: 0 }} />
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>Post live · Cashback pending</span>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </ScrollSection>
+
+          {/* Analytics charts */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
+            {[
+              { label: 'Reach',      value: '120K',  growth: '+340%', color: '#7c3aed', height: 70 },
+              { label: 'Engagement', value: '8.4%',  growth: '+180%', color: '#06b6d4', height: 55 },
+              { label: 'ROI',        value: '4.8×',  growth: '+220%', color: '#ec4899', height: 85 },
+              { label: 'Campaigns',  value: '48',    growth: '+60%',  color: '#f59e0b', height: 45 },
+              { label: 'Sales',      value: '৳340K', growth: '+410%', color: '#22c55e', height: 90 },
+            ].map((metric, i) => (
+              <motion.div
+                key={metric.label}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: i * 0.1 }}
+                whileHover={{ y: -6 }}
+              >
+                <GlassCard style={{ padding: 20, textAlign: 'center' }}>
+                  <div style={{ height: 80, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', marginBottom: 12, gap: 3 }}>
+                    {[...Array(6)].map((_, j) => (
+                      <motion.div
+                        key={j}
+                        initial={{ height: 0 }}
+                        whileInView={{ height: Math.random() * metric.height + 10 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: i * 0.1 + j * 0.06 }}
+                        style={{ width: 8, borderRadius: 4, background: j === 5 ? metric.color : `${metric.color}40` }}
+                      />
+                    ))}
+                  </div>
+                  <p style={{ fontSize: 20, fontWeight: 900, color: metric.color }}>{metric.value}</p>
+                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em' }}>{metric.label}</p>
+                  <p style={{ fontSize: 10, color: '#22c55e', fontWeight: 700, marginTop: 4 }}>{metric.growth}</p>
+                </GlassCard>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* FINAL CTA — FLEXTAG LOGO + DUAL PORTALS                            */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <section ref={ctaRef} style={{ position: 'relative', zIndex: 10, padding: '160px 24px', overflow: 'hidden' }}>
+        {/* Giant glow behind logo */}
+        <div style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', width: 800, height: 800, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 60%)', pointerEvents: 'none' }} />
+
+        <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative' }}>
+          {/* FlexTag Logo */}
+          <ScrollSection>
+            <div style={{ textAlign: 'center', marginBottom: 100 }}>
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ display: 'inline-block', marginBottom: 32 }}
+              >
+                <h1 style={{
+                  fontSize: 'clamp(72px, 12vw, 160px)',
+                  fontWeight: 900,
+                  letterSpacing: '-0.06em',
+                  lineHeight: 1,
+                  textTransform: 'uppercase',
+                  fontStyle: 'italic',
+                  background: 'linear-gradient(135deg, #7c3aed, #06b6d4, #ec4899)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  filter: 'drop-shadow(0 0 40px rgba(124,58,237,0.4))',
+                }}>
+                  FlexTag
+                </h1>
+              </motion.div>
+              <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.4)', maxWidth: 500, margin: '0 auto' }}>
+                Where creators earn and brands grow. The future of authentic marketing.
+              </p>
+            </div>
+          </ScrollSection>
+
+          {/* Dual portals */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, maxWidth: 900, margin: '0 auto' }}>
+            {/* Creator Portal */}
+            <ScrollSection>
+              <Link to="/register?role=creator" style={{ textDecoration: 'none' }}>
+                <motion.div
+                  whileHover={{ scale: 1.03, rotateY: 3, y: -8 }}
+                  transition={{ type: 'spring', stiffness: 200 }}
+                  style={{ perspective: 1000, cursor: 'pointer' }}
+                >
+                  <GlassCard style={{ padding: 48 }} glow="purple">
+                    <div style={{ textAlign: 'center', marginBottom: 32 }}>
+                      <motion.div
+                        whileHover={{ rotate: [0, -10, 10, 0] }}
+                        transition={{ duration: 0.5 }}
+                        style={{ fontSize: 64, display: 'inline-block', marginBottom: 16, filter: 'drop-shadow(0 0 20px rgba(124,58,237,0.5))' }}
+                      >🎯</motion.div>
+                      <h3 style={{ fontSize: 28, fontWeight: 900, color: '#fff', marginBottom: 8 }}>Creator Portal</h3>
+                      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Join the earning ecosystem</p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {['Browse campaigns', 'Earn cashback', 'Build your portfolio', 'Track analytics'].map((item, i) => (
+                        <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ width: 20, height: 20, borderRadius: 6, background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>✓</div>
+                          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <motion.div
+                      whileHover={{ x: 5 }}
+                      style={{
+                        marginTop: 32, padding: '14px', borderRadius: 14,
+                        background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
+                        textAlign: 'center', color: '#fff', fontWeight: 700, fontSize: 14,
+                      }}
+                    >Start Earning →</motion.div>
+                  </GlassCard>
+                </motion.div>
+              </Link>
+            </ScrollSection>
+
+            {/* Brand Portal */}
+            <ScrollSection>
+              <Link to="/register?role=brand" style={{ textDecoration: 'none' }}>
+                <motion.div
+                  whileHover={{ scale: 1.03, rotateY: -3, y: -8 }}
+                  transition={{ type: 'spring', stiffness: 200 }}
+                  style={{ perspective: 1000, cursor: 'pointer' }}
+                >
+                  <GlassCard style={{ padding: 48 }} glow="cyan">
+                    <div style={{ textAlign: 'center', marginBottom: 32 }}>
+                      <motion.div
+                        whileHover={{ rotate: [0, 10, -10, 0] }}
+                        transition={{ duration: 0.5 }}
+                        style={{ fontSize: 64, display: 'inline-block', marginBottom: 16, filter: 'drop-shadow(0 0 20px rgba(6,182,212,0.5))' }}
+                      >🏢</motion.div>
+                      <h3 style={{ fontSize: 28, fontWeight: 900, color: '#fff', marginBottom: 8 }}>Brand Portal</h3>
+                      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Scale with authentic creators</p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {['Launch campaigns', 'Track ROI', 'Discover creators', 'Pay on results only'].map((item, i) => (
+                        <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ width: 20, height: 20, borderRadius: 6, background: 'rgba(6,182,212,0.2)', border: '1px solid rgba(6,182,212,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>✓</div>
+                          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <motion.div
+                      whileHover={{ x: 5 }}
+                      style={{
+                        marginTop: 32, padding: '14px', borderRadius: 14,
+                        background: 'linear-gradient(135deg, #06b6d4, #7c3aed)',
+                        textAlign: 'center', color: '#fff', fontWeight: 700, fontSize: 14,
+                      }}
+                    >Launch Campaign →</motion.div>
+                  </GlassCard>
+                </motion.div>
+              </Link>
+            </ScrollSection>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ────────────────────────────────────────────────── */}
+      <footer style={{ position: 'relative', background: 'linear-gradient(180deg, #060918 0%, #030611 100%)', borderTop: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+
+        {/* Rainbow accent line */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent 0%, #7c3aed 25%, #06b6d4 55%, #ec4899 80%, transparent 100%)' }} />
+
+        {/* Background glow */}
+        <div style={{ position: 'absolute', top: -200, left: '50%', transform: 'translateX(-50%)', width: 700, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.06) 0%, transparent 65%)', pointerEvents: 'none' }} />
+
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
+
+          {/* ── CTA Banner ── */}
+          <div style={{
+            padding: '48px 48px',
+            margin: '48px 0 0',
+            borderRadius: 24,
+            background: 'linear-gradient(135deg, rgba(124,58,237,0.12) 0%, rgba(6,182,212,0.06) 100%)',
+            border: '1px solid rgba(124,58,237,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24,
+            position: 'relative', overflow: 'hidden',
+          }}>
+            <div style={{ position: 'absolute', top: -30, right: -30, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div>
+              <p style={{ fontSize: 11, color: '#a78bfa', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>Ready to start?</p>
+              <h3 style={{ fontSize: 28, fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+                Shop. Share. <span style={{ background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Earn.</span>
+              </h3>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginTop: 8 }}>Join 10,000+ creators already earning cashback across Bangladesh.</p>
+            </div>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <a href="/register?role=creator" style={{
+                padding: '13px 28px', borderRadius: 12,
+                background: 'linear-gradient(135deg,#7c3aed,#06b6d4)',
+                color: '#fff', fontWeight: 700, fontSize: 13,
+                textDecoration: 'none', letterSpacing: '0.02em',
+                boxShadow: '0 0 24px rgba(124,58,237,0.35)',
+                transition: 'all 0.2s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 0 40px rgba(124,58,237,0.55)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 0 24px rgba(124,58,237,0.35)' }}
+              >Join as Creator →</a>
+              <a href="/register?role=brand" style={{
+                padding: '13px 28px', borderRadius: 12,
+                border: '1px solid rgba(255,255,255,0.12)',
+                background: 'rgba(255,255,255,0.04)',
+                color: 'rgba(255,255,255,0.7)', fontWeight: 700, fontSize: 13,
+                textDecoration: 'none', letterSpacing: '0.02em',
+                transition: 'all 0.2s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(6,182,212,0.4)'; e.currentTarget.style.color = '#67e8f9' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)' }}
+              >Launch Campaign</a>
+            </div>
+          </div>
+
+          {/* ── Main grid ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 48, padding: '56px 0 48px' }}>
+
+            {/* Brand */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+                <div style={{ position: 'relative', width: 36, height: 36, flexShrink: 0 }}>
+                  <div style={{ position: 'absolute', inset: 0, borderRadius: 11, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', boxShadow: '0 0 16px rgba(124,58,237,0.5)' }} />
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: 16, fontStyle: 'italic' }}>F</div>
+                </div>
+                <div>
+                  <div style={{ fontWeight: 900, fontSize: 17, fontStyle: 'italic', color: '#fff', letterSpacing: '-0.02em' }}>FlexTag™</div>
+                  <div style={{ fontSize: 9, letterSpacing: '0.16em', color: 'rgba(167,139,250,0.6)', textTransform: 'uppercase', marginTop: 1 }}>Shop · Share · Earn</div>
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 1.8, marginBottom: 24, maxWidth: 260 }}>
+                Bangladesh's first creator-to-brand cashback platform. Buy real products, post authentic content, earn real money.
+              </p>
+              {/* Social */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[
+                  { label: 'Facebook',  path: 'M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z' },
+                  { label: 'Instagram', path: 'M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37zm1.5-4.87h.01M7.5 20.5h9A5.5 5.5 0 0022 15V9a5.5 5.5 0 00-5.5-5.5h-9A5.5 5.5 0 002 9v6a5.5 5.5 0 005.5 5.5z' },
+                  { label: 'Twitter',   path: 'M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z' },
+                  { label: 'LinkedIn',  path: 'M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z M4 6a2 2 0 100-4 2 2 0 000 4z' },
+                ].map(s => (
+                  <a key={s.label} href="#" aria-label={s.label} style={{
+                    width: 34, height: 34, borderRadius: 10,
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(255,255,255,0.03)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'rgba(255,255,255,0.35)', textDecoration: 'none', transition: 'all 0.2s',
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.5)'; e.currentTarget.style.color = '#a78bfa'; e.currentTarget.style.background = 'rgba(124,58,237,0.1)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.35)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.transform = 'translateY(0)' }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d={s.path} />
+                    </svg>
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Platform */}
+            {[
+              {
+                heading: 'Platform',
+                links: [
+                  { label: 'How It Works',  href: '#' },
+                  { label: 'For Creators',  href: '/register?role=creator' },
+                  { label: 'For Brands',    href: '/register?role=brand' },
+                  { label: 'Catalog',       href: '/creator/catalog' },
+                  { label: 'Leaderboard',   href: '/creator/leaderboard' },
+                ],
+              },
+              {
+                heading: 'Company',
+                links: [
+                  { label: 'About Us',  href: '#' },
+                  { label: 'Blog',      href: '#' },
+                  { label: 'Careers',   href: '#' },
+                  { label: 'Press',     href: '#' },
+                  { label: 'Contact',   href: '#' },
+                ],
+              },
+              {
+                heading: 'Legal & Support',
+                links: [
+                  { label: 'Privacy Policy',   href: '#' },
+                  { label: 'Terms of Service', href: '#' },
+                  { label: 'Help Center',      href: '/support/faq' },
+                  { label: 'Submit Ticket',    href: '/support/tickets' },
+                  { label: 'Live Chat',        href: '/support/chat' },
+                ],
+              },
+            ].map(col => (
+              <div key={col.heading}>
+                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.7)', marginBottom: 20 }}>{col.heading}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+                  {col.links.map(l => (
+                    <a key={l.label} href={l.href} style={{
+                      fontSize: 13, color: 'rgba(255,255,255,0.35)',
+                      textDecoration: 'none', transition: 'color 0.2s',
+                    }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.35)'}
+                    >{l.label}</a>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Divider ── */}
+          <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07) 20%, rgba(255,255,255,0.07) 80%, transparent)' }} />
+
+          {/* ── Bottom bar ── */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, padding: '24px 0' }}>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.04em' }}>
+              © 2026 <span style={{ color: 'rgba(167,139,250,0.5)' }}>FlexTag™</span> · Made with ♥ in Bangladesh
+            </p>
+            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e' }} />
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>All systems operational</span>
+            </div>
+          </div>
+
+        </div>
+      </footer>
+
+      {/* Progress indicator */}
+      <motion.div
+        style={{
+          position: 'fixed', top: 0, left: 0, right: 0,
+          height: 3, background: 'linear-gradient(90deg, #7c3aed, #06b6d4, #ec4899)',
+          scaleX: scrollYProgress, transformOrigin: '0 0', zIndex: 9999,
+        }}
+      />
     </div>
   )
 }
-
-export default Landing

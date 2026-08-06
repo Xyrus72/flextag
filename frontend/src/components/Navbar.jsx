@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth()
-  const [mobileOpen, setMobileOpen]       = useState(false)
-  const [scrolled, setScrolled]           = useState(false)
-  const [activeSection, setActiveSection] = useState('home')
-  const location                          = useLocation()
-  const isLanding                         = location.pathname === '/'
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const location = useLocation()
+  const isLanding = location.pathname === '/'
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40)
+    const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
@@ -22,85 +21,170 @@ const Navbar = () => {
   }
 
   const navLinks = [
-    { label: 'Home',        href: '/' },
-    { label: 'How It Works',href: '/#how-it-works' },
-    { label: 'For Brands',  href: '/#for-brands' },
-    { label: 'Catalog',     href: '/creator/catalog' },
-    { label: 'Contact',     href: '/#contact' },
+    { label: 'Home',         href: '/' },
+    { label: 'How It Works', href: '/#how-it-works' },
+    { label: 'For Brands',   href: '/#for-brands' },
+    { label: 'Catalog',      href: '/creator/catalog' },
+    { label: 'Contact',      href: '/#contact' },
   ]
 
   return (
-    <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-      scrolled
-        ? 'border-b border-white/8 bg-[#050505]/80 backdrop-blur-2xl shadow-2xl shadow-black/50'
-        : 'border-b border-transparent bg-transparent'
-    }`}>
-      {/* Top accent line */}
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-orange-500/50 to-transparent" />
+    <nav style={{
+      position: 'fixed',
+      top: 0, left: 0, right: 0,
+      zIndex: 9000,
+      transition: 'all 0.4s ease',
+      background: scrolled
+        ? 'rgba(5, 8, 22, 0.92)'
+        : 'rgba(5, 8, 22, 0.75)',
+      backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
+      borderBottom: scrolled
+        ? '1px solid rgba(124, 58, 237, 0.2)'
+        : '1px solid rgba(255,255,255,0.06)',
+      boxShadow: scrolled
+        ? '0 4px 40px rgba(0,0,0,0.6), 0 1px 0 rgba(124,58,237,0.1) inset'
+        : 'none',
+    }}>
+      {/* Top shimmer line */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 1,
+        background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.6), rgba(6,182,212,0.4), transparent)',
+        pointerEvents: 'none',
+      }} />
 
-      <div className="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
-        {/* ── Logo ─────────────────────────────────────────── */}
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="relative w-9 h-9">
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-orange-500 to-pink-600 opacity-80 group-hover:opacity-100 transition-opacity" />
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-orange-500 to-pink-600 blur-md opacity-40 group-hover:opacity-70 transition-opacity" />
-            <div className="absolute inset-0 flex items-center justify-center text-white font-black text-sm italic">F</div>
-          </div>
-          <div>
-            <span className="text-xl font-black italic tracking-tighter text-white group-hover:text-orange-400 transition-colors">
-              FlexTag™
-            </span>
-            <p className="text-[9px] text-orange-500/70 uppercase tracking-[0.2em] leading-none mt-0.5">Shop · Share · Earn</p>
-          </div>
+      <div style={{
+        maxWidth: 1280,
+        margin: '0 auto',
+        padding: '0 24px',
+        height: 68,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 24,
+      }}>
+
+        {/* ── LOGO ───────────────────────────────────────────────── */}
+        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          {/* FlexTag logo image */}
+          <img
+            src="/products/flextag-logo.png"
+            alt="FlexTag"
+            style={{ height: 48, width: 'auto', objectFit: 'contain' }}
+          />
         </Link>
 
-        {/* ── Center pill nav ───────────────────────────────── */}
-        <div className="hidden lg:flex items-center gap-1 px-3 py-2 rounded-full border border-white/8 bg-white/[0.03] backdrop-blur-xl">
+        {/* ── CENTER NAV ─────────────────────────────────────────── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 2,
+          flex: 1, justifyContent: 'center',
+        }} className="desktop-nav">
           {navLinks.map(link => (
-            <a key={link.label} href={link.href}
-              className="px-4 py-2 text-[11px] font-medium text-zinc-400 hover:text-white rounded-full hover:bg-white/5 transition-all uppercase tracking-wider">
+            <a
+              key={link.label}
+              href={link.href}
+              style={{
+                padding: '8px 14px',
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 500,
+                color: 'rgba(255,255,255,0.5)',
+                textDecoration: 'none',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                transition: 'all 0.2s ease',
+                fontFamily: 'Inter, sans-serif',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = '#fff'
+                e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = 'rgba(255,255,255,0.5)'
+                e.currentTarget.style.background = 'transparent'
+              }}
+            >
               {link.label}
             </a>
           ))}
         </div>
 
-        {/* ── Right actions ─────────────────────────────────── */}
-        <div className="flex items-center gap-3">
-          {/* Auth */}
-          <div className="hidden md:flex items-center gap-3">
-            {isAuthenticated ? (
-              <>
-                <Link to={getDashboardLink()}
-                  className="px-5 py-2.5 text-[11px] font-black text-white uppercase tracking-widest rounded-full relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-600 group-hover:from-orange-400 group-hover:to-pink-500 transition-all" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-600 blur-md opacity-50 group-hover:opacity-80 transition-opacity" />
-                  <span className="relative z-10">Dashboard</span>
-                </Link>
-                <button onClick={logout}
-                  className="text-[11px] text-zinc-500 hover:text-white transition-colors uppercase tracking-wider">
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login"
-                  className="text-[11px] text-zinc-400 hover:text-white transition-colors uppercase tracking-wider px-3 py-2">
-                  Sign In
-                </Link>
-                <Link to="/register"
-                  className="px-5 py-2.5 text-[11px] font-black text-white uppercase tracking-widest rounded-full relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-600 group-hover:from-orange-400 group-hover:to-pink-500 transition-all" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-600 blur-md opacity-40 group-hover:opacity-70 transition-opacity" />
-                  <span className="relative z-10">Get Started</span>
-                </Link>
-              </>
-            )}
-          </div>
+        {/* ── RIGHT ACTIONS ──────────────────────────────────────── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          {isAuthenticated ? (
+            <>
+              <Link to={getDashboardLink()} style={{ textDecoration: 'none' }}>
+                <button style={{
+                  padding: '9px 20px', borderRadius: 10,
+                  background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
+                  border: 'none', color: '#fff', fontWeight: 700,
+                  fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase',
+                  cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                  boxShadow: '0 0 20px rgba(124,58,237,0.35)',
+                  transition: 'all 0.2s',
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 30px rgba(124,58,237,0.6)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 0 20px rgba(124,58,237,0.35)'; e.currentTarget.style.transform = 'translateY(0)' }}
+                >Dashboard</button>
+              </Link>
+              <button onClick={logout} style={{
+                background: 'none', border: 'none', padding: '9px 12px',
+                fontSize: 11, color: 'rgba(255,255,255,0.35)', cursor: 'pointer',
+                letterSpacing: '0.1em', textTransform: 'uppercase',
+                fontFamily: 'Inter, sans-serif', transition: 'color 0.2s',
+              }}
+                onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.35)'}
+              >Logout</button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" style={{ textDecoration: 'none' }}>
+                <button style={{
+                  background: 'none', border: '1px solid rgba(255,255,255,0.1)',
+                  padding: '9px 18px', borderRadius: 10,
+                  fontSize: 11, color: 'rgba(255,255,255,0.55)', cursor: 'pointer',
+                  letterSpacing: '0.1em', textTransform: 'uppercase',
+                  fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.4)'; e.currentTarget.style.color = '#fff' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+                >Sign In</button>
+              </Link>
 
-          {/* Mobile menu button */}
-          <button onClick={() => setMobileOpen(!mobileOpen)}
-            className="lg:hidden w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:border-white/20 transition-all">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <Link to="/register" style={{ textDecoration: 'none' }}>
+                <button style={{
+                  padding: '9px 20px', borderRadius: 10,
+                  background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
+                  border: 'none', color: '#fff', fontWeight: 700,
+                  fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase',
+                  cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                  boxShadow: '0 0 20px rgba(124,58,237,0.35)',
+                  transition: 'all 0.2s',
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 32px rgba(124,58,237,0.65)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 0 20px rgba(124,58,237,0.35)'; e.currentTarget.style.transform = 'translateY(0)' }}
+                >Get Started</button>
+              </Link>
+            </>
+          )}
+
+          {/* Mobile burger */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            style={{
+              display: 'none',
+              width: 38, height: 38, borderRadius: 10,
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.04)',
+              alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: 'rgba(255,255,255,0.6)',
+              transition: 'all 0.2s',
+            }}
+            className="mobile-burger"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               {mobileOpen
                 ? <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>
                 : <><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="9" y1="17" x2="21" y2="17"/></>
@@ -110,38 +194,45 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* ── Mobile Drawer ──────────────────────────────────── */}
-      <div className={`lg:hidden transition-all duration-300 overflow-hidden ${mobileOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
-        <div className="px-6 pb-6 pt-2 border-t border-white/5 bg-[#050505]/95 backdrop-blur-2xl space-y-1">
+      {/* ── MOBILE DRAWER ──────────────────────────────────────── */}
+      <div style={{
+        overflow: 'hidden',
+        maxHeight: mobileOpen ? 500 : 0,
+        transition: 'max-height 0.35s ease',
+        background: 'rgba(5,8,22,0.98)',
+        backdropFilter: 'blur(24px)',
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+      }}>
+        <div style={{ padding: '16px 24px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {navLinks.map(link => (
-            <a key={link.label} href={link.href} onClick={() => setMobileOpen(false)}
-              className="block px-4 py-3 text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/5 rounded-xl transition-all uppercase tracking-wider">
-              {link.label}
-            </a>
+            <a key={link.label} href={link.href} onClick={() => setMobileOpen(false)} style={{
+              padding: '12px 16px', borderRadius: 10,
+              fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.5)',
+              textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase',
+              fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
+              display: 'block',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; e.currentTarget.style.background = 'transparent' }}
+            >{link.label}</a>
           ))}
-          <div className="pt-4 border-t border-white/5 space-y-2">
-            {isAuthenticated ? (
-              <Link to={getDashboardLink()} onClick={() => setMobileOpen(false)}
-                className="block text-center py-3 rounded-xl text-xs font-black text-white uppercase tracking-widest relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-600" />
-                <span className="relative z-10">Dashboard</span>
-              </Link>
-            ) : (
-              <>
-                <Link to="/login" onClick={() => setMobileOpen(false)}
-                  className="block text-center py-3 rounded-xl text-xs font-medium text-zinc-400 border border-white/8 hover:border-white/15 hover:text-white transition-all uppercase tracking-wider">
-                  Sign In
-                </Link>
-                <Link to="/register" onClick={() => setMobileOpen(false)}
-                  className="block text-center py-3 rounded-xl text-xs font-black text-white uppercase tracking-widest relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-600" />
-                  <span className="relative z-10">Get Started Free</span>
-                </Link>
-              </>
-            )}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 8, paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Link to="/login" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none' }}>
+              <button style={{ width: '100%', padding: 12, borderRadius: 10, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Sign In</button>
+            </Link>
+            <Link to="/register" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none' }}>
+              <button style={{ width: '100%', padding: 12, borderRadius: 10, background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', border: 'none', color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif', boxShadow: '0 0 20px rgba(124,58,237,0.3)' }}>Get Started Free</button>
+            </Link>
           </div>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 1024px) {
+          .desktop-nav { display: none !important; }
+          .mobile-burger { display: flex !important; }
+        }
+      `}</style>
     </nav>
   )
 }

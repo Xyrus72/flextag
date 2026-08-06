@@ -65,7 +65,7 @@ const ProductDetail = () => {
   if (loading) {
     return (
       <div className="p-4 lg:p-8 min-h-screen flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+        <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -76,7 +76,7 @@ const ProductDetail = () => {
         <div className="text-center">
           <p className="text-4xl mb-3">🔍</p>
           <p className="text-lg text-zinc-400">Product not found</p>
-          <Link to="/creator/catalog" className="text-orange-400 hover:text-orange-300 mt-2 block">Back to Catalog</Link>
+          <Link to="/creator/catalog" className="text-violet-400 hover:text-violet-300 mt-2 block">Back to Catalog</Link>
         </div>
       </div>
     )
@@ -85,8 +85,8 @@ const ProductDetail = () => {
   const netCost = Math.round(product.price * (1 - (product.cashbackRate || 0) / 100))
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
-      <Link to="/creator/catalog" className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-orange-400 mb-6 transition-colors">
+    <div className="page-root">
+      <Link to="/creator/catalog" className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-violet-400 mb-6 transition-colors">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
         Back to Catalog
       </Link>
@@ -96,7 +96,7 @@ const ProductDetail = () => {
         <div className="aspect-square rounded-3xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-[120px] relative overflow-hidden">
           <span>{product.image || '📦'}</span>
           {product.cashbackRate > 0 && (
-            <div className="absolute top-4 right-4 px-3 py-1.5 rounded-xl bg-orange-500/90 text-white text-sm font-bold shadow-lg">
+            <div style={{ position:'absolute', top:16, right:16, padding:'6px 14px', borderRadius:10, background:'linear-gradient(135deg,#7c3aed,#06b6d4)', color:'#fff', fontSize:13, fontWeight:800, boxShadow:'0 0 20px rgba(124,58,237,0.4)' }}>
               {product.cashbackRate}% Cashback
             </div>
           )}
@@ -138,7 +138,7 @@ const ProductDetail = () => {
             )}
             <div className="border-t border-white/5 pt-3 flex items-center justify-between">
               <span className="text-sm font-semibold text-zinc-300">Your Net Cost</span>
-              <span className="text-2xl font-extrabold bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent">
+              <span className="text-2xl font-extrabold bg-gradient-to-r from-violet-500 to-cyan-400 bg-clip-text text-transparent">
                 ৳{netCost.toLocaleString()}
               </span>
             </div>
@@ -151,24 +151,24 @@ const ProductDetail = () => {
               <div className="space-y-2">
                 {campaign.hashtags && (
                   <div className="flex items-center gap-2 text-sm text-zinc-400">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
                     Hashtags: {campaign.hashtags}
                   </div>
                 )}
                 {campaign.handles && (
                   <div className="flex items-center gap-2 text-sm text-zinc-400">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
                     Tag: {campaign.handles}
                   </div>
                 )}
                 {campaign.minFollowers > 0 && (
                   <div className="flex items-center gap-2 text-sm text-zinc-400">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
                     Minimum {campaign.minFollowers.toLocaleString()} followers required
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-sm text-zinc-400">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#67e8f9" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   Retention period: {campaign.retentionDays || 7} days
                 </div>
               </div>
@@ -183,7 +183,7 @@ const ProductDetail = () => {
               <button onClick={() => setQty(qty + 1)} className="px-4 py-3 text-zinc-400 hover:text-white transition-colors">+</button>
             </div>
             <button onClick={addToCart} disabled={!product.inStock}
-              className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold text-center shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+              className="btn-primary" style={{ flex:1, padding:'14px', fontSize:14 }}>
               {product.inStock ? `Add to Cart — ৳${(product.price * qty).toLocaleString()}` : 'Out of Stock'}
             </button>
           </div>

@@ -88,7 +88,7 @@ const PostSubmission = () => {
   }
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
+    <div className="page-root">
       <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Submit Post</h1>
       <p className="text-zinc-500 mb-8">Submit your post URL for cashback verification</p>
 
@@ -104,7 +104,7 @@ const PostSubmission = () => {
                 <div className="flex items-center gap-2 text-zinc-500 text-sm"><div className="w-4 h-4 rounded-full border border-zinc-500 border-t-transparent animate-spin" /><span>Loading orders...</span></div>
               ) : (
                 <select value={selectedOrderId} onChange={e => setSelectedOrderId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 outline-none">
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none">
                   <option value="">Choose a delivered order...</option>
                   {orders.map(o => (
                     <option key={o._id} value={o._id}>
@@ -122,8 +122,13 @@ const PostSubmission = () => {
               <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Platform</label>
               <div className="flex gap-2">
                 {['instagram', 'tiktok', 'facebook'].map(p => (
-                  <button key={p} onClick={() => setPlatform(p)}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-semibold capitalize transition-all ${platform === p ? 'bg-orange-500/15 border border-orange-500/30 text-orange-400' : 'bg-white/5 border border-white/5 text-zinc-500 hover:bg-white/10'}`}>
+                  <button key={p} onClick={() => setPlatform(p)} style={{
+                    flex:1, padding:'10px', borderRadius:12, fontSize:13, fontWeight:600, cursor:'pointer',
+                    fontFamily:'inherit', textTransform:'capitalize', transition:'all 0.2s', border:'none',
+                    background: platform === p ? 'rgba(124,58,237,0.12)' : 'rgba(255,255,255,0.04)',
+                    color: platform === p ? '#a78bfa' : 'rgba(255,255,255,0.4)',
+                    outline: platform === p ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                  }}>
                     {p}
                   </button>
                 ))}
@@ -134,13 +139,13 @@ const PostSubmission = () => {
               <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Post URL</label>
               <input value={postUrl} onChange={e => setPostUrl(e.target.value)}
                 placeholder="https://www.instagram.com/p/..."
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all placeholder:text-zinc-600" />
+                className="field-input" />
               <p className="text-xs text-zinc-600 mt-1">Your post must be public and meet campaign requirements</p>
             </div>
 
             <button onClick={handleSubmit} disabled={!postUrl || !selectedOrderId || submitting}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
-              {submitting ? 'Submitting...' : 'Submit for Verification'}
+              className="btn-primary" style={{ width:'100%', padding:14 }}>
+              {submitting ? 'Submitting…' : 'Submit for Verification'}
             </button>
           </div>
         </div>
@@ -170,7 +175,7 @@ const PostSubmission = () => {
               <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs text-zinc-500 font-medium uppercase tracking-wider">Generated Caption</span>
-                  <button onClick={() => navigator.clipboard?.writeText(aiResponse)} className="text-xs text-orange-400 hover:text-orange-300">Copy</button>
+                  <button onClick={() => navigator.clipboard?.writeText(aiResponse)} className="text-xs text-violet-400 hover:text-violet-300">Copy</button>
                 </div>
                 <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">{aiResponse}</p>
               </div>

@@ -28,11 +28,11 @@ const BrandRatings = () => {
   const overall     = ratings.length ? (([avgQuality, avgShipping, avgSupport].reduce((s, v) => s + Number(v), 0)) / 3).toFixed(1) : '—'
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
+    <div className="page-root">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           <h1 className="text-2xl lg:text-3xl font-bold text-white">Brand Reputation</h1>
-          <span className="px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 text-[10px] font-bold border border-orange-500/20">★ NEW</span>
+          <span className="px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400 text-[10px] font-bold border border-violet-500/20">★ NEW</span>
         </div>
         <p className="text-zinc-500">Creator feedback on your products and service</p>
       </div>
@@ -60,7 +60,7 @@ const BrandRatings = () => {
       <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
         <h2 className="text-lg font-bold text-white mb-5">Creator Reviews ({loading ? '...' : ratings.length})</h2>
         {loading ? (
-          <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" /></div>
+          <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
         ) : ratings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-14 rounded-xl border border-dashed border-white/10">
             <p className="text-4xl mb-3">⭐</p>

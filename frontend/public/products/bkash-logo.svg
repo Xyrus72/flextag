@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 260" width="520" height="260">
+  <rect width="520" height="260" fill="white"/>
+
+  <!-- "bKash" text -->
+  <text x="30" y="168" font-family="Georgia, 'Times New Roman', serif" font-size="108" font-weight="700" fill="#111111" letter-spacing="-2">bKash</text>
+
+  <!-- Origami bird made of geometric triangles (pink/magenta/dark-red) -->
+  <!-- Wing top-left facet -->
+  <polygon points="330,60 370,100 310,120" fill="#e91e7a"/>
+  <!-- Wing top-right facet -->
+  <polygon points="370,100 430,70 410,130" fill="#c2185b"/>
+  <!-- Wing top-center highlight -->
+  <polygon points="330,60 390,45 370,100" fill="#f06292"/>
+  <!-- Wing tip right -->
+  <polygon points="430,70 460,90 410,130" fill="#b71c1c"/>
+  <!-- Body center -->
+  <polygon points="310,120 370,100 380,160" fill="#e91e7a"/>
+  <!-- Body lower -->
+  <polygon points="310,120 380,160 340,180" fill="#c2185b"/>
+  <!-- Tail left -->
+  <polygon points="310,120 340,180 280,170" fill="#b71c1c"/>
+  <!-- Tail bottom -->
+  <polygon points="340,180 380,160 360,200" fill="#e91e7a"/>
+  <!-- Wing lower-right -->
+  <polygon points="380,160 410,130 430,160" fill="#f48fb1"/>
+  <!-- Underbelly highlight -->
+  <polygon points="370,100 410,130 380,160" fill="#f06292" opacity="0.7"/>
+  <!-- Wing inner shade -->
+  <polygon points="330,60 370,100 310,120" fill="white" opacity="0.12"/>
+</svg>

@@ -3,14 +3,13 @@ import { Link } from 'react-router-dom'
 import { getProducts } from '../../services/products'
 
 const Catalog = () => {
-  const [products, setProducts]   = useState([])
-  const [loading, setLoading]     = useState(true)
-  const [search, setSearch]       = useState('')
-  const [category, setCategory]   = useState('All')
-  const [sortBy, setSortBy]       = useState('cashback')
+  const [products, setProducts]     = useState([])
+  const [loading, setLoading]       = useState(true)
+  const [search, setSearch]         = useState('')
+  const [category, setCategory]     = useState('All')
+  const [sortBy, setSortBy]         = useState('cashback')
   const [categories, setCategories] = useState(['All'])
 
-  // Load products on filter change (debounced search)
   useEffect(() => {
     const timer = setTimeout(() => fetchProducts(), search ? 400 : 0)
     return () => clearTimeout(timer)
@@ -21,103 +20,105 @@ const Catalog = () => {
     try {
       const params = { sort: sortBy }
       if (category !== 'All') params.category = category
-      if (search)             params.q = search
+      if (search) params.q = search
       const data = await getProducts(params)
       const prods = data.products || []
       setProducts(prods)
-
-      // Derive unique categories
-      const cats = ['All', ...new Set(prods.map(p => p.category).filter(Boolean))]
-      setCategories(cats)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
+      setCategories(['All', ...new Set(prods.map(p => p.category).filter(Boolean))])
+    } catch (err) { console.error(err) }
+    finally { setLoading(false) }
   }
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
-      <div className="mb-6">
-        <h1 className="text-2xl lg:text-3xl font-bold text-white">Shop Catalog</h1>
-        <p className="text-zinc-500 mt-1">Browse products and earn cashback by promoting them</p>
+    <div className="page-root">
+      <div className="page-header">
+        <div className="page-label"><span>Browse Products</span></div>
+        <h1 className="page-title">Shop Catalog</h1>
+        <p className="page-subtitle">Browse products and earn 30-70% cashback by promoting them</p>
       </div>
 
-      {/* Filters bar */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <div className="flex-1 min-w-[200px]">
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products or brands..."
-            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all placeholder:text-zinc-600" />
+      {/* Filters */}
+      <div style={{ display:'flex', flexWrap:'wrap', gap:12, marginBottom:20 }}>
+        <div style={{ flex:1, minWidth:220 }}>
+          <div style={{ position:'relative' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}>
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products or brands..."
+              className="field-input" style={{ paddingLeft:42 }} />
+          </div>
         </div>
-        <select value={sortBy} onChange={e => setSortBy(e.target.value)}
-          className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-zinc-300 text-sm focus:border-orange-500 outline-none cursor-pointer">
-          <option value="cashback">Highest Cashback</option>
-          <option value="price_low">Price: Low → High</option>
-          <option value="price_high">Price: High → Low</option>
-          <option value="rating">Top Rated</option>
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="field-select" style={{ width:'auto', minWidth:180 }}>
+          <option value="cashback" style={{ background:'#0d0d20' }}>Highest Cashback</option>
+          <option value="price_low" style={{ background:'#0d0d20' }}>Price: Low → High</option>
+          <option value="price_high" style={{ background:'#0d0d20' }}>Price: High → Low</option>
+          <option value="rating" style={{ background:'#0d0d20' }}>Top Rated</option>
         </select>
       </div>
 
       {/* Category pills */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:24 }}>
         {categories.map(c => (
-          <button key={c} onClick={() => setCategory(c)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${category === c ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white shadow-lg shadow-orange-500/20' : 'bg-white/5 text-zinc-400 hover:bg-white/10 border border-white/5'}`}>
+          <button key={c} onClick={() => setCategory(c)} style={{
+            padding:'8px 18px', borderRadius:100, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all 0.2s',
+            background: category === c ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(255,255,255,0.04)',
+            color: category === c ? '#fff' : 'rgba(255,255,255,0.45)',
+            border: category === c ? 'none' : '1px solid rgba(255,255,255,0.08)',
+            boxShadow: category === c ? '0 0 20px rgba(124,58,237,0.3)' : 'none',
+          }}>
             {c}
           </button>
         ))}
       </div>
 
-      {/* Loading */}
-      {loading && (
-        <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+      {loading ? (
+        <div style={{ display:'flex', justifyContent:'center', padding:'80px 0' }}><div className="spinner" /></div>
+      ) : products.length === 0 ? (
+        <div className="empty-state">
+          <p>🔍</p>
+          <p>No products found — try adjusting your filters</p>
         </div>
-      )}
-
-      {/* Product Grid */}
-      {!loading && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      ) : (
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:16 }}>
           {products.map(p => (
-            <Link key={p._id} to={`/creator/product/${p._id}`}
-              className="group rounded-2xl bg-white/[0.03] border border-white/5 hover:border-orange-500/20 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-orange-500/5 no-underline">
-              <div className="aspect-square bg-white/[0.02] flex items-center justify-center text-5xl relative">
-                <span>{p.image || '📦'}</span>
-                <div className="absolute top-3 right-3 px-2 py-1 rounded-lg bg-orange-500/90 text-white text-xs font-bold shadow-lg">
-                  {p.cashbackRate}% back
+            <Link key={p._id} to={`/creator/product/${p._id}`} style={{ textDecoration:'none' }}>
+              <div style={{
+                borderRadius:18, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)',
+                overflow:'hidden', transition:'all 0.2s', cursor:'pointer',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(124,58,237,0.3)'; e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow='0 16px 40px rgba(0,0,0,0.3)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.07)'; e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none' }}
+              >
+                {/* Image */}
+                <div style={{ aspectRatio:'1', background:'rgba(255,255,255,0.02)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:48, position:'relative' }}>
+                  <span>{p.image || '📦'}</span>
+                  <div style={{ position:'absolute', top:10, right:10, padding:'4px 10px', borderRadius:8, background:'linear-gradient(135deg,#7c3aed,#06b6d4)', color:'#fff', fontSize:11, fontWeight:800 }}>
+                    {p.cashbackRate}% back
+                  </div>
+                  {!p.inStock && (
+                    <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.65)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <span style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.5)' }}>Out of Stock</span>
+                    </div>
+                  )}
                 </div>
-                {!p.inStock && (
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <span className="text-sm font-bold text-zinc-400">Out of Stock</span>
-                  </div>
-                )}
-              </div>
-              <div className="p-4">
-                <p className="text-xs text-zinc-500 mb-1">{p.brand}</p>
-                <p className="text-sm font-semibold text-white group-hover:text-orange-400 transition-colors truncate">{p.name}</p>
-                {p.rating > 0 && (
-                  <div className="flex items-center gap-1 mt-1">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    <span className="text-xs text-zinc-400">{p.rating} ({p.reviews})</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between mt-3">
-                  <div>
-                    <span className="text-lg font-bold text-white">৳{p.price?.toLocaleString()}</span>
-                    <span className="text-xs text-emerald-400 block">Net: ৳{Math.round(p.price * (1 - p.cashbackRate / 100)).toLocaleString()}</span>
+                {/* Info */}
+                <div style={{ padding:'16px' }}>
+                  <p style={{ fontSize:11, color:'rgba(255,255,255,0.3)', marginBottom:4 }}>{p.brand}</p>
+                  <p style={{ fontSize:14, fontWeight:600, color:'#fff', marginBottom:8, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{p.name}</p>
+                  {p.rating > 0 && (
+                    <div style={{ display:'flex', alignItems:'center', gap:4, marginBottom:10 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      <span style={{ fontSize:12, color:'rgba(255,255,255,0.4)' }}>{p.rating} ({p.reviews})</span>
+                    </div>
+                  )}
+                  <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between' }}>
+                    <span style={{ fontSize:18, fontWeight:800, color:'#fff' }}>৳{p.price?.toLocaleString()}</span>
+                    <span style={{ fontSize:11, color:'#4ade80' }}>Net: ৳{Math.round(p.price*(1-p.cashbackRate/100)).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
             </Link>
           ))}
-        </div>
-      )}
-
-      {!loading && products.length === 0 && (
-        <div className="text-center py-20">
-          <p className="text-4xl mb-3">🔍</p>
-          <p className="text-lg text-zinc-400">No products found</p>
-          <p className="text-sm text-zinc-600">Try adjusting your filters or check back later</p>
         </div>
       )}
     </div>

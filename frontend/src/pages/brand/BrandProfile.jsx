@@ -43,7 +43,7 @@ const BrandProfile = () => {
   }
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
+    <div className="page-root">
       <h1 className="text-2xl lg:text-3xl font-bold text-white mb-8">Brand Profile & Inventory</h1>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -51,7 +51,7 @@ const BrandProfile = () => {
         <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-white">Company Info</h2>
-            <button onClick={() => setEditing(!editing)} className="text-xs text-orange-400 hover:text-orange-300 font-medium">{editing ? 'Cancel' : 'Edit'}</button>
+            <button onClick={() => setEditing(!editing)} className="text-xs text-violet-400 hover:text-violet-300 font-medium">{editing ? 'Cancel' : 'Edit'}</button>
           </div>
           <div className="text-center mb-6 pb-6 border-b border-white/5">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-3 shadow-lg shadow-emerald-500/20">
@@ -73,7 +73,7 @@ const BrandProfile = () => {
               <div key={f.k}>
                 <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1">{f.l}</label>
                 {editing
-                  ? <input value={form[f.k]} onChange={e => setForm({ ...form, [f.k]: e.target.value })} className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 outline-none" />
+                  ? <input value={form[f.k]} onChange={e => setForm({ ...form, [f.k]: e.target.value })} className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none" />
                   : <p className="text-sm text-zinc-300">{form[f.k] || <span className="text-zinc-600">Not set</span>}</p>}
               </div>
             ))}
@@ -82,7 +82,7 @@ const BrandProfile = () => {
               <p className="text-sm text-zinc-300">{user?.email}</p>
             </div>
             {editing && (
-              <button onClick={handleSave} disabled={saving} className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold disabled:opacity-40">
+              <button onClick={handleSave} disabled={saving} className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 text-white font-bold disabled:opacity-40">
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
             )}
@@ -93,7 +93,7 @@ const BrandProfile = () => {
         <div className="lg:col-span-2 rounded-2xl bg-white/[0.03] border border-white/5 p-6">
           <h2 className="text-lg font-bold text-white mb-5">Product Inventory</h2>
           {loadingProducts ? (
-            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" /></div>
+            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
           ) : products.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-14 rounded-xl border border-dashed border-white/10">
               <p className="text-4xl mb-3">📦</p>
@@ -113,7 +113,7 @@ const BrandProfile = () => {
                     <tr key={p._id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
                       <td className="px-3 py-3"><div className="flex items-center gap-3"><span className="text-2xl">{p.image || '📦'}</span><span className="text-sm font-medium text-white">{p.name}</span></div></td>
                       <td className="px-3 py-3 text-sm text-zinc-300">৳{p.price?.toLocaleString()}</td>
-                      <td className="px-3 py-3"><span className="px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 text-xs font-bold">{p.cashbackRate}%</span></td>
+                      <td className="px-3 py-3"><span className="px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 text-xs font-bold">{p.cashbackRate}%</span></td>
                       <td className="px-3 py-3 text-sm"><span className={p.stock === 0 ? 'text-red-400 font-semibold' : p.stock < 20 ? 'text-yellow-400' : 'text-white'}>{p.stock || 0}</span></td>
                       <td className="px-3 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${p.isActive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-zinc-500/10 text-zinc-500'}`}>{p.isActive ? 'Active' : 'Inactive'}</span></td>
                     </tr>

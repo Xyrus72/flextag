@@ -22,14 +22,14 @@ const Tickets = () => {
   }
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
+    <div className="page-root">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-white">Support Tickets</h1>
           <p className="text-zinc-500 mt-1">Submit and track your support requests</p>
         </div>
         <button onClick={() => setShowNew(!showNew)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white text-sm font-bold shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all">
+          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 text-white text-sm font-bold shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all">
           + New Ticket
         </button>
       </div>
@@ -41,12 +41,12 @@ const Tickets = () => {
             <div>
               <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Subject</label>
               <input value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} placeholder="Brief description"
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 outline-none placeholder:text-zinc-600" />
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" />
             </div>
             <div>
               <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Category</label>
               <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 outline-none">
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none">
                 {['General', 'Payout', 'Verification', 'Shipping', 'Account', 'Bug Report'].map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
@@ -54,11 +54,11 @@ const Tickets = () => {
           <div>
             <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Message</label>
             <textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} rows={4} placeholder="Describe your issue in detail..."
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 outline-none resize-none placeholder:text-zinc-600" />
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none resize-none placeholder:text-zinc-600" />
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowNew(false)} className="px-6 py-3 rounded-xl bg-white/5 text-zinc-400 font-semibold border border-white/5 hover:bg-white/10 transition-all">Cancel</button>
-            <button onClick={submitTicket} className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all">Submit Ticket</button>
+            <button onClick={submitTicket} className="px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 text-white font-bold shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all">Submit Ticket</button>
           </div>
         </div>
       )}

@@ -1,158 +1,138 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { useTheme } from '../../context/ThemeContext'
 import { getAdminStats } from '../../services/admin'
 import { getPosts } from '../../services/posts'
 import { getUsers } from '../../services/users'
 
 const AdminDashboard = () => {
   const { user } = useAuth()
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
-
-  const [stats, setStats]   = useState({})
-  const [pendingPosts, setPendingPosts] = useState([])
+  const [stats, setStats]                   = useState({})
+  const [pendingPosts, setPendingPosts]      = useState([])
   const [unverifiedBrands, setUnverifiedBrands] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading]               = useState(true)
 
   useEffect(() => {
     const load = async () => {
       try {
         const [statsData, postsData, usersData] = await Promise.all([
-          getAdminStats(),
-          getPosts({ status: 'pending' }),
-          getUsers({ role: 'brand', isVerified: false }),
+          getAdminStats(), getPosts({ status:'pending' }), getUsers({ role:'brand', isVerified:false })
         ])
         setStats(statsData)
         setPendingPosts((postsData.posts || []).slice(0, 5))
         setUnverifiedBrands((usersData.users || []).slice(0, 5))
-      } catch (err) {
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
+      } catch (err) { console.error(err) }
+      finally { setLoading(false) }
     }
     load()
   }, [])
 
-  const card  = `rounded-3xl p-6 transition-all ${isDark ? 'glass-panel card-hover' : 'bg-white border border-black/5 shadow-sm hover:shadow-md hover:-translate-y-0.5'}`
-  const label = `text-[10px] uppercase tracking-widest font-medium ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`
-  const muted = `text-xs ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`
-
   const kpis = [
-    { label: 'Total GMV',          value: loading ? '...' : `৳${(stats.totalGMV || 0).toLocaleString()}`,           icon: '💰', sub: 'All time cashback disbursed' },
-    { label: 'Active Creators',    value: loading ? '...' : String(stats.totalCreators   || 0),                       icon: '👥', sub: 'Registered creators' },
-    { label: 'Active Campaigns',   value: loading ? '...' : String(stats.activeCampaigns || 0),                       icon: '📢', sub: 'Live right now' },
-    { label: 'Verified Brands',    value: loading ? '...' : String(stats.verifiedBrands  || 0),                       icon: '🏢', sub: `of ${stats.totalBrands || 0} brands` },
-    { label: 'Cashback Liability', value: loading ? '...' : `৳${(stats.cashbackLiability || 0).toLocaleString()}`,   icon: '⏳', sub: 'Pending escrow' },
-    { label: 'Commission Revenue', value: loading ? '...' : `৳${(stats.commissionRevenue || 0).toLocaleString()}`,   icon: '📊', sub: 'Platform earnings' },
+    { label:'Total GMV',          value:`৳${(stats.totalGMV||0).toLocaleString()}`,          icon:'💰', color:'rgba(34,197,94,0.12)',   border:'rgba(34,197,94,0.25)',  text:'#4ade80' },
+    { label:'Active Creators',    value:String(stats.totalCreators   || 0),                   icon:'👥', color:'rgba(124,58,237,0.12)',  border:'rgba(124,58,237,0.25)', text:'#a78bfa' },
+    { label:'Active Campaigns',   value:String(stats.activeCampaigns || 0),                   icon:'📢', color:'rgba(6,182,212,0.12)',   border:'rgba(6,182,212,0.25)',  text:'#67e8f9' },
+    { label:'Verified Brands',    value:String(stats.verifiedBrands  || 0),                   icon:'🏢', color:'rgba(236,72,153,0.12)',  border:'rgba(236,72,153,0.25)', text:'#f9a8d4' },
+    { label:'Cashback Liability', value:`৳${(stats.cashbackLiability||0).toLocaleString()}`,  icon:'⏳', color:'rgba(245,158,11,0.12)',  border:'rgba(245,158,11,0.25)', text:'#fbbf24' },
+    { label:'Commission Revenue', value:`৳${(stats.commissionRevenue||0).toLocaleString()}`,  icon:'📊', color:'rgba(34,197,94,0.12)',   border:'rgba(34,197,94,0.25)',  text:'#4ade80' },
   ]
 
   const alerts = [
-    pendingPosts.length > 0 && { level: 'warning', text: `${pendingPosts.length} post${pendingPosts.length > 1 ? 's' : ''} pending review`, link: null },
-    unverifiedBrands.length > 0 && { level: 'info', text: `${unverifiedBrands.length} brand${unverifiedBrands.length > 1 ? 's' : ''} awaiting verification`, link: '/admin/brand-verification' },
+    pendingPosts.length   > 0 && { level:'warning', text:`${pendingPosts.length} post${pendingPosts.length>1?'s':''} pending review`, link:null },
+    unverifiedBrands.length > 0 && { level:'info', text:`${unverifiedBrands.length} brand${unverifiedBrands.length>1?'s':''} awaiting verification`, link:'/admin/brand-verification' },
   ].filter(Boolean)
 
+  const panel = { background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:20, padding:24, backdropFilter:'blur(20px)' }
+
   return (
-    <div className="p-6 lg:p-10 min-h-screen">
-      <div className="mb-10">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="w-6 h-[1px] bg-orange-500" />
-          <span className={label}>Admin Control</span>
-        </div>
-        <h1 className={`text-3xl lg:text-4xl font-medium tracking-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>
-          Platform Dashboard
-        </h1>
-        <p className={`text-sm font-light mt-2 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-          Welcome, {user?.name} · Real-time platform management
-        </p>
+    <div className="page-root">
+      <div className="page-header">
+        <div className="page-label"><span>Admin Control</span></div>
+        <h1 className="page-title">Platform Dashboard</h1>
+        <p className="page-subtitle">Welcome, {user?.name} · Real-time platform management</p>
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:16, marginBottom:32 }}>
         {kpis.map(s => (
-          <div key={s.label} className={card}>
-            <span className="text-2xl block mb-4">{s.icon}</span>
-            <p className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>{s.value}</p>
-            <p className={`${label} mt-1`}>{s.label}</p>
-            <p className={`text-[10px] mt-2 ${muted}`}>{s.sub}</p>
+          <div key={s.label} className="stat-card" style={{ background:'rgba(255,255,255,0.03)' }}>
+            <div style={{ width:44, height:44, borderRadius:12, background:s.color, border:`1px solid ${s.border}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, marginBottom:16 }}>{s.icon}</div>
+            <p style={{ fontSize:28, fontWeight:800, color:'#fff', letterSpacing:'-0.03em', marginBottom:4 }}>{loading ? '—' : s.value}</p>
+            <p style={{ fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(255,255,255,0.3)', marginBottom:6 }}>{s.label}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div style={{ display:'grid', gap:20 }} className="lg:grid-cols-2">
         {/* Alerts */}
-        <div className={`rounded-3xl p-6 ${isDark ? 'glass-panel' : 'bg-white border border-black/5 shadow-sm'}`}>
-          <h2 className={`text-base font-medium tracking-tight mb-6 ${isDark ? 'text-white' : 'text-zinc-900'}`}>
-            <span className={`w-2 h-2 rounded-full ${alerts.length > 0 ? 'bg-yellow-400 animate-pulse' : 'bg-emerald-400'} inline-block mr-2`} />
+        <div style={panel}>
+          <h2 style={{ fontSize:16, fontWeight:700, color:'#fff', margin:'0 0 20px', display:'flex', alignItems:'center', gap:8 }}>
+            <span style={{ width:8, height:8, borderRadius:'50%', background: alerts.length>0 ? '#fbbf24' : '#4ade80', display:'inline-block', boxShadow: alerts.length>0 ? '0 0 8px #fbbf24' : '0 0 8px #4ade80', animation: alerts.length>0 ? 'none' : 'none' }} />
             Active Alerts
           </h2>
           {loading ? (
-            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" /></div>
+            <div style={{ display:'flex', justifyContent:'center', padding:'40px 0' }}><div className="spinner" /></div>
           ) : alerts.length === 0 ? (
-            <div className={`flex flex-col items-center justify-center py-10 rounded-2xl border border-dashed ${isDark ? 'border-white/10' : 'border-black/10'}`}>
-              <span className="text-3xl mb-2">✅</span>
-              <p className={`text-sm font-medium ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>No alerts</p>
-              <p className={`text-xs mt-1 ${muted}`}>Platform is running smoothly</p>
-            </div>
+            <div className="empty-state"><p>✅</p><p>No alerts — platform is running smoothly</p></div>
           ) : (
-            <div className="space-y-3">
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               {alerts.map((a, i) => (
-                <div key={i} className={`p-4 rounded-xl border ${a.level === 'warning' ? 'bg-yellow-500/5 border-yellow-500/15' : 'bg-blue-500/5 border-blue-500/15'}`}>
-                  <p className={`text-sm font-semibold ${a.level === 'warning' ? 'text-yellow-400' : 'text-blue-400'}`}>
-                    {a.level === 'warning' ? '⚠' : 'ℹ'} {a.text}
+                <div key={i} style={{ padding:'14px 16px', borderRadius:14, background: a.level==='warning' ? 'rgba(245,158,11,0.08)' : 'rgba(124,58,237,0.08)', border: a.level==='warning' ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(124,58,237,0.25)' }}>
+                  <p style={{ fontSize:14, fontWeight:600, color: a.level==='warning' ? '#fbbf24' : '#a78bfa', margin:'0 0 6px' }}>
+                    {a.level==='warning' ? '⚠' : 'ℹ'} {a.text}
                   </p>
-                  {a.link && <Link to={a.link} className="text-xs text-orange-400 hover:text-orange-300 mt-1 block">Review now →</Link>}
+                  {a.link && <Link to={a.link} style={{ fontSize:12, color:'#a78bfa', textDecoration:'none' }}>Review now →</Link>}
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Quick Nav */}
-        <div className={`rounded-3xl p-6 ${isDark ? 'glass-panel' : 'bg-white border border-black/5 shadow-sm'}`}>
-          <h2 className={`text-base font-medium tracking-tight mb-6 ${isDark ? 'text-white' : 'text-zinc-900'}`}>Quick Actions</h2>
-          <div className="grid grid-cols-2 gap-3">
+        {/* Quick Actions */}
+        <div style={panel}>
+          <h2 style={{ fontSize:16, fontWeight:700, color:'#fff', margin:'0 0 20px' }}>Quick Actions</h2>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
             {[
-              { to: '/admin/brand-verification', label: 'Verify Brands',  icon: '✓', badge: unverifiedBrands.length },
-              { to: '/admin/post-review',        label: 'Post Review',    icon: '📝', badge: pendingPosts.length },
-              { to: '/admin/disputes',           label: 'Disputes',       icon: '⚠', badge: 0 },
-              { to: '/admin/commission',         label: 'Commission',     icon: '%', badge: 0 },
-              { to: '/admin/categories',         label: 'Categories',     icon: '⊞', badge: 0 },
-              { to: '/admin/financial',          label: 'Financials',     icon: '$', badge: 0 },
-              { to: '/admin/analytics',          label: 'Analytics',      icon: '↗', badge: 0 },
+              { to:'/admin/brand-verification', label:'Verify Brands', icon:'✅', badge:unverifiedBrands.length },
+              { to:'/admin/post-review',        label:'Post Review',   icon:'📝', badge:pendingPosts.length },
+              { to:'/admin/disputes',           label:'Disputes',      icon:'⚠️', badge:0 },
+              { to:'/admin/commission',         label:'Commission',    icon:'💰', badge:0 },
+              { to:'/admin/categories',         label:'Categories',    icon:'📂', badge:0 },
+              { to:'/admin/financial',          label:'Financials',    icon:'📈', badge:0 },
             ].map(q => (
-              <Link key={q.to} to={q.to} className={`relative flex items-center gap-2 p-3 rounded-xl text-xs transition-all ${isDark ? 'bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] text-zinc-400 hover:text-white' : 'bg-black/[0.02] border border-black/5 hover:bg-black/[0.04] text-zinc-500 hover:text-zinc-900'}`}>
-                <span className="font-bold text-base">{q.icon}</span>
+              <Link key={q.to} to={q.to} style={{
+                position:'relative', display:'flex', alignItems:'center', gap:10, padding:'12px 14px', borderRadius:14,
+                background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)',
+                textDecoration:'none', fontSize:13, color:'rgba(255,255,255,0.55)', fontWeight:500, transition:'all 0.2s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(124,58,237,0.3)'; e.currentTarget.style.background='rgba(124,58,237,0.06)'; e.currentTarget.style.color='#fff' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.07)'; e.currentTarget.style.background='rgba(255,255,255,0.03)'; e.currentTarget.style.color='rgba(255,255,255,0.55)' }}
+              >
+                <span style={{ fontSize:18 }}>{q.icon}</span>
                 {q.label}
                 {q.badge > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{q.badge}</span>
+                  <span style={{ position:'absolute', top:-6, right:-6, minWidth:18, height:18, borderRadius:9, background:'#ef4444', color:'#fff', fontSize:10, fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>{q.badge}</span>
                 )}
               </Link>
             ))}
           </div>
-          <div className="mt-6">
-            <p className={`${label} mb-3`}>Pending Posts</p>
-            {pendingPosts.length === 0 ? (
-              <div className={`flex flex-col items-center justify-center py-6 rounded-2xl border border-dashed ${isDark ? 'border-white/10' : 'border-black/10'}`}>
-                <span className="text-2xl mb-1">✅</span>
-                <p className={`text-xs ${muted}`}>All posts reviewed</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
+
+          {/* Pending posts preview */}
+          {!loading && pendingPosts.length > 0 && (
+            <div style={{ marginTop:20 }}>
+              <p style={{ fontSize:10, fontWeight:600, letterSpacing:'0.15em', textTransform:'uppercase', color:'rgba(255,255,255,0.25)', marginBottom:10 }}>Pending Posts</p>
+              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
                 {pendingPosts.map(p => (
-                  <div key={p._id} className={`flex items-center justify-between p-3 rounded-xl ${isDark ? 'bg-white/[0.02]' : 'bg-black/[0.02]'}`}>
-                    <div className="min-w-0">
-                      <p className={`text-xs font-medium truncate ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{p.creatorId?.name || 'Creator'}</p>
-                      <p className={`text-[10px] ${muted}`}>{p.platform} · {p.campaignId?.title || 'Campaign'}</p>
+                  <div key={p._id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', borderRadius:10, background:'rgba(255,255,255,0.02)' }}>
+                    <div style={{ minWidth:0 }}>
+                      <p style={{ fontSize:13, color:'rgba(255,255,255,0.7)', margin:0, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{p.creatorId?.name || 'Creator'}</p>
+                      <p style={{ fontSize:11, color:'rgba(255,255,255,0.3)', marginTop:2 }}>{p.platform} · {p.campaignId?.title || 'Campaign'}</p>
                     </div>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-yellow-500/10 text-yellow-400 font-bold ml-2 flex-shrink-0">Pending</span>
+                    <span className="badge badge-warning" style={{ marginLeft:8 }}>Pending</span>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

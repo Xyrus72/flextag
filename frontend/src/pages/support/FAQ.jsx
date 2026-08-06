@@ -18,13 +18,13 @@ const FAQ = () => {
   const filtered = faqData.filter(f => f.q.toLowerCase().includes(search.toLowerCase()) || f.a.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
+    <div className="page-root">
       <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Frequently Asked Questions</h1>
       <p className="text-zinc-500 mb-6">Find answers to common questions</p>
 
       <div className="max-w-3xl mx-auto">
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search FAQs..."
-          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all placeholder:text-zinc-600 mb-6" />
+          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all placeholder:text-zinc-600 mb-6" />
 
         <div className="space-y-3">
           {filtered.map((faq, i) => (

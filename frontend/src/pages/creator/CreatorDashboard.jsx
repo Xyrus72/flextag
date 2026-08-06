@@ -1,32 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { useTheme } from '../../context/ThemeContext'
 import { getMyStats } from '../../services/users'
 import { getOrders } from '../../services/orders'
 
 const CreatorDashboard = () => {
   const { user } = useAuth()
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
-
-  const [stats, setStats] = useState({
-    totalEarned: 0,
-    activeCampaigns: 0,
-    completedPosts: 0,
-    engagementRate: null,
-  })
-  const [recentOrders, setRecentOrders] = useState([])
+  const [stats, setStats] = useState({ totalEarned: 0, activeCampaigns: 0, completedPosts: 0, engagementRate: null })
+  const [recentOrders, setRecentOrders]   = useState([])
   const [recentActivity, setRecentActivity] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [statsData, ordersData] = await Promise.all([
-          getMyStats(),
-          getOrders({ status: 'all' }),
-        ])
+        const [statsData, ordersData] = await Promise.all([getMyStats(), getOrders({ status: 'all' })])
         setStats({
           totalEarned:     statsData.totalEarned     || 0,
           activeCampaigns: statsData.activeCampaigns || 0,
@@ -35,105 +23,88 @@ const CreatorDashboard = () => {
         })
         const orders = ordersData.orders || []
         setRecentOrders(orders.slice(0, 3))
-
-        // Build recent activity from latest orders
         setRecentActivity(orders.slice(0, 5).map(o => ({
           id: o._id,
           icon: o.status === 'delivered' ? '✅' : o.status === 'shipped' ? '🚚' : '📦',
           text: `${o.product} — ${o.status}`,
           sub:  new Date(o.createdAt).toLocaleDateString(),
         })))
-      } catch (err) {
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
+      } catch (err) { console.error(err) }
+      finally { setLoading(false) }
     }
     load()
   }, [])
 
-  const card  = `rounded-3xl p-6 transition-all duration-300 ${isDark ? 'glass-panel card-hover' : 'bg-white border border-black/5 hover:border-black/10 hover:-translate-y-0.5 shadow-sm hover:shadow-md'}`
-  const label = `text-[10px] uppercase tracking-widest font-medium ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`
-  const muted = `text-xs ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`
-
   const kpis = [
-    { label: 'Total Earned',     value: `৳${stats.totalEarned.toLocaleString()}`, icon: '💰', accent: 'text-emerald-400', sub: stats.totalEarned > 0 ? 'Lifetime cashback' : 'No earnings yet' },
-    { label: 'Active Campaigns', value: String(stats.activeCampaigns),             icon: '📢', accent: 'text-orange-400',  sub: stats.activeCampaigns > 0 ? 'In progress' : 'No active campaigns' },
-    { label: 'Completed Posts',  value: String(stats.completedPosts),              icon: '📱', accent: 'text-blue-400',    sub: stats.completedPosts > 0 ? 'Verified posts' : 'No posts submitted' },
-    { label: 'Avg Engagement',   value: stats.engagementRate ? `${stats.engagementRate}%` : '—', icon: '❤️', accent: 'text-pink-400', sub: 'Engagement rate' },
+    { label: 'Total Earned',     value: `৳${stats.totalEarned.toLocaleString()}`, icon: '💰', color: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)',  text: '#4ade80',  sub: 'Lifetime cashback' },
+    { label: 'Active Campaigns', value: String(stats.activeCampaigns),            icon: '📢', color: 'rgba(124,58,237,0.12)', border: 'rgba(124,58,237,0.25)', text: '#a78bfa', sub: 'In progress' },
+    { label: 'Completed Posts',  value: String(stats.completedPosts),             icon: '📱', color: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.25)',  text: '#67e8f9', sub: 'Verified posts' },
+    { label: 'Avg Engagement',   value: stats.engagementRate ? `${stats.engagementRate}%` : '—', icon: '❤️', color: 'rgba(236,72,153,0.12)', border: 'rgba(236,72,153,0.25)', text: '#f9a8d4', sub: 'Engagement rate' },
   ]
 
   const tierInfo = {
-    bronze:  { next: 'silver',  progress: (user?.completedCampaigns || 0) / 5  * 100, emoji: '🥉' },
-    silver:  { next: 'gold',    progress: (user?.completedCampaigns || 0) / 20 * 100, emoji: '🥈' },
-    gold:    { next: 'diamond', progress: (user?.completedCampaigns || 0) / 50 * 100, emoji: '🥇' },
-    diamond: { next: null,      progress: 100, emoji: '💎' },
+    bronze:  { next: 'Silver',  progress: (user?.completedCampaigns||0)/5*100,  emoji:'🥉' },
+    silver:  { next: 'Gold',    progress: (user?.completedCampaigns||0)/20*100, emoji:'🥈' },
+    gold:    { next: 'Diamond', progress: (user?.completedCampaigns||0)/50*100, emoji:'🥇' },
+    diamond: { next: null,      progress: 100,                                   emoji:'💎' },
   }
   const tier = tierInfo[user?.tier] || tierInfo.bronze
 
+  const panel = { background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:20, padding:24, backdropFilter:'blur(20px)' }
+
   return (
-    <div className="p-6 lg:p-10 min-h-screen">
+    <div className="page-root">
       {/* Header */}
-      <div className="mb-10">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="w-6 h-[1px] bg-orange-500" />
-          <span className={label}>Creator Dashboard</span>
-        </div>
-        <h1 className={`text-3xl lg:text-4xl font-medium tracking-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>
-          Welcome, {user?.name?.split(' ')[0]} 👋
-        </h1>
-        <p className={`text-sm font-light mt-2 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Here's your earning overview</p>
+      <div className="page-header">
+        <div className="page-label"><span>Creator Dashboard</span></div>
+        <h1 className="page-title">Welcome back, {user?.name?.split(' ')[0]} 👋</h1>
+        <p className="page-subtitle">Here's your earning overview</p>
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:16, marginBottom:32 }}>
         {kpis.map(s => (
-          <div key={s.label} className={card}>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-2xl">{s.icon}</span>
-              {loading && <div className="w-4 h-4 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />}
+          <div key={s.label} className="stat-card" style={{ background:`rgba(255,255,255,0.03)`, borderColor:`rgba(255,255,255,0.07)` }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+              <div style={{ width:44, height:44, borderRadius:12, background:s.color, border:`1px solid ${s.border}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>{s.icon}</div>
+              {loading && <div className="spinner" style={{ width:16, height:16, borderWidth:2 }} />}
             </div>
-            <p className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>{s.value}</p>
-            <p className={`${label} mt-1`}>{s.label}</p>
-            <p className={`text-[10px] mt-2 ${s.accent}`}>{s.sub}</p>
+            <p style={{ fontSize:28, fontWeight:800, color:'#fff', letterSpacing:'-0.03em', marginBottom:4 }}>{loading ? '—' : s.value}</p>
+            <p style={{ fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(255,255,255,0.3)', marginBottom:6 }}>{s.label}</p>
+            <p style={{ fontSize:12, color:s.text }}>{s.sub}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Active Orders */}
-        <div className={`lg:col-span-2 rounded-3xl p-6 ${isDark ? 'glass-panel' : 'bg-white border border-black/5 shadow-sm'}`}>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className={`text-base font-medium tracking-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>Recent Orders</h2>
-            <Link to="/creator/orders" className={`text-xs uppercase tracking-widest transition-colors ${isDark ? 'text-zinc-500 hover:text-orange-400' : 'text-zinc-400 hover:text-orange-500'} flex items-center gap-1`}>
-              View all <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr', gap:20 }} className="lg:grid-cols-3">
+        {/* Recent Orders */}
+        <div style={{ ...panel, gridColumn:'span 2' }} className="lg:col-span-2">
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+            <h2 style={{ fontSize:16, fontWeight:700, color:'#fff', margin:0 }}>Recent Orders</h2>
+            <Link to="/creator/orders" style={{ fontSize:11, color:'rgba(167,139,250,0.7)', textDecoration:'none', textTransform:'uppercase', letterSpacing:'0.1em', display:'flex', alignItems:'center', gap:4 }}>
+              View all →
             </Link>
           </div>
           {loading ? (
-            <div className="flex items-center justify-center py-14">
-              <div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
-            </div>
+            <div style={{ display:'flex', justifyContent:'center', padding:'48px 0' }}><div className="spinner" /></div>
           ) : recentOrders.length === 0 ? (
-            <div className={`flex flex-col items-center justify-center py-14 rounded-2xl border border-dashed ${isDark ? 'border-white/10' : 'border-black/10'}`}>
-              <span className="text-4xl mb-3">📭</span>
-              <p className={`text-sm font-medium ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>No orders yet</p>
-              <p className={`text-xs mt-1 mb-4 ${muted}`}>Browse the catalog to find campaigns to join</p>
-              <Link to="/creator/catalog" className="px-4 py-2 rounded-xl bg-orange-500 text-white text-xs font-medium uppercase tracking-widest hover:bg-orange-600 transition-all">
-                Browse Catalog
-              </Link>
+            <div className="empty-state">
+              <p>📭</p>
+              <p>No orders yet — browse the catalog to join campaigns</p>
+              <Link to="/creator/catalog" className="btn-primary" style={{ marginTop:16, textDecoration:'none' }}>Browse Catalog</Link>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               {recentOrders.map(o => (
-                <div key={o._id} className={`flex items-center gap-4 p-4 rounded-2xl ${isDark ? 'bg-white/[0.02] border border-white/5' : 'bg-black/[0.02] border border-black/5'}`}>
-                  <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-2xl flex-shrink-0">{o.image || '📦'}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-zinc-900'}`}>{o.product}</p>
-                    <p className={`text-xs ${muted}`}>{o.brand} · {o.orderId}</p>
+                <div key={o._id} style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px', borderRadius:14, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ width:44, height:44, borderRadius:12, background:'rgba(255,255,255,0.05)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0 }}>{o.image || '📦'}</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <p style={{ fontSize:14, fontWeight:600, color:'#fff', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', margin:0 }}>{o.product}</p>
+                    <p style={{ fontSize:12, color:'rgba(255,255,255,0.3)', marginTop:2 }}>{o.brand} · {o.orderId}</p>
                   </div>
-                  <div className="text-right">
-                    <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>৳{o.total?.toLocaleString()}</p>
-                    <p className="text-xs text-emerald-400">+৳{o.cashbackAmount?.toLocaleString()}</p>
+                  <div style={{ textAlign:'right', flexShrink:0 }}>
+                    <p style={{ fontSize:15, fontWeight:700, color:'#fff', margin:0 }}>৳{o.total?.toLocaleString()}</p>
+                    <p style={{ fontSize:12, color:'#4ade80', marginTop:2 }}>+৳{o.cashbackAmount?.toLocaleString()}</p>
                   </div>
                 </div>
               ))}
@@ -141,64 +112,43 @@ const CreatorDashboard = () => {
           )}
         </div>
 
-        {/* Right Column */}
-        <div className="space-y-4">
+        {/* Right col */}
+        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
           {/* Tier */}
-          <div className={`rounded-3xl p-6 ${isDark ? 'glass-panel' : 'bg-white border border-black/5 shadow-sm'}`}>
-            <h2 className={`text-base font-medium tracking-tight mb-4 ${isDark ? 'text-white' : 'text-zinc-900'}`}>Tier Progress</h2>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="text-3xl">{tier.emoji}</div>
+          <div style={panel}>
+            <h2 style={{ fontSize:15, fontWeight:700, color:'#fff', margin:'0 0 16px' }}>Tier Progress</h2>
+            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
+              <span style={{ fontSize:28 }}>{tier.emoji}</span>
               <div>
-                <p className={`text-sm font-medium capitalize ${isDark ? 'text-white' : 'text-zinc-900'}`}>{user?.tier || 'Bronze'} Creator</p>
-                {tier.next && <p className={muted}>Complete campaigns to level up</p>}
+                <p style={{ fontSize:14, fontWeight:700, color:'#fff', margin:0, textTransform:'capitalize' }}>{user?.tier || 'Bronze'} Creator</p>
+                {tier.next && <p style={{ fontSize:12, color:'rgba(255,255,255,0.35)', marginTop:2 }}>Leveling up to {tier.next}</p>}
               </div>
             </div>
-            <div className={`w-full h-1.5 rounded-full ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-              <div className="h-full rounded-full bg-gradient-to-r from-orange-500 to-pink-500 transition-all" style={{ width: `${Math.min(100, tier.progress)}%` }} />
+            <div style={{ width:'100%', height:6, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden' }}>
+              <div style={{ height:'100%', borderRadius:3, background:'linear-gradient(90deg,#7c3aed,#06b6d4)', width:`${Math.min(100,tier.progress)}%`, transition:'width 1s ease' }} />
             </div>
-            <div className="flex justify-between mt-2">
-              <span className={`capitalize ${muted}`}>{user?.tier || 'Bronze'}</span>
-              {tier.next && <span className={`capitalize ${muted}`}>{tier.next}</span>}
+            <div style={{ display:'flex', justifyContent:'space-between', marginTop:8 }}>
+              <span style={{ fontSize:11, color:'rgba(255,255,255,0.3)', textTransform:'capitalize' }}>{user?.tier||'Bronze'}</span>
+              {tier.next && <span style={{ fontSize:11, color:'rgba(255,255,255,0.3)' }}>{tier.next}</span>}
             </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div className={`rounded-3xl p-6 ${isDark ? 'glass-panel' : 'bg-white border border-black/5 shadow-sm'}`}>
-            <h2 className={`text-base font-medium tracking-tight mb-4 ${isDark ? 'text-white' : 'text-zinc-900'}`}>Recent Activity</h2>
-            {recentActivity.length === 0 ? (
-              <div className={`flex flex-col items-center justify-center py-8 rounded-2xl border border-dashed ${isDark ? 'border-white/10' : 'border-black/10'}`}>
-                <span className="text-3xl mb-2">🕐</span>
-                <p className={`text-xs ${muted}`}>No activity yet</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {recentActivity.map(a => (
-                  <div key={a.id} className="flex items-center gap-3">
-                    <span className="text-lg">{a.icon}</span>
-                    <div className="min-w-0">
-                      <p className={`text-xs font-medium truncate ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{a.text}</p>
-                      <p className={`text-[10px] ${muted}`}>{a.sub}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Quick Actions */}
-          <div className={`rounded-3xl p-5 ${isDark ? 'glass-panel' : 'bg-white border border-black/5 shadow-sm'}`}>
-            <h2 className={`text-base font-medium tracking-tight mb-4 ${isDark ? 'text-white' : 'text-zinc-900'}`}>Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-2">
+          <div style={panel}>
+            <h2 style={{ fontSize:15, fontWeight:700, color:'#fff', margin:'0 0 16px' }}>Quick Actions</h2>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
               {[
-                { to: '/creator/catalog',     label: 'Shop',        icon: '🛍️' },
-                { to: '/creator/submit-post', label: 'Submit Post', icon: '📱' },
-                { to: '/creator/wallet',      label: 'Wallet',      icon: '💳' },
-                { to: '/creator/leaderboard', label: 'Rankings',    icon: '🏆' },
+                { to:'/creator/catalog',     label:'Shop',      icon:'🛍️' },
+                { to:'/creator/submit-post', label:'Submit',    icon:'📱' },
+                { to:'/creator/wallet',      label:'Wallet',    icon:'💳' },
+                { to:'/creator/leaderboard', label:'Rankings',  icon:'🏆' },
               ].map(q => (
-                <Link key={q.to} to={q.to}
-                  className={`p-3 rounded-xl text-center transition-all ${isDark ? 'bg-white/[0.02] border border-white/5 hover:bg-white/[0.05]' : 'bg-black/[0.02] border border-black/5 hover:bg-black/[0.05]'}`}>
-                  <p className="text-xl mb-1">{q.icon}</p>
-                  <p className={`text-[10px] font-medium uppercase tracking-widest ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{q.label}</p>
+                <Link key={q.to} to={q.to} style={{ padding:'14px 8px', borderRadius:12, textAlign:'center', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', textDecoration:'none', transition:'all 0.2s', display:'block' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(124,58,237,0.3)'; e.currentTarget.style.background='rgba(124,58,237,0.06)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.07)'; e.currentTarget.style.background='rgba(255,255,255,0.03)' }}
+                >
+                  <p style={{ fontSize:22, marginBottom:6 }}>{q.icon}</p>
+                  <p style={{ fontSize:10, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(255,255,255,0.4)', margin:0 }}>{q.label}</p>
                 </Link>
               ))}
             </div>

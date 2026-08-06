@@ -15,11 +15,11 @@ const FinancialDashboard = () => {
   const { campaignEscrow, totalEscrow, commissionRevenue, upcomingPayouts } = data
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
+    <div className="page-root">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           <h1 className="text-2xl lg:text-3xl font-bold text-white">Financial Health Dashboard</h1>
-          <span className="px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 text-[10px] font-bold border border-orange-500/20">★ CRITICAL</span>
+          <span className="px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400 text-[10px] font-bold border border-violet-500/20">★ CRITICAL</span>
         </div>
         <p className="text-zinc-500">Real-time cashback liability and platform solvency</p>
       </div>
@@ -29,7 +29,7 @@ const FinancialDashboard = () => {
         {[
           { label: 'Total Escrow',      value: loading ? '...' : `৳${(totalEscrow || 0).toLocaleString()}`,                           icon: '⏳', color: 'from-yellow-500/15 to-amber-500/15',  border: 'border-yellow-500/20' },
           { label: 'Active Campaigns',  value: loading ? '...' : String(campaignEscrow.length),                                          icon: '📢', color: 'from-blue-500/15 to-cyan-500/15',     border: 'border-blue-500/20' },
-          { label: 'Upcoming Payouts',  value: loading ? '...' : String(upcomingPayouts.reduce((s, u) => s + u.payouts, 0)),             icon: '💸', color: 'from-orange-500/15 to-pink-500/15',   border: 'border-orange-500/20' },
+          { label: 'Upcoming Payouts',  value: loading ? '...' : String(upcomingPayouts.reduce((s, u) => s + u.payouts, 0)),             icon: '💸', color: 'from-violet-500/15 to-cyan-500/15',   border: 'border-violet-500/20' },
           { label: 'Commission Income', value: loading ? '...' : `৳${(commissionRevenue || 0).toLocaleString()}`,                       icon: '📊', color: 'from-emerald-500/15 to-teal-500/15', border: 'border-emerald-500/20' },
         ].map(s => (
           <div key={s.label} className={`p-5 rounded-2xl bg-gradient-to-br ${s.color} border ${s.border}`}>
@@ -45,7 +45,7 @@ const FinancialDashboard = () => {
         <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
           <h2 className="text-lg font-bold text-white mb-5">Cashback Liability by Campaign</h2>
           {loading ? (
-            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" /></div>
+            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
           ) : campaignEscrow.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 rounded-xl border border-dashed border-white/10">
               <p className="text-3xl mb-2">✅</p>
@@ -84,7 +84,7 @@ const FinancialDashboard = () => {
           <h2 className="text-lg font-bold text-white">Solvency Status</h2>
 
           {loading ? (
-            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" /></div>
+            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
           ) : (
             <>
               <div className={`p-5 rounded-2xl ${commissionRevenue >= totalEscrow ? 'bg-emerald-500/5 border border-emerald-500/15' : 'bg-red-500/5 border border-red-500/15'}`}>
@@ -112,7 +112,7 @@ const FinancialDashboard = () => {
                     {upcomingPayouts.slice(0, 4).map((w, i) => (
                       <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02]">
                         <span className="text-sm text-zinc-300">Week {w._id?.week || i + 1}</span>
-                        <p className="text-sm font-bold text-orange-400">{w.payouts} payouts pending</p>
+                        <p className="text-sm font-bold text-violet-400">{w.payouts} payouts pending</p>
                       </div>
                     ))}
                   </div>

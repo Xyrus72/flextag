@@ -3,19 +3,19 @@ import { getLeaderboard } from '../../services/users'
 import { useAuth } from '../../context/AuthContext'
 
 const tierGrad = {
-  diamond: 'from-cyan-300 to-blue-400',
-  gold:    'from-yellow-400 to-amber-500',
-  silver:  'from-gray-300 to-gray-500',
-  bronze:  'from-amber-700 to-amber-900',
+  diamond: 'linear-gradient(135deg,#a5f3fc,#60a5fa)',
+  gold:    'linear-gradient(135deg,#fde68a,#f59e0b)',
+  silver:  'linear-gradient(135deg,#d1d5db,#9ca3af)',
+  bronze:  'linear-gradient(135deg,#d97706,#92400e)',
 }
 
 const badges = [
-  { emoji: '🏆', name: 'Top Performer',  desc: 'Ranked #1 on the monthly leaderboard',        color: 'from-yellow-500/15 to-amber-500/15 border-yellow-500/20' },
-  { emoji: '⚡', name: 'Fast Poster',    desc: 'Submitted post within 24h of delivery',        color: 'from-blue-500/15 to-cyan-500/15 border-blue-500/20' },
-  { emoji: '🌟', name: 'Quality Creator',desc: 'Avg engagement rate above 5%',                 color: 'from-violet-500/15 to-purple-500/15 border-violet-500/20' },
-  { emoji: '🥇', name: 'Gold Tier',      desc: 'Achieved Gold tier status',                    color: 'from-yellow-500/15 to-orange-500/15 border-yellow-500/20' },
-  { emoji: '💎', name: 'Diamond Elite',  desc: 'Achieved Diamond tier status',                 color: 'from-cyan-500/15 to-blue-500/15 border-cyan-500/20' },
-  { emoji: '🔥', name: 'Streak Master',  desc: '10+ consecutive successful campaigns',          color: 'from-orange-500/15 to-red-500/15 border-orange-500/20' },
+  { emoji:'🏆', name:'Top Performer',   desc:'Ranked #1 on the monthly leaderboard',     color:'rgba(245,158,11,0.12)',  border:'rgba(245,158,11,0.25)' },
+  { emoji:'⚡', name:'Fast Poster',     desc:'Submitted post within 24h of delivery',    color:'rgba(6,182,212,0.12)',   border:'rgba(6,182,212,0.25)'  },
+  { emoji:'🌟', name:'Quality Creator', desc:'Avg engagement rate above 5%',              color:'rgba(124,58,237,0.12)', border:'rgba(124,58,237,0.25)' },
+  { emoji:'🥇', name:'Gold Tier',       desc:'Achieved Gold tier status',                color:'rgba(245,158,11,0.12)', border:'rgba(245,158,11,0.25)' },
+  { emoji:'💎', name:'Diamond Elite',   desc:'Achieved Diamond tier status',             color:'rgba(6,182,212,0.12)',  border:'rgba(6,182,212,0.25)'  },
+  { emoji:'🔥', name:'Streak Master',   desc:'10+ consecutive successful campaigns',      color:'rgba(239,68,68,0.12)',  border:'rgba(239,68,68,0.25)'  },
 ]
 
 const Leaderboard = () => {
@@ -36,92 +36,105 @@ const Leaderboard = () => {
   const myRank = ranked.findIndex(c => c._id === user?._id) + 1
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
-      <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Leaderboard & Badges</h1>
-      <p className="text-zinc-500 mb-6">Compete, earn badges, and unlock premium campaigns</p>
+    <div className="page-root">
+      <div className="page-header">
+        <div className="page-label"><span>Community</span></div>
+        <h1 className="page-title">Leaderboard & Badges</h1>
+        <p className="page-subtitle">Compete, earn badges, and unlock premium campaigns</p>
+      </div>
 
       {myRank > 0 && (
-        <div className="p-4 rounded-2xl bg-orange-500/5 border border-orange-500/15 mb-6 flex items-center gap-3">
-          <span className="text-2xl">🏅</span>
+        <div style={{ padding:'16px 20px', borderRadius:16, background:'rgba(124,58,237,0.08)', border:'1px solid rgba(124,58,237,0.2)', marginBottom:24, display:'flex', alignItems:'center', gap:14 }}>
+          <span style={{ fontSize:28 }}>🏅</span>
           <div>
-            <p className="text-sm font-semibold text-orange-400">Your Current Rank: #{myRank}</p>
-            <p className="text-xs text-zinc-500 mt-0.5">Keep completing campaigns to climb higher!</p>
+            <p style={{ fontSize:14, fontWeight:700, color:'#a78bfa', margin:0 }}>Your Current Rank: #{myRank}</p>
+            <p style={{ fontSize:12, color:'rgba(255,255,255,0.35)', marginTop:4 }}>Keep completing campaigns to climb higher!</p>
           </div>
         </div>
       )}
 
-      <div className="flex bg-white/5 rounded-xl p-1 mb-6 w-fit">
-        {[{ id: 'leaderboard', label: '🏅 Leaderboard' }, { id: 'badges', label: '🎖️ Badges' }].map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${tab === t.id ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}>
-            {t.label}
-          </button>
+      {/* Tabs */}
+      <div style={{ display:'flex', gap:4, background:'rgba(255,255,255,0.04)', borderRadius:12, padding:4, width:'fit-content', marginBottom:24 }}>
+        {[{ id:'leaderboard', label:'🏅 Leaderboard' }, { id:'badges', label:'🎖️ Badges' }].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={{
+            padding:'9px 20px', borderRadius:10, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all 0.2s', border:'none',
+            background: tab === t.id ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'transparent',
+            color: tab === t.id ? '#fff' : 'rgba(255,255,255,0.4)',
+            boxShadow: tab === t.id ? '0 0 20px rgba(124,58,237,0.3)' : 'none',
+          }}>{t.label}</button>
         ))}
       </div>
 
       {tab === 'leaderboard' ? (
         loading ? (
-          <div className="flex justify-center py-20">
-            <div className="w-10 h-10 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
-          </div>
+          <div style={{ display:'flex', justifyContent:'center', padding:'80px 0' }}><div className="spinner" /></div>
         ) : creators.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-4xl mb-3">🏆</p>
-            <p className="text-lg text-zinc-400">No creators yet</p>
-            <p className="text-sm text-zinc-600">Be the first to complete campaigns!</p>
-          </div>
+          <div className="empty-state"><p>🏆</p><p>No creators yet — be the first to complete campaigns!</p></div>
         ) : (
-          <div className="rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden">
-            {/* Top 3 podium */}
+          <div className="data-table">
+            {/* Top 3 Podium */}
             {top3.length >= 3 && (
-              <div className="grid grid-cols-3 gap-4 p-6 border-b border-white/5">
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:16, padding:24, borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
                 {[ranked[1], ranked[0], ranked[2]].map((c, i) => {
                   const pos = [2, 1, 3][i]
                   if (!c) return <div key={i} />
                   return (
-                    <div key={c._id} className={`text-center ${pos === 1 ? 'order-2' : pos === 2 ? 'order-1' : 'order-3'}`}>
-                      <div className={`w-14 h-14 mx-auto rounded-full bg-gradient-to-br ${tierGrad[c.tier] || tierGrad.bronze} flex items-center justify-center text-white text-lg font-bold mb-2 ${pos === 1 ? 'ring-2 ring-yellow-400/50' : ''}`}>
-                        {c.name[0]}
-                      </div>
-                      <p className="text-sm font-bold text-white">{c.name.split(' ')[0]}</p>
-                      <p className="text-xs text-zinc-500">{c.instagramHandle || '@' + c.name.split(' ')[0].toLowerCase()}</p>
-                      <p className="text-lg font-extrabold mt-1 bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent">#{pos}</p>
+                    <div key={c._id} style={{ textAlign:'center', order: pos === 1 ? 2 : pos === 2 ? 1 : 3 }}>
+                      <div style={{
+                        width: pos===1?56:44, height: pos===1?56:44, margin:'0 auto', borderRadius:'50%',
+                        background: tierGrad[c.tier] || tierGrad.bronze,
+                        display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:16, fontWeight:800,
+                        boxShadow: pos===1 ? '0 0 24px rgba(245,158,11,0.4)' : 'none',
+                        border: pos===1 ? '2px solid rgba(245,158,11,0.5)' : '1px solid rgba(255,255,255,0.1)', marginBottom:8,
+                      }}>{c.name[0]}</div>
+                      <p style={{ fontSize:13, fontWeight:700, color:'#fff', margin:'0 0 2px' }}>{c.name.split(' ')[0]}</p>
+                      <p style={{ fontSize:11, color:'rgba(255,255,255,0.35)', margin:0 }}>{c.instagramHandle || '@' + c.name.split(' ')[0].toLowerCase()}</p>
+                      <p style={{ fontSize:20, fontWeight:900, background:'linear-gradient(135deg,#7c3aed,#06b6d4)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text', margin:'4px 0 0' }}>#{pos}</p>
                     </div>
                   )
                 })}
               </div>
             )}
-
-            {/* Full list */}
-            <div className="divide-y divide-white/5">
-              {ranked.map(c => (
-                <div key={c._id} className={`flex items-center gap-4 px-6 py-4 hover:bg-white/[0.02] transition-all ${c._id === user?._id ? 'bg-orange-500/5' : ''}`}>
-                  <span className={`w-8 text-center text-sm font-bold ${c.rank <= 3 ? 'bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent' : 'text-zinc-600'}`}>#{c.rank}</span>
-                  <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${tierGrad[c.tier] || tierGrad.bronze} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}>{c.name[0]}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">
-                      {c.name} {c._id === user?._id && <span className="text-orange-400 text-xs">(You)</span>}
-                    </p>
-                    <p className="text-xs text-zinc-500">
-                      {c.instagramHandle || '@' + c.name.split(' ')[0].toLowerCase()} · {(c.followersCount || 0).toLocaleString()} followers
-                    </p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-bold text-white">{c.completedCampaigns || 0} campaigns</p>
-                    <p className="text-xs text-emerald-400">৳{(c.totalEarnings || 0).toLocaleString()}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <table style={{ width:'100%', borderCollapse:'collapse' }}>
+              <thead>
+                <tr>
+                  <th>Rank</th><th>Creator</th><th>Tier</th><th style={{ textAlign:'right' }}>Campaigns</th><th style={{ textAlign:'right' }}>Earnings</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ranked.map(c => (
+                  <tr key={c._id} style={{ background: c._id === user?._id ? 'rgba(124,58,237,0.05)' : '' }}>
+                    <td>
+                      <span style={{ fontWeight:800, fontSize:14, background: c.rank<=3 ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : '', WebkitBackgroundClip: c.rank<=3 ? 'text' : '', WebkitTextFillColor: c.rank<=3 ? 'transparent' : 'rgba(255,255,255,0.3)', backgroundClip: c.rank<=3 ? 'text' : '' }}>#{c.rank}</span>
+                    </td>
+                    <td>
+                      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                        <div style={{ width:34, height:34, borderRadius:'50%', background: tierGrad[c.tier]||tierGrad.bronze, display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:800, fontSize:13, flexShrink:0 }}>{c.name[0]}</div>
+                        <div>
+                          <p style={{ fontSize:13, fontWeight:600, color:'#fff', margin:0 }}>{c.name} {c._id===user?._id && <span style={{ color:'#a78bfa', fontSize:11 }}>(You)</span>}</p>
+                          <p style={{ fontSize:11, color:'rgba(255,255,255,0.3)', margin:0 }}>{c.instagramHandle || '@'+c.name.split(' ')[0].toLowerCase()}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span className="badge badge-info" style={{ textTransform:'capitalize' }}>{c.tier||'Bronze'}</span></td>
+                    <td style={{ textAlign:'right', fontWeight:700, color:'#fff' }}>{c.completedCampaigns||0}</td>
+                    <td style={{ textAlign:'right', fontWeight:700, color:'#4ade80' }}>৳{(c.totalEarnings||0).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))', gap:16 }}>
           {badges.map(b => (
-            <div key={b.name} className={`p-5 rounded-2xl bg-gradient-to-br ${b.color} border hover:-translate-y-1 transition-all`}>
-              <span className="text-4xl mb-3 block">{b.emoji}</span>
-              <h3 className="text-sm font-bold text-white mb-1">{b.name}</h3>
-              <p className="text-xs text-zinc-400">{b.desc}</p>
+            <div key={b.name} style={{ padding:24, borderRadius:18, background:b.color, border:`1px solid ${b.border}`, transition:'all 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow='0 12px 32px rgba(0,0,0,0.3)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='' }}
+            >
+              <span style={{ fontSize:36, display:'block', marginBottom:14 }}>{b.emoji}</span>
+              <h3 style={{ fontSize:14, fontWeight:700, color:'#fff', margin:'0 0 6px' }}>{b.name}</h3>
+              <p style={{ fontSize:12, color:'rgba(255,255,255,0.4)', margin:0, lineHeight:1.6 }}>{b.desc}</p>
             </div>
           ))}
         </div>

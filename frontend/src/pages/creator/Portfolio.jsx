@@ -35,11 +35,11 @@ const Portfolio = () => {
   }
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
+    <div className="page-root">
       <h1 className="text-2xl lg:text-3xl font-bold text-white mb-8">Creator Portfolio</h1>
 
       {/* Public profile card */}
-      <div className="rounded-2xl bg-gradient-to-br from-orange-500/10 to-pink-500/10 border border-orange-500/15 p-8 mb-8">
+      <div className="rounded-2xl bg-gradient-to-br from-violet-500/10 to-cyan-500/10 border border-violet-500/15 p-8 mb-8">
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${tierBg[user?.tier] || tierBg.bronze} flex items-center justify-center text-white text-4xl font-bold shadow-xl`}>
             {user?.name?.[0] || 'C'}
@@ -74,7 +74,7 @@ const Portfolio = () => {
       <h2 className="text-lg font-bold text-white mb-4">Approved Posts</h2>
       {loading ? (
         <div className="flex justify-center py-10">
-          <div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+          <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
         </div>
       ) : posts.length === 0 ? (
         <div className="text-center py-16 rounded-2xl border border-dashed border-white/10">
@@ -85,7 +85,7 @@ const Portfolio = () => {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {posts.map(p => (
-            <div key={p._id} className="rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden hover:border-orange-500/15 hover:-translate-y-1 transition-all">
+            <div key={p._id} className="rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden hover:border-violet-500/15 hover:-translate-y-1 transition-all">
               <div className="aspect-video bg-white/[0.02] flex items-center justify-center text-5xl">📱</div>
               <div className="p-4">
                 <p className="text-xs text-zinc-500 mb-1">{p.campaignId?.brand || p.campaignId?.title || 'Campaign'}</p>

@@ -80,7 +80,7 @@ const CampaignTracker = () => {
     if (hours === null) return 'text-zinc-400'
     if (hours <= 6)  return 'text-red-400'
     if (hours <= 24) return 'text-yellow-400'
-    if (hours <= 48) return 'text-orange-400'
+    if (hours <= 48) return 'text-violet-400'
     return 'text-emerald-400'
   }
 
@@ -88,7 +88,7 @@ const CampaignTracker = () => {
     if (hours === null) return 'bg-white/[0.03] border-white/5'
     if (hours <= 6)  return 'bg-red-500/10 border-red-500/20'
     if (hours <= 24) return 'bg-yellow-500/10 border-yellow-500/20'
-    if (hours <= 48) return 'bg-orange-500/10 border-orange-500/20'
+    if (hours <= 48) return 'bg-violet-500/10 border-violet-500/20'
     return 'bg-white/[0.03] border-white/5'
   }
 
@@ -106,12 +106,11 @@ const CampaignTracker = () => {
   }
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">Campaign Tracker</h1>
-        </div>
-        <p className="text-zinc-500">Track your orders and posting deadlines</p>
+    <div className="page-root">
+      <div className="page-header">
+        <div className="page-label"><span>Tracking</span></div>
+        <h1 className="page-title">Campaign Tracker</h1>
+        <p className="page-subtitle">Track your orders and posting deadlines in real-time</p>
       </div>
 
       <div className="p-4 rounded-2xl bg-violet-500/5 border border-violet-500/15 mb-6 flex items-start gap-3">
@@ -124,7 +123,7 @@ const CampaignTracker = () => {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+          <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
         </div>
       ) : campaigns.length === 0 ? (
         <div className="text-center py-20">

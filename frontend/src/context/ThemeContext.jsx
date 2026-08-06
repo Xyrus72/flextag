@@ -1,34 +1,21 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect } from 'react'
 
+// FlexTag is permanently dark-themed. ThemeContext kept for import compatibility.
 const ThemeContext = createContext({ theme: 'dark', toggleTheme: () => {} })
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => localStorage.getItem('flextag-theme') || 'dark')
-
   useEffect(() => {
+    // Always enforce dark class and dark background
     const root = document.documentElement
-    const body = document.body
-
-    // Remove both classes then add the current one
-    root.classList.remove('dark', 'light')
-    root.classList.add(theme)
-
-    // Update body background for instant feel
-    if (theme === 'dark') {
-      body.style.backgroundColor = '#000000'
-      body.style.color = '#d4d4d8'
-    } else {
-      body.style.backgroundColor = '#fafafa'
-      body.style.color = '#52525b'
-    }
-
-    localStorage.setItem('flextag-theme', theme)
-  }, [theme])
-
-  const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark')
+    root.classList.remove('light')
+    root.classList.add('dark')
+    document.body.style.backgroundColor = '#050816'
+    document.body.style.color = '#d4d4d8'
+    localStorage.setItem('flextag-theme', 'dark')
+  }, [])
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme: 'dark', toggleTheme: () => {} }}>
       {children}
     </ThemeContext.Provider>
   )

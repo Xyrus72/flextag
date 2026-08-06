@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 220" width="480" height="220">
+  <rect width="480" height="220" fill="white"/>
+
+  <!-- Nagad circular mark: 4 arc segments forming a swirl -->
+  <!-- Outer ring segment 1 (top-left, orange) -->
+  <path d="M110,110 m-70,0 a70,70 0 0,1 49.5,-49.5 l10,17.3 a50,50 0 0,0 -35.3,35.3 z" fill="#FF8C00"/>
+  <!-- Outer ring segment 2 (top-right, red-orange) -->
+  <path d="M110,110 m0,-70 a70,70 0 0,1 49.5,49.5 l-17.3,10 a50,50 0 0,0 -35.3,-35.3 z" fill="#E53935"/>
+  <!-- Outer ring segment 3 (bottom-right, dark red) -->
+  <path d="M110,110 m70,0 a70,70 0 0,1 -49.5,49.5 l-10,-17.3 a50,50 0 0,0 35.3,-35.3 z" fill="#C62828"/>
+  <!-- Outer ring segment 4 (bottom-left, orange-red) -->
+  <path d="M110,110 m0,70 a70,70 0 0,1 -49.5,-49.5 l17.3,-10 a50,50 0 0,0 35.3,35.3 z" fill="#EF6C00"/>
+
+  <!-- Inner geometric block top (red) -->
+  <rect x="96" y="42" width="28" height="16" rx="3" fill="#E53935" transform="rotate(-10,110,50)"/>
+  <!-- Inner geometric block right -->
+  <rect x="162" y="96" width="16" height="28" rx="3" fill="#C62828" transform="rotate(10,170,110)"/>
+
+  <!-- White center circle -->
+  <circle cx="110" cy="110" r="36" fill="white"/>
+
+  <!-- Inner swirl dot -->
+  <circle cx="110" cy="110" r="14" fill="#E53935"/>
+  <circle cx="110" cy="110" r="7" fill="white"/>
+
+  <!-- "নগদ" Bengali text in bold red -->
+  <text x="210" y="148" font-family="'Noto Sans Bengali', Arial, sans-serif" font-size="88" font-weight="900" fill="#E53935">নগদ</text>
+</svg>

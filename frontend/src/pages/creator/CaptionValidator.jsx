@@ -37,14 +37,15 @@ const CaptionValidator = () => {
   }
 
   return (
-    <div className="p-4 lg:p-8 min-h-screen">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">Caption Validator</h1>
-          <span className="px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 text-[10px] font-bold border border-orange-500/20">★ NEW</span>
+    <div className="page-root">
+        <div className="page-header">
+          <div className="page-label"><span>AI Tools</span></div>
+          <h1 className="page-title" style={{ display:'flex', alignItems:'center', gap:12 }}>
+            Caption Validator
+            <span style={{ padding:'3px 10px', borderRadius:100, background:'rgba(124,58,237,0.15)', color:'#a78bfa', fontSize:11, fontWeight:700, border:'1px solid rgba(124,58,237,0.3)', letterSpacing:'0.1em' }}>★ AI</span>
+          </h1>
+          <p className="page-subtitle">Check your caption before posting — avoid rejections</p>
         </div>
-        <p className="text-zinc-500">Check your caption before posting — avoid rejections</p>
-      </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Input */}
@@ -52,7 +53,7 @@ const CaptionValidator = () => {
           <div className="mb-4">
             <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Campaign</label>
             <select value={selectedCampaign} onChange={e => { setSelectedCampaign(e.target.value); setResult(null) }}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 outline-none">
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none">
               {Object.entries(campaigns).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}
             </select>
           </div>
@@ -61,13 +62,12 @@ const CaptionValidator = () => {
             <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Your Caption</label>
             <textarea value={caption} onChange={e => { setCaption(e.target.value); setResult(null) }} rows={8}
               placeholder="Paste your draft caption here..."
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all placeholder:text-zinc-600 resize-none" />
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all placeholder:text-zinc-600 resize-none" />
             <p className="text-xs text-zinc-600 mt-1">{caption.length} characters</p>
           </div>
 
-          <button onClick={validateCaption} disabled={!caption || checking}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all disabled:opacity-30">
-            {checking ? 'Checking...' : '✓ Validate Caption'}
+          <button onClick={validateCaption} disabled={!caption || checking} className="btn-primary" style={{ width:'100%', padding:14 }}>
+            {checking ? 'Checking…' : '✓ Validate Caption'}
           </button>
         </div>
 
@@ -78,7 +78,7 @@ const CaptionValidator = () => {
             <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Campaign Requirements</h3>
             <div className="space-y-2">
               {campaigns[selectedCampaign].hashtags.map(h => (
-                <div key={h} className="flex items-center gap-2 text-sm text-zinc-400"><span className="text-orange-400">#</span>{h}</div>
+                <div key={h} className="flex items-center gap-2 text-sm text-zinc-400"><span className="text-violet-400">#</span>{h}</div>
               ))}
               {campaigns[selectedCampaign].handles.map(h => (
                 <div key={h} className="flex items-center gap-2 text-sm text-zinc-400"><span className="text-blue-400">@</span>{h}</div>

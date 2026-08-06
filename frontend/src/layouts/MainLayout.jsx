@@ -14,9 +14,9 @@ const MainLayout = () => {
 
       {/* Ambient glows — only on non-landing pages (landing manages its own) */}
       {!isLanding && (
-        <>
-          <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] glow-orange rounded-full pointer-events-none blur-3xl z-0 opacity-40" />
-          <div className="fixed bottom-[-20%] right-[-10%] w-[50%] h-[50%] glow-blue rounded-full pointer-events-none blur-3xl z-0 opacity-40" />
+      <>
+          <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full pointer-events-none blur-3xl z-0 opacity-25" style={{ background:'radial-gradient(circle,rgba(124,58,237,0.5) 0%,transparent 70%)' }} />
+          <div className="fixed bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full pointer-events-none blur-3xl z-0 opacity-25" style={{ background:'radial-gradient(circle,rgba(6,182,212,0.4) 0%,transparent 70%)' }} />
         </>
       )}
 
@@ -26,7 +26,8 @@ const MainLayout = () => {
         <Outlet />
       </main>
 
-      <Footer />
+      {/* Hide global footer on landing — it has its own built-in footer */}
+      {!isLanding && <Footer />}
     </div>
   )
 }

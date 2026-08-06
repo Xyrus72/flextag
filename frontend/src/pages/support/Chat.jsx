@@ -58,7 +58,7 @@ const Chat = () => {
               <div className={`max-w-[75%] ${msg.sender === 'user' ? 'order-1' : ''}`}>
                 <div className={`px-4 py-3 rounded-2xl text-sm ${
                   msg.sender === 'user'
-                    ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white rounded-br-md'
+                    ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white rounded-br-md'
                     : 'bg-white/5 text-zinc-300 rounded-bl-md'
                 }`}>
                   {msg.text}
@@ -87,9 +87,9 @@ const Chat = () => {
             <input value={input} onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendMessage()}
               placeholder="Type your message..."
-              className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500 outline-none placeholder:text-zinc-600" />
+              className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" />
             <button onClick={sendMessage}
-              className="px-5 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all">
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 text-white font-bold shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>
           </div>
