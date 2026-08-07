@@ -1,11 +1,42 @@
 const express  = require('express')
 const router   = express.Router()
+const http     = require('http')
 const User     = require('../models/User')
 const Campaign = require('../models/Campaign')
 const Order    = require('../models/Order')
 const Post     = require('../models/Post')
+const Product  = require('../models/Product')
 const Transaction = require('../models/Transaction')
 const { requireAuth, requireRole } = require('../middleware/auth')
+
+// ─── Helper: proxy a request to the Python bot ──────────────────────────────
+function proxyToPythonBot(payload) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify(payload)
+    const options = {
+      hostname: '127.0.0.1',
+      port: 8000,
+      path: '/scrape',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    }
+    const req = http.request(options, (res) => {
+      let data = ''
+      res.on('data', chunk => (data += chunk))
+      res.on('end', () => {
+        try { resolve({ status: res.statusCode, body: JSON.parse(data) }) }
+        catch { resolve({ status: res.statusCode, body: { error: 'Bad response from bot' } }) }
+      })
+    })
+    req.on('error', err => reject(err))
+    req.setTimeout(30000, () => { req.destroy(); reject(new Error('Bot request timed out')) })
+    req.write(body)
+    req.end()
+  })
+}
 
 // ── GET /api/admin/stats — platform-wide KPIs ─────────────────────────────
 router.get('/stats', requireAuth, requireRole('admin'), async (req, res) => {
@@ -177,6 +208,85 @@ router.get('/financial', requireAuth, requireRole('admin'), async (req, res) => 
   } catch (err) {
     console.error('[admin financial]', err)
     res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── GET /api/admin/products — list products with optional status filter ───────
+router.get('/products', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { status } = req.query
+    const filter = status ? { status } : {}
+    const products = await Product.find(filter)
+      .populate('brandId', 'name companyName email')
+      .sort({ createdAt: -1 })
+    res.json({ products })
+  } catch (err) {
+    console.error('[admin products GET]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── PUT /api/admin/products/:id/approve ───────────────────────────────────────
+router.put('/products/:id/approve', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+    if (!product) return res.status(404).json({ message: 'Product not found.' })
+    product.status = 'approved'
+    product.rejectionReason = ''
+    await product.save()
+    res.json({ product })
+  } catch (err) {
+    console.error('[admin products approve]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── PUT /api/admin/products/:id/reject ────────────────────────────────────────
+router.put('/products/:id/reject', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+    if (!product) return res.status(404).json({ message: 'Product not found.' })
+    product.status = 'rejected'
+    product.rejectionReason = req.body.reason || 'Does not meet listing requirements.'
+    await product.save()
+    res.json({ product })
+  } catch (err) {
+    console.error('[admin products reject]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── PUT /api/admin/creators/:id/ig-verify — mark creator IG as verified ─────
+router.put('/creators/:id/ig-verify', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { igVerified } = req.body
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { igVerified: !!igVerified },
+      { new: true }
+    ).select('-password')
+    if (!user) return res.status(404).json({ message: 'Creator not found.' })
+    res.json({ user, message: igVerified ? 'Instagram identity verified.' : 'Instagram verification revoked.' })
+  } catch (err) {
+    console.error('[admin ig-verify]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── POST /api/admin/instagram-lookup — proxy scrape to Python bot ─────────
+router.post('/instagram-lookup', requireAuth, requireRole('admin'), async (req, res) => {
+  const { username, max_posts = 10 } = req.body
+  if (!username) return res.status(400).json({ error: 'Username is required.' })
+
+  try {
+    const result = await proxyToPythonBot({ username, max_posts })
+    return res.status(result.status).json(result.body)
+  } catch (err) {
+    console.error('[admin instagram-lookup]', err.message)
+    if (err.message.includes('timed out')) {
+      return res.status(504).json({ error: 'Scraper timed out. Make sure bot/server.py is running on port 8000.' })
+    }
+    return res.status(503).json({ error: 'Could not reach scraper bot. Make sure bot/server.py is running on port 8000.' })
   }
 })
 

@@ -153,7 +153,7 @@ router.put('/:id', requireAuth, async (req, res) => {
       'name', 'phone', 'instagramHandle', 'tiktokHandle', 'followersCount',
       'engagementRate', 'companyName', 'website', 'productCategory', 'avatar',
       // admin only
-      'isVerified', 'tier', 'role',
+      'isVerified', 'igVerified', 'tier', 'role',
     ]
 
     const user = await User.findById(req.params.id)

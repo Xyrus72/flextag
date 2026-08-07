@@ -3,11 +3,11 @@ const router  = express.Router()
 const Product = require('../models/Product')
 const { requireAuth, requireRole } = require('../middleware/auth')
 
-// ── GET /api/products — public catalog ────────────────────────────────────
+// ── GET /api/products — approved catalog (creators / public) ──────────────────
 router.get('/', async (req, res) => {
   try {
     const { category, q, sort, brandId } = req.query
-    const filter = { isActive: true }
+    const filter = { isActive: true, status: 'approved' }
     if (category && category !== 'All') filter.category = category
     if (brandId)  filter.brandId = brandId
     if (q)        filter.$or = [
@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
     ]
 
     let query = Product.find(filter)
-    if (sort === 'cashback')   query = query.sort({ cashbackRate: -1 })
+    if (sort === 'cashback')        query = query.sort({ cashbackRate: -1 })
     else if (sort === 'price_low')  query = query.sort({ price: 1 })
     else if (sort === 'price_high') query = query.sort({ price: -1 })
     else if (sort === 'rating')     query = query.sort({ rating: -1 })
@@ -30,7 +30,18 @@ router.get('/', async (req, res) => {
   }
 })
 
-// ── GET /api/products/:id ──────────────────────────────────────────────────
+// ── GET /api/products/my — brand sees their own products (all statuses) ───────
+router.get('/my', requireAuth, requireRole('brand', 'admin'), async (req, res) => {
+  try {
+    const products = await Product.find({ brandId: req.user._id }).sort({ createdAt: -1 })
+    res.json({ products })
+  } catch (err) {
+    console.error('[products GET /my]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── GET /api/products/:id ──────────────────────────────────────────────────────
 router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
@@ -41,21 +52,24 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// ── POST /api/products — brand creates product ─────────────────────────────
+// ── POST /api/products — brand submits a product (starts as pending) ──────────
 router.post('/', requireAuth, requireRole('brand', 'admin'), async (req, res) => {
   try {
     const { name, price, cashbackRate, category, image, description, stock } = req.body
     if (!name || !price || !cashbackRate || !category) {
-      return res.status(400).json({ message: 'name, price, cashbackRate and category required.' })
+      return res.status(400).json({ message: 'name, price, cashbackRate and category are required.' })
     }
     const product = await Product.create({
-      name, price: Number(price),
+      name,
+      price:        Number(price),
       cashbackRate: Number(cashbackRate),
-      category, image: image || '📦',
-      description: description || '',
-      stock: Number(stock) || 0,
-      brand:   req.user.companyName || req.user.name,
-      brandId: req.user._id,
+      category,
+      image:        image || '',
+      description:  description || '',
+      stock:        Number(stock) || 0,
+      brand:        req.user.companyName || req.user.name,
+      brandId:      req.user._id,
+      status:       'pending',  // always starts pending
     })
     res.status(201).json({ product })
   } catch (err) {
@@ -64,7 +78,7 @@ router.post('/', requireAuth, requireRole('brand', 'admin'), async (req, res) =>
   }
 })
 
-// ── PUT /api/products/:id ──────────────────────────────────────────────────
+// ── PUT /api/products/:id ──────────────────────────────────────────────────────
 router.put('/:id', requireAuth, requireRole('brand', 'admin'), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)

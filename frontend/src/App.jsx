@@ -38,6 +38,8 @@ import OrderFulfillment from './pages/brand/OrderFulfillment'
 import Analytics from './pages/brand/Analytics'
 import InviteCampaign from './pages/brand/InviteCampaign'
 import BrandRatings from './pages/brand/BrandRatings'
+import PostProduct from './pages/brand/PostProduct'
+import MyProducts from './pages/brand/MyProducts'
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -48,6 +50,8 @@ import CommissionSettings from './pages/admin/CommissionSettings'
 import FinancialDashboard from './pages/admin/FinancialDashboard'
 import PlatformAnalytics from './pages/admin/PlatformAnalytics'
 import PostReview from './pages/admin/PostReview'
+import ProductApproval from './pages/admin/ProductApproval'
+import CreatorVerification from './pages/admin/CreatorVerification'
 
 // Support Pages
 import FAQ from './pages/support/FAQ'
@@ -95,6 +99,8 @@ const AppRoutes = () => (
     {/* ── Brand Routes ────────────────────────── */}
     <Route element={<ProtectedRoute allowedRoles={['brand']}><BrandLayout /></ProtectedRoute>}>
       <Route path="/brand" element={<BrandDashboard />} />
+      <Route path="/brand/post-product" element={<PostProduct />} />
+      <Route path="/brand/my-products" element={<MyProducts />} />
       <Route path="/brand/campaign-builder" element={<CampaignBuilder />} />
       <Route path="/brand/orders" element={<OrderFulfillment />} />
       <Route path="/brand/analytics" element={<Analytics />} />
@@ -106,6 +112,7 @@ const AppRoutes = () => (
     {/* ── Admin Routes ────────────────────────── */}
     <Route element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout /></ProtectedRoute>}>
       <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/admin/product-approval" element={<ProductApproval />} />
       <Route path="/admin/brand-verification" element={<BrandVerification />} />
       <Route path="/admin/categories" element={<Categories />} />
       <Route path="/admin/disputes" element={<DisputePortal />} />
@@ -113,6 +120,7 @@ const AppRoutes = () => (
       <Route path="/admin/financial" element={<FinancialDashboard />} />
       <Route path="/admin/analytics" element={<PlatformAnalytics />} />
       <Route path="/admin/post-review" element={<PostReview />} />
+      <Route path="/admin/creator-verification" element={<CreatorVerification />} />
     </Route>
 
     {/* ── Catch-all ───────────────────────────── */}

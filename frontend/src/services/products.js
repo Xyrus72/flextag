@@ -11,3 +11,6 @@ export const createProduct = (data) =>
 
 export const updateProduct = (id, data) =>
   api.put(`/api/products/${id}`, data).then(r => r.data)
+
+export const getMyProducts = () =>
+  api.get('/api/products/my').then(r => r.data)

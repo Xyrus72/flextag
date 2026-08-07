@@ -39,8 +39,6 @@ const creatorLinks = [
   { path: '/creator/portfolio',        label: 'Portfolio',        icon: icons.portfolio },
   { path: '/creator/profile',          label: 'Profile & Shipping',icon: icons.profile },
   { path: '/creator/instagram-analyzer',  label: 'IG Analyzer',        icon: icons.instagram, badge: 'BOT' },
-  { path: '/support/faq',             label: 'FAQ',              icon: icons.faq },
-  { path: '/support/tickets',         label: 'Support',          icon: icons.ticket },
   { path: '/support/chat',            label: 'Live Chat',        icon: icons.chat, badge: '●' },
 ]
 
@@ -48,7 +46,7 @@ const CreatorLayout = () => (
   <div style={{ minHeight: '100vh', background: '#050816', position: 'relative' }}>
     <div className="noise-overlay" />
     <Sidebar links={creatorLinks} />
-    <main style={{ marginLeft: 0, paddingTop: 60, minHeight: '100vh', position: 'relative', zIndex: 10 }} className="lg:ml-64 lg:pt-0">
+    <main style={{ marginLeft: 256, minHeight: '100vh', position: 'relative', zIndex: 10 }}>
       <Outlet />
     </main>
   </div>

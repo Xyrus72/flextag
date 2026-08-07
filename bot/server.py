@@ -3,16 +3,18 @@
 """
 server.py -- Flask backend for Instagram Profile Scraper
 Run:  python server.py
-Then open:  http://localhost:5000
+Runs on port 8000 (Node backend uses 5000).
 """
 
 from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 import instaloader
 import time
 import os
 from http.cookiejar import MozillaCookieJar
 
 app = Flask(__name__, static_folder=".")
+CORS(app)  # Allow Node.js proxy on :5000 to call this server
 
 COOKIES_FILE = "cookies.txt"
 SESSION_FILE = "ig_session"
@@ -31,6 +33,7 @@ def build_loader():
         download_comments=False,
         save_metadata=False,
         post_metadata_txt_pattern="",
+        max_connection_attempts=1,  # Fails instantly on 429 instead of sleeping for 10 mins
     )
     return L
 
@@ -142,6 +145,7 @@ def scrape():
 if __name__ == "__main__":
     print("=" * 50)
     print("  Instagram Scraper Server")
-    print("  Open:  http://localhost:5000")
+    print("  Running on: http://localhost:8000")
+    print("  (Node backend proxy on :5000 → this server)")
     print("=" * 50)
-    app.run(debug=False, port=5000)
+    app.run(debug=False, port=8000)

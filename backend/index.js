@@ -39,9 +39,14 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 // ─── Connect to MongoDB ───────────────────────────────────────────────────────
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI, {
+  serverSelectionTimeoutMS: 10000,
+  socketTimeoutMS: 45000,
+  tls: true,
+  tlsAllowInvalidCertificates: false,
+})
   .then(() => console.log('✅  MongoDB connected'))
-  .catch((err) => { console.error('❌  MongoDB connection error:', err); process.exit(1) })
+  .catch((err) => { console.error('❌  MongoDB connection error:', err.message); process.exit(1) })
 
 // ─── Session ──────────────────────────────────────────────────────────────────
 app.use(session({

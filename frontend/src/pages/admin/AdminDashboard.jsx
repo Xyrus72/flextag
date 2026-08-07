@@ -92,12 +92,13 @@ const AdminDashboard = () => {
           <h2 style={{ fontSize:16, fontWeight:700, color:'#fff', margin:'0 0 20px' }}>Quick Actions</h2>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
             {[
-              { to:'/admin/brand-verification', label:'Verify Brands', icon:'✅', badge:unverifiedBrands.length },
-              { to:'/admin/post-review',        label:'Post Review',   icon:'📝', badge:pendingPosts.length },
-              { to:'/admin/disputes',           label:'Disputes',      icon:'⚠️', badge:0 },
-              { to:'/admin/commission',         label:'Commission',    icon:'💰', badge:0 },
-              { to:'/admin/categories',         label:'Categories',    icon:'📂', badge:0 },
-              { to:'/admin/financial',          label:'Financials',    icon:'📈', badge:0 },
+              { to:'/admin/brand-verification',   label:'Verify Brands',   icon:'✅', badge:unverifiedBrands.length },
+              { to:'/admin/creator-verification', label:'Verify Creators', icon:'🧑‍🎤', badge:0 },
+              { to:'/admin/post-review',          label:'Post Review',     icon:'📝', badge:pendingPosts.length },
+              { to:'/admin/disputes',             label:'Disputes',        icon:'⚠️', badge:0 },
+              { to:'/admin/commission',           label:'Commission',      icon:'💰', badge:0 },
+              { to:'/admin/categories',           label:'Categories',      icon:'📂', badge:0 },
+              { to:'/admin/financial',            label:'Financials',      icon:'📈', badge:0 },
             ].map(q => (
               <Link key={q.to} to={q.to} style={{
                 position:'relative', display:'flex', alignItems:'center', gap:10, padding:'12px 14px', borderRadius:14,

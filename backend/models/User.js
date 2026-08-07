@@ -24,9 +24,10 @@ const userSchema = new mongoose.Schema({
   totalCreators:   { type: Number, default: 0 },
 
   // Shared
-  isVerified: { type: Boolean, default: false },
-  avatar:     { type: String, default: null },
-  isSuper:    { type: Boolean, default: false },
+  isVerified:  { type: Boolean, default: false },
+  igVerified:  { type: Boolean, default: false },   // admin-verified Instagram identity
+  avatar:      { type: String, default: null },
+  isSuper:     { type: Boolean, default: false },
 }, { timestamps: true })
 
 module.exports = mongoose.model('User', userSchema)
