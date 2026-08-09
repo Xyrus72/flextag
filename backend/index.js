@@ -18,6 +18,7 @@ const adminRoutes        = require('./routes/admin')
 const settingsRoutes     = require('./routes/settings')
 const disputeRoutes      = require('./routes/disputes')
 const categoryRoutes     = require('./routes/categories')
+const captionRoutes      = require('./routes/captionValidator')
 
 const app  = express()
 const PORT = process.env.PORT || 5000
@@ -78,6 +79,7 @@ app.use('/api/admin',        adminRoutes)
 app.use('/api/settings',     settingsRoutes)
 app.use('/api/disputes',     disputeRoutes)
 app.use('/api/categories',   categoryRoutes)
+app.use('/api/caption',      captionRoutes)
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))
