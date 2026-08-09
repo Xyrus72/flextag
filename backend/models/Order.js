@@ -17,7 +17,11 @@ const orderSchema = new mongoose.Schema({
   status:     { type: String, enum: ['processing', 'packed', 'shipped', 'delivered', 'cancelled'], default: 'processing' },
   tracking:   { type: String, default: '' },
   address:    { type: String, default: '' },
-  paymentMethod: { type: String, default: 'bkash' },
+  paymentMethod: { type: String, default: 'sslcommerz' },
+  paymentStatus: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
+  transactionId: { type: String, default: '' },
+  valId:         { type: String, default: '' },
+  paymentDetails:{ type: Object, default: {} },
   cashbackReleased: { type: Boolean, default: false },
 }, { timestamps: true })
 

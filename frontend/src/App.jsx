@@ -29,6 +29,8 @@ import Wallet from './pages/creator/Wallet'
 import Leaderboard from './pages/creator/Leaderboard'
 import Portfolio from './pages/creator/Portfolio'
 import InstagramAnalyzer from './pages/creator/InstagramAnalyzer'
+import CheckoutSuccess from './pages/creator/CheckoutSuccess'
+import CheckoutFail from './pages/creator/CheckoutFail'
 
 // Brand Pages
 import BrandDashboard from './pages/brand/BrandDashboard'
@@ -91,6 +93,8 @@ const AppRoutes = () => (
       <Route path="/creator/portfolio" element={<Portfolio />} />
       <Route path="/creator/profile" element={<Profile />} />
       <Route path="/creator/instagram-analyzer" element={<InstagramAnalyzer />} />
+      <Route path="/creator/checkout/success" element={<CheckoutSuccess />} />
+      <Route path="/creator/checkout/fail" element={<CheckoutFail />} />
       <Route path="/support/faq" element={<FAQ />} />
       <Route path="/support/tickets" element={<Tickets />} />
       <Route path="/support/chat" element={<Chat />} />

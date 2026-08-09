@@ -20,6 +20,9 @@ router.get('/', requireAuth, async (req, res) => {
 
     if (status && status !== 'all') filter.status = status
 
+    // Don't show orders still waiting for payment
+    filter.paymentStatus = { $ne: 'pending' }
+
     const orders = await Order.find(filter)
       .populate('creatorId', 'name instagramHandle avatar')
       .populate('brandId',   'companyName name')

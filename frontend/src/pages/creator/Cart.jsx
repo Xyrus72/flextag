@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { placeOrder } from '../../services/orders'
+import { initCheckout } from '../../services/checkout'
 import { useAuth } from '../../context/AuthContext'
 
 const CART_KEY = 'flextag_cart'
@@ -8,12 +8,11 @@ const CART_KEY = 'flextag_cart'
 const Cart = () => {
   const { user }  = useAuth()
   const navigate  = useNavigate()
-  const [items, setItems]                   = useState([])
-  const [paymentMethod, setPaymentMethod]   = useState('bkash')
-  const [address, setAddress]               = useState('')
-  const [showCheckout, setShowCheckout]     = useState(false)
-  const [placing, setPlacing]               = useState(false)
-  const [error, setError]                   = useState('')
+  const [items, setItems]               = useState([])
+  const [address, setAddress]           = useState('')
+  const [showCheckout, setShowCheckout] = useState(false)
+  const [placing, setPlacing]           = useState(false)
+  const [error, setError]               = useState('')
 
   useEffect(() => {
     setItems(JSON.parse(localStorage.getItem(CART_KEY) || '[]'))
@@ -31,13 +30,23 @@ const Cart = () => {
     if (!address.trim()) { setError('Please enter your shipping address.'); return }
     setPlacing(true); setError('')
     try {
-      for (const item of items) {
-        await placeOrder({ campaignId: item.campaignId || item._id, qty: item.qty, address: address.trim(), paymentMethod })
+      const checkoutItems = items.map(item => ({
+        campaignId: item.campaignId || item._id,
+        qty: item.qty,
+      }))
+
+      const data = await initCheckout({ items: checkoutItems, address: address.trim() })
+
+      if (data.url) {
+        // Clear cart before redirecting to payment gateway
+        localStorage.removeItem(CART_KEY)
+        // Redirect to SSLCommerz payment page
+        window.location.href = data.url
+      } else {
+        setError('Failed to initialize payment. Please try again.')
       }
-      localStorage.removeItem(CART_KEY)
-      navigate('/creator/orders')
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to place order. Please try again.')
+      setError(err.response?.data?.message || 'Failed to initiate payment. Please try again.')
     } finally { setPlacing(false) }
   }
 
@@ -134,30 +143,28 @@ const Cart = () => {
                     placeholder="House, Road, Area, City..."
                     className="field-input" style={{ resize:'none', fontFamily:'inherit' }} />
                 </div>
-                <div>
-                  <label className="field-label">Payment Method</label>
-                  <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:4 }}>
-                    {[
-                      { id:'bkash', label:'🔴 bKash', desc:'Mobile banking' },
-                      { id:'ssl',   label:'🟢 SSLCommerz', desc:'Card / Bank' },
-                    ].map(m => (
-                      <button key={m.id} onClick={() => setPaymentMethod(m.id)} style={{
-                        width:'100%', padding:'12px 14px', borderRadius:12, display:'flex', alignItems:'center', gap:12,
-                        background: paymentMethod === m.id ? 'rgba(124,58,237,0.08)' : 'rgba(255,255,255,0.03)',
-                        border: paymentMethod === m.id ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(255,255,255,0.07)',
-                        cursor:'pointer', transition:'all 0.2s', fontFamily:'inherit',
-                      }}>
-                        <span style={{ fontSize:20 }}>{m.label.split(' ')[0]}</span>
-                        <div style={{ textAlign:'left' }}>
-                          <p style={{ fontSize:13, fontWeight:600, color: paymentMethod === m.id ? '#fff' : 'rgba(255,255,255,0.5)', margin:0 }}>{m.label.split(' ').slice(1).join(' ')}</p>
-                          <p style={{ fontSize:11, color:'rgba(255,255,255,0.3)', margin:0 }}>{m.desc}</p>
-                        </div>
-                      </button>
-                    ))}
+
+                {/* Payment gateway info */}
+                <div style={{
+                  padding: '14px 16px', borderRadius: 14,
+                  background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.18)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#34d399' }}>Secure Payment via SSLCommerz</span>
                   </div>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.5 }}>
+                    You'll be redirected to SSLCommerz's secure payment gateway where you can pay using bKash, Nagad, Rocket, Visa, Mastercard, and more.
+                  </p>
                 </div>
+
                 <button onClick={handleCheckout} disabled={placing || !address.trim()} className="btn-primary" style={{ width:'100%', padding:14, fontSize:14 }}>
-                  {placing ? 'Placing Order…' : `Pay ৳${subtotal.toLocaleString()} →`}
+                  {placing ? (
+                    <span style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                      <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" style={{ display:'inline-block' }} />
+                      Redirecting to Payment…
+                    </span>
+                  ) : `Pay ৳${subtotal.toLocaleString()} →`}
                 </button>
                 <button onClick={() => setShowCheckout(false)} className="btn-ghost" style={{ width:'100%', padding:'10px' }}>← Back</button>
               </div>
