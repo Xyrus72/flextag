@@ -1,6 +1,8 @@
 require('dotenv').config()
 
 const express    = require('express')
+const http       = require('http')
+const { Server } = require('socket.io')
 const mongoose   = require('mongoose')
 const cors       = require('cors')
 const session    = require('express-session')
@@ -18,12 +20,14 @@ const adminRoutes        = require('./routes/admin')
 const settingsRoutes     = require('./routes/settings')
 const disputeRoutes      = require('./routes/disputes')
 const categoryRoutes     = require('./routes/categories')
+const messageRoutes      = require('./routes/messages')
 
-const app  = express()
-const PORT = process.env.PORT || 5000
+const app    = express()
+const server = http.createServer(app)
+const PORT   = process.env.PORT || 5000
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
-app.use(cors({
+const corsOptions = {
   origin: (origin, callback) => {
     if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin)) {
       callback(null, true)
@@ -32,7 +36,8 @@ app.use(cors({
     }
   },
   credentials: true,
-}))
+}
+app.use(cors(corsOptions))
 
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
 app.use(express.json())
@@ -49,7 +54,7 @@ mongoose.connect(process.env.MONGO_URI, {
   .catch((err) => { console.error('❌  MongoDB connection error:', err.message); process.exit(1) })
 
 // ─── Session ──────────────────────────────────────────────────────────────────
-app.use(session({
+const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'flextag_secret',
   resave: false,
   saveUninitialized: false,
@@ -64,7 +69,31 @@ app.use(session({
     maxAge: 7 * 24 * 60 * 60 * 1000,
     sameSite: 'lax',
   },
-}))
+})
+app.use(sessionMiddleware)
+
+// ─── Socket.IO ───────────────────────────────────────────────────────────────
+const io = new Server(server, {
+  cors: {
+    origin: (origin, callback) => {
+      if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin)) {
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    },
+    credentials: true,
+  },
+})
+
+// Share Express session with Socket.IO
+io.use((socket, next) => {
+  sessionMiddleware(socket.request, socket.request.res || {}, next)
+})
+
+// Initialize socket event handlers
+const initSocket = require('./socket')
+initSocket(io)
 
 // ─── Mount Routes ─────────────────────────────────────────────────────────────
 app.use('/api/auth',         authRoutes)
@@ -78,6 +107,7 @@ app.use('/api/admin',        adminRoutes)
 app.use('/api/settings',     settingsRoutes)
 app.use('/api/disputes',     disputeRoutes)
 app.use('/api/categories',   categoryRoutes)
+app.use('/api/messages',     messageRoutes)
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))
@@ -89,4 +119,4 @@ app.use((err, req, res, _next) => {
 })
 
 // ─── Start ────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => console.log(`🚀  FlexTag API running on http://localhost:${PORT}`))
+server.listen(PORT, () => console.log(`🚀  FlexTag API running on http://localhost:${PORT}`))

@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar'
 import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, Megaphone, Package, BarChart3,
-  UserPlus, Star, Building2, PackagePlus, PackageCheck,
+  UserPlus, Star, Building2, PackagePlus, PackageCheck, MessageSquare,
 } from 'lucide-react'
 
 const icons = {
@@ -17,6 +17,7 @@ const icons = {
   profile:     <NavIcon icon={Building2}       color="#06b6d4" />,
   postProduct: <NavIcon icon={PackagePlus}     color="#a78bfa" />,
   myProducts:  <NavIcon icon={PackageCheck}    color="#4ade80" />,
+  chat:        <NavIcon icon={MessageSquare}    color="#06b6d4" />,
 }
 
 const brandLinks = [
@@ -29,6 +30,7 @@ const brandLinks = [
   { path: '/brand/invite',           label: 'Invite Creators',  icon: icons.invite },
   { path: '/brand/ratings',          label: 'Brand Reputation', icon: icons.ratings },
   { path: '/brand/profile',          label: 'Company Profile',  icon: icons.profile },
+  { path: '/brand/chat',             label: 'Live Chat',        icon: icons.chat, badge: '●' },
 ]
 
 const BrandLayout = () => (

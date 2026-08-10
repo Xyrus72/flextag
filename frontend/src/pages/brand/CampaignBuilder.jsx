@@ -74,8 +74,8 @@ const CampaignBuilder = () => {
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Campaign Title</label>
                 <input value={form.title} onChange={set('title')} placeholder="e.g. Summer Glow Collection" className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" /></div>
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Category</label>
-                <select value={form.category} onChange={set('category')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none">
-                  {['Beauty', 'Fashion', 'Tech', 'Lifestyle', 'Food', 'Health'].map(c => <option key={c} value={c}>{c}</option>)}
+                <select value={form.category} onChange={set('category')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none" style={{ background: '#0b0f24', color: '#fff' }}>
+                  {['Beauty', 'Fashion', 'Tech', 'Lifestyle', 'Food', 'Health'].map(c => <option key={c} value={c} style={{ background: '#0b0f24', color: '#fff' }}>{c}</option>)}
                 </select></div>
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Campaign Deadline</label>
                 <input type="date" value={form.deadline} onChange={set('deadline')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none" /></div>
@@ -122,8 +122,8 @@ const CampaignBuilder = () => {
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Required Tags (handles)</label>
                 <input value={form.handles} onChange={set('handles')} placeholder="@glowupbd" className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" /></div>
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Retention Period (days)</label>
-                <select value={form.retentionDays} onChange={set('retentionDays')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none">
-                  {[3, 5, 7, 14, 30].map(d => <option key={d} value={d}>{d} days</option>)}
+                <select value={form.retentionDays} onChange={set('retentionDays')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none" style={{ background: '#0b0f24', color: '#fff' }}>
+                  {[3, 5, 7, 14, 30].map(d => <option key={d} value={d} style={{ background: '#0b0f24', color: '#fff' }}>{d} days</option>)}
                 </select></div>
             </div>
           )}

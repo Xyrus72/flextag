@@ -20,3 +20,19 @@ export const verifyUser = (id, isVerified) =>
 
 export const getBrandRatings = (params = {}) =>
   api.get('/api/users/brand/ratings', { params }).then(r => r.data)
+
+// ── Shipping Addresses ────────────────────────────────────────────────────────
+export const getAddresses = (userId) =>
+  api.get(`/api/users/${userId}/addresses`).then(r => r.data)
+
+export const addAddress = (userId, data) =>
+  api.post(`/api/users/${userId}/addresses`, data).then(r => r.data)
+
+export const updateAddress = (userId, addrId, data) =>
+  api.put(`/api/users/${userId}/addresses/${addrId}`, data).then(r => r.data)
+
+export const deleteAddress = (userId, addrId) =>
+  api.delete(`/api/users/${userId}/addresses/${addrId}`).then(r => r.data)
+
+export const setDefaultAddress = (userId, addrId) =>
+  api.put(`/api/users/${userId}/addresses/${addrId}/default`).then(r => r.data)

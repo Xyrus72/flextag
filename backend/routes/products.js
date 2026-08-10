@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
       { brand: { $regex: q, $options: 'i' } },
     ]
 
-    let query = Product.find(filter)
+    let query = Product.find(filter).populate('brandId', 'name companyName logoUrl avatar email productCategory isVerified')
     if (sort === 'cashback')        query = query.sort({ cashbackRate: -1 })
     else if (sort === 'price_low')  query = query.sort({ price: 1 })
     else if (sort === 'price_high') query = query.sort({ price: -1 })
@@ -44,7 +44,7 @@ router.get('/my', requireAuth, requireRole('brand', 'admin'), async (req, res) =
 // ── GET /api/products/:id ──────────────────────────────────────────────────────
 router.get('/:id', async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id)
+    const product = await Product.findById(req.params.id).populate('brandId', 'name companyName logoUrl avatar email productCategory address isVerified')
     if (!product) return res.status(404).json({ message: 'Product not found.' })
     res.json({ product })
   } catch (err) {

@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar'
 import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, BadgeCheck, FileSearch, Layers,
-  ShieldAlert, Percent, HeartPulse, Activity, PackageSearch, UserCheck,
+  ShieldAlert, Percent, HeartPulse, Activity, PackageSearch, UserCheck, MessageSquare,
 } from 'lucide-react'
 
 const icons = {
@@ -18,6 +18,7 @@ const icons = {
   review:     <NavIcon icon={FileSearch}      color="#7c3aed" />,
   products:   <NavIcon icon={PackageSearch}   color="#fbbf24" />,
   creators:   <NavIcon icon={UserCheck}       color="#f97316" />,
+  chat:       <NavIcon icon={MessageSquare}   color="#06b6d4" />,
 }
 
 const adminLinks = [
@@ -31,6 +32,7 @@ const adminLinks = [
   { path: '/admin/commission',             label: 'Commission Settings',  icon: icons.commission },
   { path: '/admin/financial',              label: 'Financial Health',     icon: icons.financial },
   { path: '/admin/analytics',              label: 'Platform Analytics',   icon: icons.analytics },
+  { path: '/admin/chat',                   label: 'Live Chat Support',    icon: icons.chat,      badge: '●' },
 ]
 
 const AdminLayout = () => (
