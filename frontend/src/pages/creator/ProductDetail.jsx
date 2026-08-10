@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { getProduct } from '../../services/products'
 import { getCampaigns } from '../../services/campaigns'
+import { startConversation } from '../../services/messages'
 
 const ProductDetail = () => {
   const { id } = useParams()
@@ -60,6 +61,19 @@ const ProductDetail = () => {
     else existing.push(item)
     localStorage.setItem(cartKey, JSON.stringify(existing))
     navigate('/creator/cart')
+  }
+
+  const handleChatWithBrand = async () => {
+    try {
+      const targetId = product.brandId?._id || product.brandId
+      if (targetId) {
+        await startConversation({ targetUserId: targetId, type: 'direct' })
+      }
+    } catch (err) {
+      console.error('Error starting brand chat:', err)
+    } finally {
+      navigate('/support/chat')
+    }
   }
 
   if (loading) {
@@ -175,9 +189,9 @@ const ProductDetail = () => {
             </div>
           )}
 
-          {/* Add to Cart */}
-          <div className="mt-8 flex items-center gap-4">
-            <div className="flex items-center rounded-xl bg-white/5 border border-white/10">
+          {/* Add to Cart & Chat with Brand */}
+          <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="flex items-center rounded-xl bg-white/5 border border-white/10 self-center sm:self-auto">
               <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-4 py-3 text-zinc-400 hover:text-white transition-colors">−</button>
               <span className="px-4 py-3 text-white font-semibold min-w-[40px] text-center">{qty}</span>
               <button onClick={() => setQty(qty + 1)} className="px-4 py-3 text-zinc-400 hover:text-white transition-colors">+</button>
@@ -185,6 +199,11 @@ const ProductDetail = () => {
             <button onClick={addToCart} disabled={!product.inStock}
               className="btn-primary" style={{ flex:1, padding:'14px', fontSize:14 }}>
               {product.inStock ? `Add to Cart — ৳${(product.price * qty).toLocaleString()}` : 'Out of Stock'}
+            </button>
+            <button onClick={handleChatWithBrand}
+              className="px-5 py-3.5 rounded-xl bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30 hover:bg-emerald-500/25 transition-all flex items-center justify-center gap-2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Chat with Brand
             </button>
           </div>
         </div>

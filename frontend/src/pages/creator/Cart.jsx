@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { placeOrder } from '../../services/orders'
+import { getAddresses } from '../../services/users'
 import { useAuth } from '../../context/AuthContext'
 
 const CART_KEY = 'flextag_cart'
@@ -11,6 +12,7 @@ const Cart = () => {
   const [items, setItems]                   = useState([])
   const [paymentMethod, setPaymentMethod]   = useState('bkash')
   const [address, setAddress]               = useState('')
+  const [savedAddresses, setSavedAddresses] = useState([])
   const [showCheckout, setShowCheckout]     = useState(false)
   const [placing, setPlacing]               = useState(false)
   const [error, setError]                   = useState('')
@@ -18,6 +20,31 @@ const Cart = () => {
   useEffect(() => {
     setItems(JSON.parse(localStorage.getItem(CART_KEY) || '[]'))
   }, [])
+
+  useEffect(() => {
+    if (!user?._id) return
+    const addrs = user.shippingAddresses || []
+    if (addrs.length > 0) {
+      setSavedAddresses(addrs)
+      const def = addrs.find(a => a.isDefault) || addrs[0]
+      if (def) {
+        const formatted = `${def.fullName || user.name} (${def.phone || user.phone})\n${def.street}, ${def.city}${def.zip ? ', ' + def.zip : ''}, ${def.country}`
+        setAddress(formatted)
+      }
+    } else {
+      getAddresses(user._id)
+        .then(d => {
+          const list = d.addresses || []
+          setSavedAddresses(list)
+          if (list.length > 0) {
+            const def = list.find(a => a.isDefault) || list[0]
+            const formatted = `${def.fullName || user.name} (${def.phone || user.phone})\n${def.street}, ${def.city}${def.zip ? ', ' + def.zip : ''}, ${def.country}`
+            setAddress(formatted)
+          }
+        })
+        .catch(() => {})
+    }
+  }, [user?._id, user?.shippingAddresses])
 
   const save = (updated) => { setItems(updated); localStorage.setItem(CART_KEY, JSON.stringify(updated)) }
   const updateQty  = (id, delta) => save(items.map(i => i._id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i))
@@ -129,7 +156,27 @@ const Cart = () => {
             ) : (
               <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
                 <div>
-                  <label className="field-label">Shipping Address</label>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+                    <label className="field-label" style={{ margin:0 }}>Shipping Address</label>
+                    <Link to="/creator/profile" style={{ fontSize:11, color:'#a78bfa', textDecoration:'none', fontWeight:600 }}>+ Manage Saved Addresses</Link>
+                  </div>
+                  {savedAddresses.length > 0 && (
+                    <select
+                      onChange={e => {
+                        const selected = savedAddresses.find(a => a._id === e.target.value)
+                        if (selected) {
+                          const formatted = `${selected.fullName || user.name} (${selected.phone || user.phone})\n${selected.street}, ${selected.city}${selected.zip ? ', ' + selected.zip : ''}, ${selected.country}`
+                          setAddress(formatted)
+                        }
+                      }}
+                      className="field-select" style={{ marginBottom:8, background:'#0b0f24', color:'#fff' }}>
+                      {savedAddresses.map(a => (
+                        <option key={a._id} value={a._id} style={{ background:'#0b0f24', color:'#fff' }}>
+                          {a.label} {a.isDefault ? '★ (Default)' : ''} — {a.street}, {a.city}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <textarea value={address} onChange={e => setAddress(e.target.value)} rows={3}
                     placeholder="House, Road, Area, City..."
                     className="field-input" style={{ resize:'none', fontFamily:'inherit' }} />

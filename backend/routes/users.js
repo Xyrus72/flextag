@@ -152,6 +152,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     const allowed = [
       'name', 'phone', 'instagramHandle', 'tiktokHandle', 'followersCount',
       'engagementRate', 'companyName', 'website', 'productCategory', 'avatar',
+      'logoUrl', 'address',
       // admin only
       'isVerified', 'igVerified', 'tier', 'role',
     ]
@@ -189,6 +190,127 @@ router.put('/:id/verify', requireAuth, requireRole('admin'), async (req, res) =>
     if (!user) return res.status(404).json({ message: 'User not found.' })
     res.json({ user, message: isVerified ? 'Brand verified.' : 'Brand rejected.' })
   } catch (err) {
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHIPPING ADDRESSES  (creator only, stored in User.shippingAddresses)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET  /api/users/:id/addresses — list all addresses
+router.get('/:id/addresses', requireAuth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin' && req.params.id !== req.user._id.toString())
+      return res.status(403).json({ message: 'Access denied.' })
+    const user = await User.findById(req.params.id).select('shippingAddresses')
+    if (!user) return res.status(404).json({ message: 'User not found.' })
+    res.json({ addresses: user.shippingAddresses })
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// POST /api/users/:id/addresses — add a new address
+router.post('/:id/addresses', requireAuth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin' && req.params.id !== req.user._id.toString())
+      return res.status(403).json({ message: 'Access denied.' })
+    const user = await User.findById(req.params.id)
+    if (!user) return res.status(404).json({ message: 'User not found.' })
+
+    const { label, fullName, phone, street, city, state, zip, country, isDefault } = req.body
+    if (!street) return res.status(400).json({ message: 'Street is required.' })
+
+    // If new address is default → clear existing defaults
+    if (isDefault) user.shippingAddresses.forEach(a => { a.isDefault = false })
+    // If this is the first address, auto-default it
+    const makeDefault = isDefault || user.shippingAddresses.length === 0
+
+    user.shippingAddresses.push({ label, fullName, phone, street, city, state, zip, country, isDefault: makeDefault })
+    await user.save()
+    res.status(201).json({ addresses: user.shippingAddresses })
+  } catch (err) {
+    console.error('[addresses POST]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// PUT  /api/users/:id/addresses/:addrId — update an address
+router.put('/:id/addresses/:addrId', requireAuth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin' && req.params.id !== req.user._id.toString())
+      return res.status(403).json({ message: 'Access denied.' })
+    const user = await User.findById(req.params.id)
+    if (!user) return res.status(404).json({ message: 'User not found.' })
+
+    const addr = user.shippingAddresses.id(req.params.addrId)
+    if (!addr) return res.status(404).json({ message: 'Address not found.' })
+
+    const { label, fullName, phone, street, city, state, zip, country, isDefault } = req.body
+    if (label     !== undefined) addr.label    = label
+    if (fullName  !== undefined) addr.fullName = fullName
+    if (phone     !== undefined) addr.phone    = phone
+    if (street    !== undefined) addr.street   = street
+    if (city      !== undefined) addr.city     = city
+    if (state     !== undefined) addr.state    = state
+    if (zip       !== undefined) addr.zip      = zip
+    if (country   !== undefined) addr.country  = country
+    if (isDefault) {
+      user.shippingAddresses.forEach(a => { a.isDefault = false })
+      addr.isDefault = true
+    }
+
+    await user.save()
+    res.json({ addresses: user.shippingAddresses })
+  } catch (err) {
+    console.error('[addresses PUT]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// DELETE /api/users/:id/addresses/:addrId — remove an address
+router.delete('/:id/addresses/:addrId', requireAuth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin' && req.params.id !== req.user._id.toString())
+      return res.status(403).json({ message: 'Access denied.' })
+    const user = await User.findById(req.params.id)
+    if (!user) return res.status(404).json({ message: 'User not found.' })
+
+    const addr = user.shippingAddresses.id(req.params.addrId)
+    if (!addr) return res.status(404).json({ message: 'Address not found.' })
+
+    const wasDefault = addr.isDefault
+    addr.deleteOne()
+
+    // If deleted address was default, auto-promote next one
+    if (wasDefault && user.shippingAddresses.length > 0) {
+      user.shippingAddresses[0].isDefault = true
+    }
+    await user.save()
+    res.json({ addresses: user.shippingAddresses })
+  } catch (err) {
+    console.error('[addresses DELETE]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// PUT  /api/users/:id/addresses/:addrId/default — set as default
+router.put('/:id/addresses/:addrId/default', requireAuth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin' && req.params.id !== req.user._id.toString())
+      return res.status(403).json({ message: 'Access denied.' })
+    const user = await User.findById(req.params.id)
+    if (!user) return res.status(404).json({ message: 'User not found.' })
+
+    const addr = user.shippingAddresses.id(req.params.addrId)
+    if (!addr) return res.status(404).json({ message: 'Address not found.' })
+
+    user.shippingAddresses.forEach(a => { a.isDefault = a._id.equals(addr._id) })
+    await user.save()
+    res.json({ addresses: user.shippingAddresses })
+  } catch (err) {
+    console.error('[addresses default]', err)
     res.status(500).json({ message: 'Server error.' })
   }
 })

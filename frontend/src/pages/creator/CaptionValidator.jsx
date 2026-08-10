@@ -53,8 +53,9 @@ const CaptionValidator = () => {
           <div className="mb-4">
             <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Campaign</label>
             <select value={selectedCampaign} onChange={e => { setSelectedCampaign(e.target.value); setResult(null) }}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none">
-              {Object.entries(campaigns).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none"
+              style={{ background: '#0b0f24', color: '#fff' }}>
+              {Object.entries(campaigns).map(([k, v]) => <option key={k} value={k} style={{ background: '#0b0f24', color: '#fff' }}>{v.name}</option>)}
             </select>
           </div>
 

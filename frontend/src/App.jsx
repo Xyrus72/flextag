@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { SocketProvider } from './context/SocketContext'
 import PageLoader from './components/PageLoader'
 
 // Layouts
@@ -52,6 +53,7 @@ import PlatformAnalytics from './pages/admin/PlatformAnalytics'
 import PostReview from './pages/admin/PostReview'
 import ProductApproval from './pages/admin/ProductApproval'
 import CreatorVerification from './pages/admin/CreatorVerification'
+import AdminChat from './pages/admin/AdminChat'
 
 // Support Pages
 import FAQ from './pages/support/FAQ'
@@ -107,6 +109,7 @@ const AppRoutes = () => (
       <Route path="/brand/invite" element={<InviteCampaign />} />
       <Route path="/brand/ratings" element={<BrandRatings />} />
       <Route path="/brand/profile" element={<BrandProfile />} />
+      <Route path="/brand/chat" element={<Chat />} />
     </Route>
 
     {/* ── Admin Routes ────────────────────────── */}
@@ -114,13 +117,14 @@ const AppRoutes = () => (
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/admin/product-approval" element={<ProductApproval />} />
       <Route path="/admin/brand-verification" element={<BrandVerification />} />
+      <Route path="/admin/creator-verification" element={<CreatorVerification />} />
+      <Route path="/admin/post-review" element={<PostReview />} />
       <Route path="/admin/categories" element={<Categories />} />
       <Route path="/admin/disputes" element={<DisputePortal />} />
       <Route path="/admin/commission" element={<CommissionSettings />} />
       <Route path="/admin/financial" element={<FinancialDashboard />} />
       <Route path="/admin/analytics" element={<PlatformAnalytics />} />
-      <Route path="/admin/post-review" element={<PostReview />} />
-      <Route path="/admin/creator-verification" element={<CreatorVerification />} />
+      <Route path="/admin/chat" element={<AdminChat />} />
     </Route>
 
     {/* ── Catch-all ───────────────────────────── */}
@@ -141,10 +145,12 @@ const App = () => {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          {!loaded && <PageLoader onDone={handleLoaderDone} />}
-          <div style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.4s ease 0.1s' }}>
-            <AppRoutes />
-          </div>
+          <SocketProvider>
+            {!loaded && <PageLoader onDone={handleLoaderDone} />}
+            <div style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.4s ease 0.1s' }}>
+              <AppRoutes />
+            </div>
+          </SocketProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

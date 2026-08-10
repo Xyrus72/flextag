@@ -289,6 +289,13 @@ body {
 }
 .field-select:focus { border-color: rgba(124,58,237,0.5); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
 
+/* Global styling for select dropdown popup items */
+select option {
+  background-color: #0b0f24 !important;
+  color: #ffffff !important;
+  padding: 8px 12px;
+}
+
 /* ── Badge / Status ───────────────────────────────────────────────────────── */
 .badge {
   display: inline-flex;

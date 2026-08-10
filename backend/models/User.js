@@ -1,5 +1,17 @@
 const mongoose = require('mongoose')
 
+const shippingAddressSchema = new mongoose.Schema({
+  label:     { type: String, default: 'Home' },   // e.g. Home, Office
+  fullName:  { type: String, default: '' },
+  phone:     { type: String, default: '' },
+  street:    { type: String, required: true },
+  city:      { type: String, default: '' },
+  state:     { type: String, default: '' },
+  zip:       { type: String, default: '' },
+  country:   { type: String, default: 'Bangladesh' },
+  isDefault: { type: Boolean, default: false },
+}, { _id: true })
+
 const userSchema = new mongoose.Schema({
   name:     { type: String, required: true, trim: true },
   email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
@@ -15,11 +27,14 @@ const userSchema = new mongoose.Schema({
   tier:            { type: String, default: 'bronze' },
   totalEarnings:   { type: Number, default: 0 },
   completedCampaigns: { type: Number, default: 0 },
+  shippingAddresses: { type: [shippingAddressSchema], default: [] },
 
   // Brand-only
   companyName:     { type: String, default: '' },
   website:         { type: String, default: '' },
   productCategory: { type: String, default: '' },
+  logoUrl:         { type: String, default: '' },
+  address:         { type: String, default: '' },
   totalCampaigns:  { type: Number, default: 0 },
   totalCreators:   { type: Number, default: 0 },
 
