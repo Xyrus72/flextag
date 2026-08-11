@@ -16,15 +16,16 @@ router.get('/', requireAuth, async (req, res) => {
       .sort({ createdAt: -1 })
 
     // Compute balances for creator
-    let totalEarnings = 0, pendingEscrow = 0, available = 0
+    let totalEarnings = 0, pendingEscrow = 0, available = 0, topUps = 0
     if (req.user.role === 'creator') {
       const allTx = await Transaction.find({ userId: req.user._id })
       allTx.forEach(t => {
         if (t.type === 'cashback' && t.status === 'completed') totalEarnings += t.amount
         if (t.type === 'cashback' && t.status === 'pending')   pendingEscrow += t.amount
         if (t.type === 'withdrawal' && t.status === 'completed') available -= t.amount
+        if (t.type === 'top_up' && t.status === 'completed') topUps += t.amount
       })
-      available = totalEarnings + available
+      available = totalEarnings + topUps + available
       if (available < 0) available = 0
     }
 
@@ -77,6 +78,29 @@ router.post('/withdraw', requireAuth, requireRole('creator'), async (req, res) =
     res.status(201).json({ transaction: tx, message: 'Withdrawal request submitted.' })
   } catch (err) {
     console.error('[withdraw POST]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── POST /api/transactions/topup — creator adds money to wallet ────────────
+router.post('/topup', requireAuth, requireRole('creator'), async (req, res) => {
+  try {
+    const { amount, paymentMethod } = req.body
+    if (!amount || Number(amount) <= 0) {
+      return res.status(400).json({ message: 'Valid amount is required.' })
+    }
+
+    const tx = await Transaction.create({
+      userId:      req.user._id,
+      type:        'top_up',
+      amount:      Number(amount),
+      desc:        `Wallet Top-Up via ${paymentMethod || 'Gateway'}`,
+      status:      'completed',
+    })
+
+    res.status(201).json({ transaction: tx, message: 'Wallet topped up successfully.' })
+  } catch (err) {
+    console.error('[topup POST]', err)
     res.status(500).json({ message: 'Server error.' })
   }
 })
