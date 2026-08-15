@@ -16,6 +16,8 @@ const productSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved' },
   rejectionReason: { type: String, default: '' },
+  campaignBudget: { type: Number, default: 50000, min: 0 },
+  totalCashbackSpent: { type: Number, default: 0, min: 0 },
   creatorCriteria: {
     minFollowers: { type: Number, default: 1000 },
     targetCategory: { type: String, default: 'General' }
@@ -33,6 +35,17 @@ productSchema.virtual('netPrice').get(function () {
 
 productSchema.virtual('savingsAmount').get(function () {
   return Math.round(this.price * ((this.cashbackRate || 0) / 100))
+})
+
+productSchema.virtual('isBudgetCapReached').get(function () {
+  if (!this.campaignBudget) return false
+  return (this.totalCashbackSpent || 0) >= this.campaignBudget
+})
+
+productSchema.virtual('remainingBudget').get(function () {
+  const budget = this.campaignBudget || 50000
+  const spent = this.totalCashbackSpent || 0
+  return Math.max(0, budget - spent)
 })
 
 module.exports = mongoose.model('Product', productSchema)
