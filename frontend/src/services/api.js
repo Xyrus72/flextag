@@ -1,9 +1,11 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000',
-  withCredentials: true,          // send cookies (session) with every request
-  headers: { 'Content-Type': 'application/json' },
+  baseURL: 'http://localhost:9002',
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 })
 
 export default api
