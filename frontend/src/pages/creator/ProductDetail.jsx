@@ -94,6 +94,9 @@ const ProductDetail = () => {
   }
 
   const netCost = Math.round(product.price * (1 - (product.cashbackRate || 0) / 100))
+  const budgetCap = product.campaignBudget || 50000
+  const totalSpent = product.totalCashbackSpent || 0
+  const isCapReached = totalSpent >= budgetCap
 
   return (
     <div className="page-root">
@@ -114,7 +117,12 @@ const ProductDetail = () => {
               {product.cashbackRate}% Cashback
             </div>
           )}
-          {!product.inStock && (
+          {isCapReached && (
+            <div style={{ position: 'absolute', top: 16, left: 16, padding: '6px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.25)', border: '1px solid rgba(239,68,68,0.4)', color: '#f87171', fontSize: 12, fontWeight: 800 }}>
+              Budget Cap Reached
+            </div>
+          )}
+          {!product.inStock && !isCapReached && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
               <span className="text-xl font-bold text-zinc-400">Out of Stock</span>
             </div>
@@ -156,7 +164,21 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          <div className="mt-6 p-5 rounded-2xl bg-violet-950/20 border border-violet-500/20">
+          <div className="mt-4 p-4 rounded-2xl bg-cyan-950/20 border border-cyan-500/20">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Campaign Spend Control</span>
+              <span className="text-xs font-semibold text-cyan-400">Cap: ৳{budgetCap.toLocaleString()}</span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-cyan-500 to-violet-500" style={{ width: `${Math.min(100, (totalSpent / budgetCap) * 100)}%` }} />
+            </div>
+            <div className="flex items-center justify-between mt-2 text-xs text-zinc-400">
+              <span>Disbursed: ৳{totalSpent.toLocaleString()}</span>
+              <span>Available: ৳{Math.max(0, budgetCap - totalSpent).toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div className="mt-4 p-5 rounded-2xl bg-violet-950/20 border border-violet-500/20">
             <h3 className="text-sm font-bold text-violet-300 uppercase tracking-wider mb-3">Posting Rules & Requirements</h3>
             <div className="space-y-2 text-sm text-zinc-300">
               <div>Hashtags: <span className="text-violet-400 font-semibold">{product.postingRules?.hashtags?.join(' ') || '#FlexTag #BrandPartner'}</span></div>
@@ -166,16 +188,15 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          {/* Add to Cart & Chat with Brand */}
           <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="flex items-center rounded-xl bg-white/5 border border-white/10 self-center sm:self-auto">
               <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-4 py-3 text-zinc-400 hover:text-white transition-colors">−</button>
               <span className="px-4 py-3 text-white font-semibold min-w-[40px] text-center">{qty}</span>
               <button onClick={() => setQty(qty + 1)} className="px-4 py-3 text-zinc-400 hover:text-white transition-colors">+</button>
             </div>
-            <button onClick={addToCart} disabled={!product.inStock}
+            <button onClick={addToCart} disabled={!product.inStock || isCapReached}
               className="btn-primary" style={{ flex: 1, padding: '14px', fontSize: 14 }}>
-              {product.inStock ? `Add to Cart — ৳${(product.price * qty).toLocaleString()}` : 'Out of Stock'}
+              {isCapReached ? 'Budget Cap Reached' : product.inStock ? `Add to Cart — ৳${(product.price * qty).toLocaleString()}` : 'Out of Stock'}
             </button>
             <button onClick={handleChatWithBrand}
               className="px-5 py-3.5 rounded-xl bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30 hover:bg-emerald-500/25 transition-all flex items-center justify-center gap-2">

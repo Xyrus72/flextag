@@ -154,12 +154,14 @@ const Catalog = () => {
             const price = p.price || 0
             const cashbackRate = p.cashbackRate || 0
             const netPrice = Math.round(price * (1 - cashbackRate / 100))
+            const capReached = p.campaignBudget && (p.totalCashbackSpent || 0) >= p.campaignBudget
 
             return (
               <Link key={p._id} to={`/creator/product/${p._id}`} style={{ textDecoration: 'none' }}>
                 <div style={{
                   borderRadius: 18, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
-                  overflow: 'hidden', transition: 'all 0.2s', cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'
+                  overflow: 'hidden', transition: 'all 0.2s', cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                  opacity: capReached ? 0.7 : 1
                 }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.3)'; e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.3)' }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
@@ -173,6 +175,11 @@ const Catalog = () => {
                     <div style={{ position: 'absolute', top: 10, right: 10, padding: '4px 10px', borderRadius: 8, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', fontSize: 11, fontWeight: 800 }}>
                       {cashbackRate}% back
                     </div>
+                    {capReached && (
+                      <div style={{ position: 'absolute', top: 10, left: 10, padding: '4px 10px', borderRadius: 8, background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.4)', color: '#f87171', fontSize: 10, fontWeight: 800 }}>
+                        Cap Reached
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -184,6 +191,11 @@ const Catalog = () => {
                         <span style={{ fontSize: 11, color: '#a78bfa', background: 'rgba(124,58,237,0.15)', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>
                           {(p.creatorCriteria?.minFollowers || 1000).toLocaleString()}+ Followers
                         </span>
+                        {p.campaignBudget && (
+                          <span style={{ fontSize: 10, color: '#67e8f9', background: 'rgba(6,182,212,0.12)', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>
+                            Cap: ৳{(p.campaignBudget / 1000).toFixed(0)}k
+                          </span>
+                        )}
                       </div>
                     </div>
 
