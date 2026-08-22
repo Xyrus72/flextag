@@ -37,6 +37,7 @@ const adminLinks = [
 
 const AdminLayout = () => (
   <div style={{ minHeight: '100vh', background: '#050816', position: 'relative' }}>
+    <div className="aurora-bg" />
     <div className="noise-overlay" />
     <Sidebar links={adminLinks} />
     <main style={{ marginLeft: 256, minHeight: '100vh', position: 'relative', zIndex: 10 }}>

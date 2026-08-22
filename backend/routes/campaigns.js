@@ -47,7 +47,7 @@ router.post('/', requireAuth, requireRole('brand'), async (req, res) => {
     const {
       title, product, category, price, cashbackRate, stock,
       minFollowers, hashtags, handles, deadline, retentionDays,
-      budgetCap, isPrivate,
+      budgetCap, isPrivate, contentType,
     } = req.body
 
     if (!title || !product || !price || !cashbackRate) {
@@ -67,6 +67,7 @@ router.post('/', requireAuth, requireRole('brand'), async (req, res) => {
       minFollowers: Number(minFollowers) || 1000,
       hashtags: hashtags || '',
       handles:  handles  || '',
+      contentType: ['any', 'reel', 'post', 'carousel'].includes(contentType) ? contentType : 'any',
       deadline: deadline ? new Date(deadline) : undefined,
       retentionDays: Number(retentionDays) || 7,
       budgetCap: Number(budgetCap) || 0,
@@ -92,7 +93,7 @@ router.put('/:id', requireAuth, requireRole('brand', 'admin'), async (req, res) 
     }
 
     const allowed = ['title', 'status', 'stock', 'stockLeft', 'hashtags', 'handles',
-                     'deadline', 'budgetCap', 'isPrivate', 'retentionDays', 'cashbackRate']
+                     'deadline', 'budgetCap', 'isPrivate', 'retentionDays', 'cashbackRate', 'contentType']
     allowed.forEach(k => { if (req.body[k] !== undefined) campaign[k] = req.body[k] })
     await campaign.save()
 

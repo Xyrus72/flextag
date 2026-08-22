@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node index.js",
-    "seed": "node seed.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node --openssl-legacy-provider index.js",
+    "dev": "set NODE_OPTIONS=--openssl-legacy-provider && nodemon index.js",
+    "seed": "node --openssl-legacy-provider seed.js",
+    "test": "node --test tests/instagram.test.js"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +21,10 @@
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "mongoose": "^9.7.4",
+    "nodemailer": "^9.0.5",
     "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }

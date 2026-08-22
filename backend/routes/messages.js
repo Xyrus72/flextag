@@ -18,28 +18,12 @@ router.get('/contacts', requireAuth, async (req, res) => {
       query.role = role
     }
 
-    let users = await User.find(query)
+    // Demo/sample data belongs in `npm run seed`, never in a GET handler —
+    // seeding here would create real, loginable accounts with a shared
+    // hard-coded password on any production deployment.
+    const users = await User.find(query)
       .select('name companyName role instagramHandle avatar logoUrl productCategory email isVerified')
       .sort({ companyName: 1, name: 1 })
-
-    // If looking for brands and 0 brands exist in MongoDB, auto-seed official brand accounts into database
-    if (role === 'brand' && users.length === 0) {
-      const bcrypt = require('bcryptjs')
-      const defaultPassword = await bcrypt.hash('brand123', 10)
-
-      const sampleBrands = [
-        { name: 'Aarong Official', companyName: 'Aarong Fashion', email: 'contact@aarong.com', password: defaultPassword, role: 'brand', productCategory: 'Fashion & Lifestyle', isVerified: true },
-        { name: 'Apex Team', companyName: 'Apex Footwear', email: 'info@apexfootwear.com', password: defaultPassword, role: 'brand', productCategory: 'Footwear & Accessories', isVerified: true },
-        { name: 'Yellow BD', companyName: 'Yellow Clothing', email: 'support@yellowbd.com', password: defaultPassword, role: 'brand', productCategory: 'Apparel & Clothing', isVerified: true },
-        { name: 'Samsung BD Team', companyName: 'Samsung Electronics', email: 'official@samsungbd.com', password: defaultPassword, role: 'brand', productCategory: 'Electronics & Tech', isVerified: true },
-      ]
-
-      await User.insertMany(sampleBrands)
-
-      users = await User.find(query)
-        .select('name companyName role instagramHandle avatar logoUrl productCategory email isVerified')
-        .sort({ companyName: 1, name: 1 })
-    }
 
     res.json({ contacts: users })
   } catch (err) {
@@ -93,19 +77,13 @@ router.post('/conversations', requireAuth, async (req, res) => {
         const userToSupport = await User.findOne({ _id: { $ne: currentUserId } })
         if (userToSupport) targetId = userToSupport._id
       } else {
-        // Find an admin user in MongoDB
-        let admin = await User.findOne({ role: 'admin' })
+        // Route to an existing admin. Never create one on the fly — an
+        // auto-provisioned admin with a hard-coded password is a takeover
+        // vector. Provision admins with `node createAdmin.js`.
+        const admin = await User.findOne({ role: 'admin' })
         if (!admin) {
-          // Auto-create default FlexTag Support Admin if none exists yet
-          const bcrypt = require('bcryptjs')
-          const hashed = await bcrypt.hash('admin123', 10)
-          admin = await User.create({
-            name: 'FlexTag Support Admin',
-            email: 'support@flextag.com',
-            password: hashed,
-            role: 'admin',
-            isVerified: true,
-          })
+          console.error('[messages/conversations] no admin account exists — run `node createAdmin.js`')
+          return res.status(503).json({ message: 'Support is currently unavailable. Please try again later.' })
         }
         targetId = admin._id
       }
@@ -149,7 +127,7 @@ router.get('/conversations/:id', requireAuth, async (req, res) => {
     const userId = req.user._id
 
     const conversation = await Conversation.findById(convId)
-    if (!conversation || !conversation.participants.includes(userId)) {
+    if (!conversation || !conversation.participants.some(p => p.equals(userId))) {
       return res.status(403).json({ message: 'Access denied to conversation.' })
     }
 
@@ -181,7 +159,7 @@ router.post('/', requireAuth, async (req, res) => {
     }
 
     const conversation = await Conversation.findById(conversationId)
-    if (!conversation || !conversation.participants.includes(senderId)) {
+    if (!conversation || !conversation.participants.some(p => p.equals(senderId))) {
       return res.status(403).json({ message: 'Access denied.' })
     }
 
