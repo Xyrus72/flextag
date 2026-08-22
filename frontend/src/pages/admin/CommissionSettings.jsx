@@ -1,15 +1,49 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { getSettings, updateSettings } from '../../services/admin'
 import { useAuth } from '../../context/AuthContext'
 
-const fields = [
-  { key: 'commissionRate', label: 'Commission Rate (%)',           desc: 'Platform commission from each cashback payout', suffix: '%', icon: '💰' },
-  { key: 'listingFee',     label: 'Listing Fee per Campaign (৳)',  desc: 'Flat fee charged when a brand creates a campaign', suffix: '৳', icon: '📋' },
-  { key: 'featuredFee',    label: 'Featured Placement Fee (৳)',    desc: 'Fee for premium product placement in catalog', suffix: '৳', icon: '⭐' },
-  { key: 'minWithdrawal',  label: 'Min Withdrawal Threshold (৳)',  desc: 'Minimum balance required for creator cashout', suffix: '৳', icon: '🏦' },
-  { key: 'retentionDays',  label: 'Default Retention Period',      desc: 'Days a post must stay live for cashback release', suffix: 'days', icon: '📅' },
-  { key: 'maxCashback',    label: 'Max Cashback Rate (%)',         desc: 'Maximum cashback percentage brands can offer', suffix: '%', icon: '📊' },
+// min/max mirror the clamps applied server-side (backend/utils/settings.js) so the
+// page never displays a value the backend silently ignores.
+const platformFields = [
+  { key: 'commissionRate', label: 'Commission Rate (%)',           desc: 'Platform commission from each cashback payout', suffix: '%', icon: '💰', min: 0, max: 100 },
+  { key: 'listingFee',     label: 'Listing Fee per Campaign (৳)',  desc: 'Flat fee charged when a brand creates a campaign', suffix: '৳', icon: '📋', min: 0 },
+  { key: 'featuredFee',    label: 'Featured Placement Fee (৳)',    desc: 'Fee for premium product placement in catalog', suffix: '৳', icon: '⭐', min: 0 },
+  { key: 'minWithdrawal',  label: 'Min Withdrawal Threshold (৳)',  desc: 'Minimum balance required for creator cashout', suffix: '৳', icon: '🏦', min: 0 },
+  { key: 'retentionDays',  label: 'Default Retention Period',      desc: 'Days a post must stay live for cashback release', suffix: 'days', icon: '📅', min: 0, max: 365 },
+  { key: 'maxCashback',    label: 'Max Cashback Rate (%)',         desc: 'Maximum cashback percentage brands can offer', suffix: '%', icon: '📊', min: 0, max: 100 },
 ]
+
+// Instagram audit / post-verification settings. Seeded by the backend; all values
+// are numeric — 'on/off' settings are stored as 1 / 0.
+const instagramFields = [
+  { key: 'igMinFollowers',     label: 'IG Minimum Followers',          desc: 'Creators need at least this many Instagram followers to register', suffix: 'followers', icon: '📸', min: 0 },
+  { key: 'igBlockPrivate',     label: 'IG Block Private Accounts',     desc: '1 = private Instagram accounts cannot register, 0 = allow', suffix: 'on/off', icon: '🔒' },
+  { key: 'igPrecheckEnforce',  label: 'IG Enforce Check at Signup',    desc: '1 = block ineligible accounts at signup, 0 = only warn', suffix: 'on/off', icon: '🛂' },
+  { key: 'igAutoApprovePosts', label: 'IG Auto-approve Verified Posts', desc: '1 = release cashback automatically when every post check passes (ownership-verified creators only), 0 = manual review', suffix: 'on/off', icon: '⚡' },
+  { key: 'igAuditTtlDays',     label: 'IG Audit Freshness',            desc: 'Re-use a cached audit for this many days before re-fetching', suffix: 'days', icon: '🗓️', min: 0, max: 365 },
+  { key: 'igFollowerSample',   label: 'IG Follower Sample Size',       desc: 'Followers sampled for the fake-follower estimate (0–500)', suffix: 'followers', icon: '🧪', min: 0, max: 500 },
+  { key: 'igPostsToFetch',     label: 'IG Posts to Analyze',           desc: 'Recent posts pulled per audit (6–60)', suffix: 'posts', icon: '🗂️', min: 6, max: 60 },
+]
+
+const clampField = (f, raw) => {
+  let n = Number(raw)
+  if (!Number.isFinite(n)) n = f.min ?? 0
+  if (f.min != null) n = Math.max(f.min, n)
+  if (f.max != null) n = Math.min(f.max, n)
+  return n
+}
+
+// Single list used by the diff/save logic below.
+const fields = [...platformFields, ...instagramFields]
+
+// View-mode display: prefix '৳', suffix '%', 'On'/'Off' for toggles, otherwise "<n> <unit>".
+const formatValue = (f, raw) => {
+  const v = Number(raw) || 0
+  if (f.suffix === 'on/off') return v ? 'On' : 'Off'
+  if (f.suffix === '৳') return `৳${v.toLocaleString()}`
+  if (f.suffix === '%') return `${v.toLocaleString()}%`
+  return `${v.toLocaleString()} ${f.suffix}`
+}
 
 const CommissionSettings = () => {
   const { user } = useAuth()
@@ -18,6 +52,7 @@ const CommissionSettings = () => {
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving]   = useState(false)
+  const [error, setError]     = useState('')
   const [changelog, setChangelog] = useState([])
 
   useEffect(() => {
@@ -32,28 +67,62 @@ const CommissionSettings = () => {
 
   const saveSettings = async () => {
     setSaving(true)
+    setError('')
     try {
-      // Build diff
+      // Clamp numeric fields to the server's bounds, then build the diff
+      const next = { ...tempSettings }
+      fields.forEach(f => { if (f.suffix !== 'on/off' && next[f.key] !== undefined) next[f.key] = clampField(f, next[f.key]) })
       const changes = []
       const updates = {}
       fields.forEach(f => {
-        if (String(settings[f.key]) !== String(tempSettings[f.key])) {
-          changes.push({ date: new Date().toLocaleString(), field: f.label, from: String(settings[f.key]), to: String(tempSettings[f.key]), by: user?.name })
-          updates[f.key] = tempSettings[f.key]
+        if (String(settings[f.key]) !== String(next[f.key])) {
+          changes.push({ date: new Date().toLocaleString(), field: f.label, from: String(settings[f.key]), to: String(next[f.key]), by: user?.name })
+          updates[f.key] = next[f.key]
         }
       })
       if (Object.keys(updates).length > 0) {
         await updateSettings(updates)
-        setSettings(tempSettings)
+        setSettings(next)
+        setTempSettings(next)
         setChangelog(prev => [...changes, ...prev])
       }
       setEditing(false)
     } catch (err) {
-      console.error(err)
+      setError(err.response?.data?.message || 'Failed to save settings. Please try again.')
     } finally {
       setSaving(false)
     }
   }
+
+  const renderCard = (f) => (
+    <div key={f.key} className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.03]">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">{f.icon}</span>
+        <div>
+          <p className="text-sm font-semibold text-white">{f.label}</p>
+          <p className="text-[10px] text-zinc-600">{f.desc}</p>
+        </div>
+      </div>
+      {!editing ? (
+        <p className="text-2xl font-extrabold text-white mt-2">{formatValue(f, settings[f.key])}</p>
+      ) : f.suffix === 'on/off' ? (
+        <div className="flex gap-2 mt-2">
+          {[[1, 'On'], [0, 'Off']].map(([val, lbl]) => (
+            <button key={lbl} type="button"
+              onClick={() => setTempSettings(prev => ({ ...prev, [f.key]: val }))}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-bold border transition-all ${(Number(tempSettings[f.key]) || 0) === val ? 'bg-violet-500/15 text-violet-300 border-violet-500/30' : 'bg-white/5 text-zinc-500 border-white/10 hover:bg-white/10'}`}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <input type="number" value={tempSettings[f.key] ?? 0} min={f.min} max={f.max}
+          onChange={e => { const v = e.target.value; setTempSettings(prev => ({ ...prev, [f.key]: v === '' ? '' : Number(v) })) }}
+          onBlur={() => setTempSettings(prev => ({ ...prev, [f.key]: clampField(f, prev[f.key]) }))}
+          className="w-full px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-lg font-bold focus:border-violet-500 outline-none mt-2" />
+      )}
+    </div>
+  )
 
   return (
     <div className="page-root">
@@ -90,27 +159,19 @@ const CommissionSettings = () => {
               )}
             </div>
 
+            {error && <p className="text-xs text-red-400 mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20">{error}</p>}
+
             <div className="grid sm:grid-cols-2 gap-4">
-              {fields.map(f => (
-                <div key={f.key} className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.03]">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">{f.icon}</span>
-                    <div>
-                      <p className="text-sm font-semibold text-white">{f.label}</p>
-                      <p className="text-[10px] text-zinc-600">{f.desc}</p>
-                    </div>
-                  </div>
-                  {editing ? (
-                    <input type="number" value={tempSettings[f.key] || 0}
-                      onChange={e => setTempSettings({ ...tempSettings, [f.key]: Number(e.target.value) })}
-                      className="w-full px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-lg font-bold focus:border-violet-500 outline-none mt-2" />
-                  ) : (
-                    <p className="text-2xl font-extrabold text-white mt-2">
-                      {f.suffix === '৳' && '৳'}{(settings[f.key] || 0).toLocaleString()}{f.suffix === '%' && '%'}{f.suffix === 'days' && ' days'}
-                    </p>
-                  )}
-                </div>
-              ))}
+              {platformFields.map(renderCard)}
+            </div>
+
+            <div className="flex items-center gap-3 mt-8 mb-4">
+              <span className="text-lg">📸</span>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Instagram</h3>
+              <div className="flex-1 h-px bg-white/5" />
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {instagramFields.map(renderCard)}
             </div>
           </div>
 

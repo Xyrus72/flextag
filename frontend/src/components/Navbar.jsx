@@ -83,6 +83,7 @@ const Navbar = () => {
             <a
               key={link.label}
               href={link.href}
+              className="nav-link"
               style={{
                 padding: '8px 14px',
                 borderRadius: 8,
@@ -232,6 +233,19 @@ const Navbar = () => {
           .desktop-nav { display: none !important; }
           .mobile-burger { display: flex !important; }
         }
+        .nav-link { position: relative; }
+        .nav-link::after {
+          content: '';
+          position: absolute;
+          left: 14px; right: 14px; bottom: 4px;
+          height: 1.5px;
+          border-radius: 2px;
+          background: linear-gradient(90deg, #7c3aed, #06b6d4);
+          transform: scaleX(0);
+          transform-origin: left;
+          transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .nav-link:hover::after { transform: scaleX(1); }
       `}</style>
     </nav>
   )

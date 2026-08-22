@@ -14,6 +14,7 @@ const campaignSchema = new mongoose.Schema({
   minFollowers: { type: Number, default: 1000 },
   hashtags:     { type: String, default: '' },
   handles:      { type: String, default: '' },
+  contentType:  { type: String, enum: ['any', 'reel', 'post', 'carousel'], default: 'any' },  // required media type for post verification
   deadline:     { type: Date },
   retentionDays:{ type: Number, default: 7 },
   budgetCap:    { type: Number, default: 0 },

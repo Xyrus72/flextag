@@ -3,9 +3,11 @@ const router   = express.Router()
 const Post     = require('../models/Post')
 const Order    = require('../models/Order')
 const Campaign = require('../models/Campaign')
-const Transaction = require('../models/Transaction')
-const User     = require('../models/User')
 const { requireAuth, requireRole } = require('../middleware/auth')
+const { approvePost } = require('../services/postApproval')
+const { parsePostUrl } = require('../services/instagram/endpoints')
+
+const escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 // ── GET /api/posts ─────────────────────────────────────────────────────────
 router.get('/', requireAuth, async (req, res) => {
@@ -19,9 +21,9 @@ router.get('/', requireAuth, async (req, res) => {
     if (status) filter.status = status
 
     const posts = await Post.find(filter)
-      .populate('creatorId',  'name instagramHandle avatar followersCount tier')
-      .populate('campaignId', 'title brand retentionDays cashbackRate')
-      .populate('orderId',    'orderId cashbackAmount')
+      .populate('creatorId',  'name instagramHandle avatar followersCount tier igVerified igHealthScore igFakeFollowerPct')
+      .populate('campaignId', 'title brand brandId retentionDays cashbackRate hashtags handles contentType')
+      .populate('orderId',    'orderId cashbackAmount createdAt status')
       .sort({ createdAt: -1 })
 
     res.json({ posts })
@@ -38,14 +40,34 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
     if (!campaignId || !postUrl) {
       return res.status(400).json({ message: 'campaignId and postUrl required.' })
     }
+    const plat = platform || 'instagram'
+    const url = String(postUrl).trim()
+    const shortcode = plat === 'instagram' ? parsePostUrl(url) : null
+    if (plat === 'instagram' && !shortcode) {
+      return res.status(400).json({ message: 'Paste the link of the Instagram post or reel (instagram.com/p/… or /reel/…).' })
+    }
 
     const campaign = await Campaign.findById(campaignId)
     if (!campaign) return res.status(404).json({ message: 'Campaign not found.' })
 
-    // Check no duplicate submission for same order
+    // The order must belong to this creator AND this campaign — it anchors the
+    // verification date and decides how much cashback is released.
     if (orderId) {
-      const existing = await Post.findOne({ orderId, creatorId: req.user._id })
+      const order = await Order.findOne({ _id: orderId, creatorId: req.user._id, campaignId: campaign._id })
+      if (!order) return res.status(404).json({ message: 'Order not found for this campaign.' })
+      if (order.status === 'cancelled') return res.status(400).json({ message: 'This order was cancelled, so no cashback can be claimed for it.' })
+      // One live submission per order; a rejected post may be fixed and resubmitted.
+      const existing = await Post.findOne({ orderId, creatorId: req.user._id, status: { $ne: 'rejected' } })
       if (existing) return res.status(409).json({ message: 'Post already submitted for this order.' })
+    }
+
+    // The same Instagram post can't back two submissions (by anyone).
+    if (shortcode) {
+      const dup = await Post.findOne({
+        status: { $in: ['pending', 'approved'] },
+        postUrl: new RegExp(`/(?:p|reel|reels|tv)/${escapeRe(shortcode)}(?:[/?#]|$)`, 'i'),
+      }).select('_id')
+      if (dup) return res.status(409).json({ message: 'This Instagram post has already been submitted.' })
     }
 
     const retentionDeadline = new Date()
@@ -55,8 +77,8 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
       creatorId:  req.user._id,
       campaignId,
       orderId:    orderId || undefined,
-      postUrl,
-      platform:   platform || 'instagram',
+      postUrl:    url,
+      platform:   plat,
       retentionDeadline,
     })
 
@@ -71,55 +93,42 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
   }
 })
 
-// ── PUT /api/posts/:id/approve — admin/brand approves post ─────────────────
+// ── PUT /api/posts/:id/approve — admin / owning brand approves post ────────
+// Cashback release lives in services/postApproval.js (shared with automated
+// Instagram verification) so the money path can't drift.
 router.put('/:id/approve', requireAuth, requireRole('admin', 'brand'), async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
       .populate('campaignId')
       .populate('orderId')
+      .populate('creatorId', 'name instagramHandle igVerified')
     if (!post) return res.status(404).json({ message: 'Post not found.' })
+    if (req.user.role === 'brand' && String(post.campaignId?.brandId) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Access denied.' })
+    }
     if (post.status !== 'pending') return res.status(400).json({ message: 'Post is not pending.' })
 
-    post.status = 'approved'
-    await post.save()
-
-    // Release cashback: create a completed transaction
-    if (post.orderId) {
-      const order = post.orderId
-      if (!order.cashbackReleased) {
-        await Transaction.create({
-          userId:  post.creatorId,
-          type:    'cashback',
-          amount:  order.cashbackAmount,
-          desc:    `Cashback for ${post.campaignId?.title || 'campaign'}`,
-          status:  'completed',
-          orderId: order._id,
-          postId:  post._id,
-        })
-
-        // Update order cashback released flag
-        await Order.findByIdAndUpdate(order._id, { cashbackReleased: true })
-
-        // Update creator totalEarnings
-        await User.findByIdAndUpdate(post.creatorId, {
-          $inc: { totalEarnings: order.cashbackAmount, completedCampaigns: 1 },
-        })
-      }
-    }
-
-    res.json({ post, message: 'Post approved and cashback released.' })
+    const { released } = await approvePost(post, { approvedBy: req.user._id })
+    res.json({ post, message: released ? 'Post approved and cashback released.' : 'Post approved.' })
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ message: err.message })
     console.error('[posts approve]', err)
     res.status(500).json({ message: 'Server error.' })
   }
 })
 
-// ── PUT /api/posts/:id/reject — admin/brand rejects post ──────────────────
+// ── PUT /api/posts/:id/reject — admin / owning brand rejects post ──────────
 router.put('/:id/reject', requireAuth, requireRole('admin', 'brand'), async (req, res) => {
   try {
     const { reason } = req.body
-    const post = await Post.findById(req.params.id)
+    const post = await Post.findById(req.params.id).populate('campaignId', 'brandId')
     if (!post) return res.status(404).json({ message: 'Post not found.' })
+    if (req.user.role === 'brand' && String(post.campaignId?.brandId) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Access denied.' })
+    }
+    if (post.status === 'approved') {
+      return res.status(400).json({ message: 'Approved posts cannot be rejected — cashback was already released. Open a dispute instead.' })
+    }
 
     post.status = 'rejected'
     post.rejectionReason = reason || 'Does not meet campaign requirements.'
@@ -127,6 +136,7 @@ router.put('/:id/reject', requireAuth, requireRole('admin', 'brand'), async (req
 
     res.json({ post, message: 'Post rejected.' })
   } catch (err) {
+    console.error('[posts reject]', err)
     res.status(500).json({ message: 'Server error.' })
   }
 })

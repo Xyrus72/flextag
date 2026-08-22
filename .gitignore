@@ -35,3 +35,6 @@ Thumbs.db
 
 # Coverage
 coverage/
+
+# Claude Code local tooling (skills, launch config)
+.claude/
