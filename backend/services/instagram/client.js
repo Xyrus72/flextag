@@ -313,9 +313,9 @@ function httpFor(err) {
     case 'NOT_FOUND': return { status: 404, message: 'Instagram account or post not found.' }
     case 'PRIVATE': return { status: 422, message: 'This Instagram account is private.' }
     case 'BAD_INPUT': return { status: 400, message: err.message }
-    case 'NO_SESSION': return { status: 503, message: 'Instagram session is not configured. Add IG_SESSIONID to backend/.env.' }
-    case 'SESSION_INVALID': return { status: 503, message: 'Instagram session expired or was challenged. Refresh IG_SESSIONID in backend/.env.' }
-    case 'RATE_LIMITED': return { status: 429, message: 'Instagram rate limit hit. Try again in a few minutes.' }
+    case 'NO_SESSION': return { status: 503, message: err.hint === 'HIKERAPI_KEY' ? 'HikerAPI is not configured. Add HIKERAPI_KEY to backend/.env.' : 'No Instagram data provider is configured. Add HIKERAPI_KEY (recommended) or IG_SESSIONID to backend/.env.' }
+    case 'SESSION_INVALID': return { status: 503, message: err.hint === 'HIKERAPI_KEY' ? 'HikerAPI rejected the access key — check HIKERAPI_KEY in backend/.env.' : 'Instagram session expired or was challenged. Refresh IG_SESSIONID in backend/.env.' }
+    case 'RATE_LIMITED': return { status: 429, message: err.hint === 'HIKERAPI_KEY' ? 'HikerAPI credits are exhausted or rate-limited — top up at hikerapi.com.' : 'Instagram rate limit hit. Try again in a few minutes.' }
     default: return { status: 502, message: err.message || 'Instagram is unavailable right now.' }
   }
 }

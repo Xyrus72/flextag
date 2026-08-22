@@ -3,9 +3,9 @@ const router  = express.Router()
 const crypto  = require('crypto')
 const { requireAuth, requireRole } = require('../middleware/auth')
 const client  = require('../services/instagram/client')
-const { cleanUsername, fetchProfile } = require('../services/instagram/endpoints')
-const { normalizeProfile } = require('../services/instagram/normalize')
-const { precheck, runAudit } = require('../services/instagram/audit')
+const { cleanUsername } = require('../services/instagram/endpoints')
+const { precheck, runAudit, fetchProfile } = require('../services/instagram/audit')
+const { getProvider, providers } = require('../services/instagram/provider')
 const { verifyPost } = require('../services/instagram/postCheck')
 const IgAudit = require('../models/IgAudit')
 const Post    = require('../models/Post')
@@ -43,8 +43,16 @@ const identityLimiter = createLimiter({ windowMs: 10 * 60_000, max: 6, keyFn: by
 /* ── GET /api/instagram/status (admin) ───────────────────────────────────── */
 router.get('/status', requireAuth, requireRole('admin'), async (req, res) => {
   try {
-    const [session, settings] = await Promise.all([client.checkSession({ force: req.query.force === '1' }), getIgSettings({ fresh: true })])
-    res.json({ ...client.getStatus(), valid: session.valid, sessionUser: session.username || null, settings })
+    const force = req.query.force === '1'
+    const prov = getProvider()
+    const other = prov === providers.hiker ? providers.session : providers.hiker
+    const [primary, secondary, settings] = await Promise.all([
+      prov.status({ force }),
+      other.configured() ? other.status({ force }).catch((e) => ({ provider: other.name, configured: true, valid: null, lastError: e.message })) : Promise.resolve({ provider: other.name, configured: false, valid: null }),
+      getIgSettings({ fresh: true }),
+    ])
+    // Top-level fields describe the ACTIVE provider (what the admin strip shows); both are listed under `providers`.
+    res.json({ ...primary, providers: { [primary.provider]: primary, [secondary.provider]: secondary }, settings })
   } catch (err) { sendIgError(req, res, err, 'status') }
 })
 
@@ -165,7 +173,7 @@ router.post('/verify-identity/check', requireAuth, requireRole('creator'), ident
     if (req.user.igVerified) return res.json({ verified: true, handle, message: 'Already verified.' })
     const code = String(req.user.igVerifyCode || '')
     if (!code) return res.status(400).json({ message: 'Request a verification code first.' })
-    const profile = normalizeProfile(await fetchProfile(handle))
+    const { profile } = await fetchProfile(handle)
     const haystack = `${profile.biography || ''} ${profile.externalUrl || ''}`.toUpperCase()
     if (!haystack.includes(code.toUpperCase())) {
       return res.json({ verified: false, handle, code, message: `We couldn't find ${code} in @${handle}'s bio yet. Instagram can take a minute to update — make sure the bio is saved, then try again.` })

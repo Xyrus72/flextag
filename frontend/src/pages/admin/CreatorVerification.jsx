@@ -133,23 +133,22 @@ const MiniSpinner = () => (
 
 const describeStatus = (status) => {
   if (!status) return null
+  const hiker = status.provider === 'hiker'
   if (!status.configured) {
     return {
       tone: 'grey',
-      title: 'Not configured',
+      title: 'No Instagram data provider configured',
       detail: (
-        <>add <code style={CODE}>IG_SESSIONID</code> / <code style={CODE}>IG_CSRFTOKEN</code> / <code style={CODE}>IG_DS_USER_ID</code> to <code style={CODE}>backend/.env</code> (use a throwaway account)</>
+        <>add <code style={CODE}>HIKERAPI_KEY</code> (recommended) or the cookie trio <code style={CODE}>IG_SESSIONID</code> / <code style={CODE}>IG_CSRFTOKEN</code> / <code style={CODE}>IG_DS_USER_ID</code> to <code style={CODE}>backend/.env</code></>
       ),
     }
   }
   if (status.valid === false) {
-    return {
-      tone: 'red',
-      title: 'Session expired',
-      detail: <>refresh <code style={CODE}>IG_SESSIONID</code> in <code style={CODE}>backend/.env</code>{status.lastError ? ` · ${status.lastError}` : ''}</>,
-    }
+    return hiker
+      ? { tone: 'red', title: 'HikerAPI key rejected', detail: <>check <code style={CODE}>HIKERAPI_KEY</code> in <code style={CODE}>backend/.env</code>{status.lastError ? ` · ${status.lastError}` : ''}</> }
+      : { tone: 'red', title: 'Session expired', detail: <>refresh <code style={CODE}>IG_SESSIONID</code> in <code style={CODE}>backend/.env</code>{status.lastError ? ` · ${status.lastError}` : ''}</> }
   }
-  const user = status.sessionUser ? `@${status.sessionUser}` : 'session'
+  const user = hiker ? 'HikerAPI' : status.sessionUser ? `@${status.sessionUser}` : 'session'
   const reqs = isNum(status.requestsLastHour) ? `${fmtNum(status.requestsLastHour)} request${Number(status.requestsLastHour) === 1 ? '' : 's'} this hour` : null
   if (status.throttledUntil && new Date(status.throttledUntil).getTime() > Date.now()) {
     return {
@@ -160,7 +159,7 @@ const describeStatus = (status) => {
   }
   return {
     tone: 'green',
-    title: `Instagram session active (${user})`,
+    title: hiker ? 'HikerAPI active (pay-per-request)' : `Instagram session active (${user})`,
     detail: reqs || 'no requests this hour',
   }
 }

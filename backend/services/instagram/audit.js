@@ -6,10 +6,9 @@
  */
 const IgAudit = require('../../models/IgAudit')
 const User = require('../../models/User')
-const client = require('./client')
 const ep = require('./endpoints')
-const nz = require('./normalize')
 const sc = require('./scoring')
+const { getProvider, getFallbackProvider, withFallback, providers } = require('./provider')
 const { getIgSettings } = require('../../utils/settings')
 
 const DAY = 86_400_000
@@ -40,17 +39,16 @@ async function precheck(rawUsername, { settings } = {}) {
     const profile = { ...cached.profile, username }
     return { ...summarizeProfile(profile), ...sc.evaluateEligibility(profile, s), cached: true }
   }
-  const raw = await ep.fetchProfile(username)
-  const profile = nz.normalizeProfile(raw)
+  const { profile, seedPosts, via } = await fetchProfile(username)
   const eligibility = sc.evaluateEligibility(profile, s)
   const now = new Date()
   if (!cached) {
-    // Persist a basic snapshot (profile + first posts) so the full audit / admin lists can reuse it.
-    const posts = (raw.edge_owner_to_timeline_media?.edges || []).map((e) => nz.normalizePostFromWeb(e.node, profile.username))
+    // Persist a basic snapshot (profile + any seed posts) so the full audit / admin lists can reuse it.
+    const posts = seedPosts || []
     const metrics = sc.computeMetrics(profile, posts)
     await IgAudit.findOneAndUpdate(
       { username },
-      { $set: { igUserId: profile.igUserId, profile, posts, metrics, health: sc.scoreHealth(metrics, profile), eligibility, source: client.getSession() ? 'session' : 'anonymous', depth: 'basic', fetchedAt: now, profileCheckedAt: now, fetchErrors: [] } },
+      { $set: { igUserId: profile.igUserId, profile, posts, metrics, health: sc.scoreHealth(metrics, profile), eligibility, source: via, depth: 'basic', fetchedAt: now, profileCheckedAt: now, fetchErrors: [] } },
       { upsert: true, new: true },
     )
   } else {
@@ -58,6 +56,18 @@ async function precheck(rawUsername, { settings } = {}) {
     await IgAudit.updateOne({ username }, { $set: { igUserId: profile.igUserId, profile, eligibility, profileCheckedAt: now } })
   }
   return { ...summarizeProfile(profile), ...eligibility, cached: false }
+}
+
+/**
+ * Profile via the active provider (with fallback). Returns the normalized
+ * profile, any seed posts the provider bundles, and which provider answered —
+ * the deep fetches that follow must use that same provider.
+ */
+async function fetchProfile(username) {
+  return withFallback(async (p) => {
+    const { profile, seedPosts } = await p.getProfile(username)
+    return { profile, seedPosts: seedPosts || [], via: p.configured() ? p.name : 'anonymous', provider: p }
+  })
 }
 
 /* ── Full audit ──────────────────────────────────────────────────────────── */
@@ -80,10 +90,11 @@ async function runAuditInner(username, { depth = 'full', force = false, userId =
   const s = settings || (await getIgSettings())
   const existing = await IgAudit.findOne({ username })
   const ttl = maxAgeMs ?? s.auditTtlDays * DAY
-  const hasSession = !!client.getSession()
+  const primary = getProvider()
+  const canDeep = primary.configured() || !!getFallbackProvider(primary)
 
   // A fresh doc is reused unless a full audit is now attainable where only a basic one exists.
-  const upgradable = depth === 'full' && existing && existing.depth !== 'full' && !existing.profile?.isPrivate && hasSession
+  const upgradable = depth === 'full' && existing && existing.depth !== 'full' && !existing.profile?.isPrivate && canDeep
   if (existing && !force && !upgradable && Date.now() - existing.fetchedAt.getTime() < ttl) {
     if (userId && !existing.user) { existing.user = userId; await existing.save() }
     return existing
@@ -92,41 +103,37 @@ async function runAuditInner(username, { depth = 'full', force = false, userId =
   const t0 = Date.now()
   const errors = []
 
-  // 1. Profile (+ the first 12 posts in the web shape)
-  const rawProfile = await ep.fetchProfile(username)
-  const profile = nz.normalizeProfile(rawProfile)
-  let posts = (rawProfile.edge_owner_to_timeline_media?.edges || []).map((e) => nz.normalizePostFromWeb(e.node, profile.username))
+  // 1. Profile via whichever provider answers (HikerAPI or the cookie session)
+  const { profile, seedPosts, via, provider } = await fetchProfile(username)
+  let posts = seedPosts
   let followers = []
   const commentSamples = []
   let effectiveDepth = 'basic'
+  const deepOk = provider.configured() && !profile.isPrivate && depth === 'full' && !!profile.igUserId
 
-  if (!profile.isPrivate && depth === 'full' && hasSession && profile.igUserId) {
+  if (deepOk) {
     effectiveDepth = 'full'
-    // 2. More posts (mobile shape has reel play counts)
+    // 2. Extended post history (reel play counts, captions)
     try {
       if (s.postsToFetch > posts.length) {
-        const items = await ep.fetchUserFeed(profile.igUserId, { limit: s.postsToFetch })
-        if (items.length) posts = items.map(nz.normalizePostFromMobile)
+        const more = await provider.getPosts(profile.igUserId, { limit: s.postsToFetch })
+        if (more.length) posts = more
       }
     } catch (err) { errors.push(`posts: ${err.message}`) }
     // 3. Follower sample (fake-follower estimate)
     try {
-      if (s.followerSample > 0) {
-        const raw = await ep.fetchFollowersSample(profile.igUserId, { limit: s.followerSample })
-        followers = raw.map(nz.normalizeFollower)
-      }
+      if (s.followerSample > 0) followers = await provider.getFollowers(profile.igUserId, { limit: s.followerSample })
     } catch (err) { errors.push(`followers: ${err.message}`) }
     // 4. Comment samples from the 3 newest posts with comments
     try {
       for (const p of posts.slice(0, 3)) {
         if (!p.comments) continue
         const mediaId = p.id || ep.shortcodeToMediaId(p.shortcode)
-        const cs = await ep.fetchComments(mediaId, { limit: 20 })
-        commentSamples.push(...cs.map((c) => nz.normalizeComment(c, p.shortcode)))
+        commentSamples.push(...(await provider.getComments(mediaId, { limit: 20, shortcode: p.shortcode })))
       }
     } catch (err) { errors.push(`comments: ${err.message}`) }
-  } else if (depth === 'full' && !hasSession) {
-    errors.push('No Instagram session: follower sample and extended post history skipped.')
+  } else if (depth === 'full' && !provider.configured()) {
+    errors.push('No Instagram data provider configured: follower sample and extended post history skipped.')
   }
 
   // Dedupe + newest first (posts without a usable date sort last)
@@ -159,7 +166,7 @@ async function runAuditInner(username, { depth = 'full', force = false, userId =
         igUserId: profile.igUserId, user: linkedUserId || null, profile, posts, commentSamples: commentSamples.slice(0, 60),
         followerSample: audience.counts, metrics, health,
         audience: { fakeFollowerPct: audience.fakeFollowerPct, quality: audience.quality, signals: audience.signals, sampleSize: audience.sampleSize },
-        eligibility, source: hasSession ? 'session' : 'anonymous', depth: effectiveDepth,
+        eligibility, source: via, depth: effectiveDepth,
         fetchedAt: new Date(), profileCheckedAt: new Date(), durationMs: Date.now() - t0, fetchErrors: errors, history,
       },
     },
@@ -200,4 +207,4 @@ function auditUserInBackground(user, extra = {}) {
   }, 500).unref?.()
 }
 
-module.exports = { precheck, runAudit, auditUserInBackground, findUserIdForHandle }
+module.exports = { precheck, runAudit, auditUserInBackground, findUserIdForHandle, fetchProfile, providers }
