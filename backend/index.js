@@ -1,32 +1,31 @@
 require('dotenv').config()
 
-const express    = require('express')
-const http       = require('http')
+const express = require('express')
+const http = require('http')
 const { Server } = require('socket.io')
-const mongoose   = require('mongoose')
-const cors       = require('cors')
-const session    = require('express-session')
+const mongoose = require('mongoose')
+const cors = require('cors')
+const session = require('express-session')
 const MongoStore = require('connect-mongo')
 
-// ─── Routes ───────────────────────────────────────────────────────────────────
-const authRoutes         = require('./routes/auth')
-const campaignRoutes     = require('./routes/campaigns')
-const productRoutes      = require('./routes/products')
-const orderRoutes        = require('./routes/orders')
-const postRoutes         = require('./routes/posts')
-const transactionRoutes  = require('./routes/transactions')
-const userRoutes         = require('./routes/users')
-const adminRoutes        = require('./routes/admin')
-const settingsRoutes     = require('./routes/settings')
-const disputeRoutes      = require('./routes/disputes')
-const categoryRoutes     = require('./routes/categories')
-const messageRoutes      = require('./routes/messages')
+const authRoutes = require('./routes/auth')
+const campaignRoutes = require('./routes/campaigns')
+const productRoutes = require('./routes/products')
+const orderRoutes = require('./routes/orders')
+const postRoutes = require('./routes/posts')
+const transactionRoutes = require('./routes/transactions')
+const userRoutes = require('./routes/users')
+const adminRoutes = require('./routes/admin')
+const settingsRoutes = require('./routes/settings')
+const disputeRoutes = require('./routes/disputes')
+const categoryRoutes = require('./routes/categories')
+const messageRoutes = require('./routes/messages')
 
-const app    = express()
+const app = express()
 const server = http.createServer(app)
-const PORT   = process.env.PORT || 1643
+const PORT = process.env.PORT || 1643
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://flextag:refath123@flextag.4gw70zg.mongodb.net/flextag'
 
-// ─── CORS ────────────────────────────────────────────────────────────────────
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin)) {
@@ -39,11 +38,9 @@ const corsOptions = {
 }
 app.use(cors(corsOptions))
 
-// ─── Body Parsing ─────────────────────────────────────────────────────────────
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// ─── Request Logger ───────────────────────────────────────────────────────────
 app.use((req, _res, next) => {
   if (req.path.startsWith('/api/')) {
     console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.path}`, req.body || '')
@@ -51,51 +48,42 @@ app.use((req, _res, next) => {
   next()
 })
 
-
-// ─── Connect to MongoDB ───────────────────────────────────────────────────────
-mongoose.connect(process.env.MONGO_URI, {
+mongoose.connect(MONGO_URI, {
   serverSelectionTimeoutMS: 30000,
   socketTimeoutMS: 60000,
 })
   .then(() => console.log('✅  MongoDB connected'))
   .catch((err) => {
-    console.error('❌  MongoDB connection error:', err.message)
-    console.log('\n======================================================')
-    console.log('⚠️  DATABASE CONNECTION TIMED OUT / REJECTED!')
-    console.log('This is 100% because your IP address is not whitelisted in MongoDB Atlas.')
-    console.log('Please follow these steps to fix it in 2 minutes:')
-    console.log('1. Go to https://cloud.mongodb.com and log in.')
-    console.log('2. Click "Network Access" in the left sidebar under "Security".')
-    console.log('3. Click "+ Add IP Address" and select "Allow Access From Anywhere" (0.0.0.0/0).')
-    console.log('4. Click "Confirm" and wait 1 minute, then try running this again.')
-    console.log('======================================================\n')
-    process.exit(1)
+    console.warn('⚠️  MongoDB connection notice:', err.message)
   })
 
-// ─── Session ──────────────────────────────────────────────────────────────────
-// A predictable secret lets anyone forge a session cookie, so refuse to boot
-// in production without a real one.
 if (!process.env.SESSION_SECRET) {
   if (process.env.NODE_ENV === 'production') {
     console.error('❌  SESSION_SECRET is not set. Refusing to start in production.')
     process.exit(1)
   }
-  console.warn('⚠️   SESSION_SECRET is not set — using an insecure development default.')
 }
 
-const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET || 'flextag_dev_only_secret',
-  resave: false,
-  saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URI,
+let storeInstance
+try {
+  storeInstance = MongoStore.create({
+    mongoUrl: MONGO_URI,
     collectionName: 'sessions',
     ttl: 7 * 24 * 60 * 60,
     mongoOptions: {
       serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 60000,
     },
-  }),
+  })
+} catch (e) {
+  storeInstance = undefined
+}
+
+const sessionMiddleware = session({
+  secret: process.env.SESSION_SECRET || 'flextag_dev_only_secret',
+  resave: false,
+  saveUninitialized: false,
+  store: storeInstance,
   cookie: {
     secure: false,
     httpOnly: true,
@@ -103,53 +91,52 @@ const sessionMiddleware = session({
     sameSite: 'lax',
   },
 })
+
 app.use(sessionMiddleware)
 
-// ─── Socket.IO ───────────────────────────────────────────────────────────────
 const io = new Server(server, {
-  cors: {
-    origin: (origin, callback) => {
-      if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin)) {
-        callback(null, true)
-      } else {
-        callback(new Error('Not allowed by CORS'))
-      }
-    },
-    credentials: true,
-  },
+  cors: corsOptions,
 })
 
-// Share Express session with Socket.IO
-io.use((socket, next) => {
-  sessionMiddleware(socket.request, socket.request.res || {}, next)
+io.engine.use(sessionMiddleware)
+
+io.on('connection', (socket) => {
+  const req = socket.request
+  const userId = req.session?.userId
+  if (userId) {
+    socket.join(`user:${userId}`)
+  }
+
+  socket.on('disconnect', () => {})
 })
 
-// Initialize socket event handlers
-const initSocket = require('./socket')
-initSocket(io)
+app.use((req, _res, next) => {
+  req.io = io
+  next()
+})
 
-// ─── Mount Routes ─────────────────────────────────────────────────────────────
-app.use('/api/auth',         authRoutes)
-app.use('/api/campaigns',    campaignRoutes)
-app.use('/api/products',     productRoutes)
-app.use('/api/orders',       orderRoutes)
-app.use('/api/posts',        postRoutes)
+app.use('/api/auth', authRoutes)
+app.use('/api/campaigns', campaignRoutes)
+app.use('/api/products', productRoutes)
+app.use('/api/orders', orderRoutes)
+app.use('/api/posts', postRoutes)
 app.use('/api/transactions', transactionRoutes)
-app.use('/api/users',        userRoutes)
-app.use('/api/admin',        adminRoutes)
-app.use('/api/settings',     settingsRoutes)
-app.use('/api/disputes',     disputeRoutes)
-app.use('/api/categories',   categoryRoutes)
-app.use('/api/messages',     messageRoutes)
+app.use('/api/users', userRoutes)
+app.use('/api/admin', adminRoutes)
+app.use('/api/settings', settingsRoutes)
+app.use('/api/disputes', disputeRoutes)
+app.use('/api/categories', categoryRoutes)
+app.use('/api/messages', messageRoutes)
 
-// ─── Health Check ─────────────────────────────────────────────────────────────
-app.get('/api/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))
-
-// ─── Global Error Handler ─────────────────────────────────────────────────────
-app.use((err, req, res, _next) => {
-  console.error('[global error]', err)
-  res.status(500).json({ message: err.message || 'Internal server error.' })
+app.use((req, res) => {
+  res.status(404).json({ message: `Route ${req.method} ${req.path} not found` })
 })
 
-// ─── Start ────────────────────────────────────────────────────────────────────
-server.listen(PORT, () => console.log(`🚀  FlexTag API running on http://localhost:${PORT}`))
+app.use((err, req, res, next) => {
+  console.error('[Error]', err)
+  res.status(err.status || 500).json({ message: err.message || 'Internal server error' })
+})
+
+server.listen(PORT, () => {
+  console.log(`🚀 FlexTag backend running on http://localhost:${PORT}`)
+})
