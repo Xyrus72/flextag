@@ -104,7 +104,7 @@ const SnapshotStats = ({ snapshot, source }) => {
   const stats = [
     // null likes mean "hidden by the owner" only when we read the post through a session;
     // the anonymous embed page simply may not expose the count.
-    { label: 'Likes',    value: snapshot.likes === null ? (source === 'session' ? 'Hidden' : null) : fmtNum(snapshot.likes) },
+    { label: 'Likes',    value: snapshot.likes === null ? (source && source !== 'embed' ? 'Hidden' : null) : fmtNum(snapshot.likes) },
     { label: 'Comments', value: fmtNum(snapshot.comments) },
     { label: 'Views',    value: fmtNum(snapshot.views) },
     { label: 'Posted',   value: fmtDate(snapshot.takenAt) },

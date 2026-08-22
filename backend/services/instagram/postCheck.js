@@ -6,9 +6,9 @@
  * Also performs the retention re-check (is the post still live at the deadline).
  */
 const Post = require('../../models/Post')
-const client = require('./client')
 const ep = require('./endpoints')
-const nz = require('./normalize')
+const { getProvider, withFallback } = require('./provider')
+const { embedToPost } = require('./providers/session')
 const { approvePost } = require('../postApproval')
 const { getIgSettings } = require('../../utils/settings')
 
@@ -18,16 +18,6 @@ const RETENTION_FATAL = new Set(['NO_SESSION', 'SESSION_INVALID', 'RATE_LIMITED'
 /** "#GlowUp, #FlexTag" → ['glowup','flextag'] ; "@brand, @other" → ['brand','other'] */
 function splitList(value, stripRe) {
   return [...new Set(String(value || '').split(/[,\s]+/).map((x) => x.trim().replace(stripRe, '').toLowerCase()).filter(Boolean))]
-}
-
-function embedToPost(e) {
-  const caption = e.caption == null ? null : e.caption
-  return {
-    shortcode: e.shortcode, url: `https://www.instagram.com/p/${e.shortcode}/`, owner: (e.owner || '').toLowerCase(),
-    ownerIsPrivate: !!e.isPrivate, takenAt: e.takenAt ? new Date(e.takenAt * 1000) : null,
-    mediaType: e.mediaType ?? (e.isVideo ? 'video' : null), likes: e.likes, comments: null, views: null, caption,
-    thumbnail: '', hashtags: caption == null ? null : nz.extractHashtags(caption), mentions: caption == null ? null : nz.extractMentions(caption),
-  }
 }
 
 /**
@@ -129,17 +119,13 @@ async function verifyPost(postOrId, { by = null } = {}) {
 
   let fetched = null
   try {
-    if (client.getSession()) {
-      fetched = nz.normalizePostFromMobile(await ep.fetchPostByShortcode(shortcode))
-      verification.source = 'session'
-    } else {
-      fetched = embedToPost(await ep.fetchPostEmbed(shortcode))
-      verification.source = 'embed'
-    }
+    // HikerAPI or the cookie session (with fallback); the embed page when neither is configured.
+    fetched = await withFallback((p) => p.getPost(shortcode))
+    verification.source = fetched.source || getProvider().name
   } catch (err) {
     if (err.code === 'NOT_FOUND') {
       fetched = null
-      verification.source = client.getSession() ? 'session' : 'embed'
+      verification.source = getProvider().name
     } else {
       // Keep operational detail (env names, session state) out of creator-visible fields.
       verification.status = 'error'
@@ -185,8 +171,7 @@ async function retentionCheck(postOrId) {
     retention.status = 'skipped'
   } else {
     try {
-      if (client.getSession()) await ep.fetchPostByShortcode(shortcode)
-      else await ep.fetchPostEmbed(shortcode)
+      await withFallback((p) => p.getPost(shortcode))
       retention.status = 'alive'
     } catch (err) {
       if (err.code === 'NOT_FOUND') {

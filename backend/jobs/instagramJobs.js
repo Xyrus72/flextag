@@ -7,7 +7,7 @@
  */
 const Post = require('../models/Post')
 const User = require('../models/User')
-const client = require('../services/instagram/client')
+const { anyConfigured } = require('../services/instagram/provider')
 const { runAudit } = require('../services/instagram/audit')
 const { retentionCheck } = require('../services/instagram/postCheck')
 const { getIgSettings } = require('../utils/settings')
@@ -40,7 +40,7 @@ async function runRetentionChecks({ limit = 20 } = {}) {
 
 /** Creators whose audit is older than the TTL (or never audited): refresh. */
 async function runStaleReaudits({ limit = 25 } = {}) {
-  if (!client.getSession()) return { skipped: 'no session' }
+  if (!anyConfigured()) return { skipped: 'no provider configured' }
   if (running.reaudit) return { skipped: 'already running' }
   running.reaudit = true
   try {

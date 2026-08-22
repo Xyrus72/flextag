@@ -50,7 +50,7 @@ const IgAuditSchema = new mongoose.Schema({
   },
   eligibility: { eligible: { type: Boolean, default: false }, reasons: { type: [String], default: [] }, minFollowers: { type: Number, default: 1000 } },
 
-  source:     { type: String, enum: ['session', 'anonymous', 'fixture'], default: 'session' },
+  source:     { type: String, enum: ['session', 'anonymous', 'hiker', 'embed', 'fixture'], default: 'session' },
   depth:      { type: String, enum: ['basic', 'full'], default: 'basic' },
   fetchedAt:  { type: Date, default: Date.now, index: true },
   profileCheckedAt: { type: Date, default: null },   // last lightweight profile refresh (signup prechecks)
