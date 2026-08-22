@@ -21,6 +21,7 @@ const settingsRoutes     = require('./routes/settings')
 const disputeRoutes      = require('./routes/disputes')
 const categoryRoutes     = require('./routes/categories')
 const messageRoutes      = require('./routes/messages')
+const { startRetentionMonitor } = require('./services/retentionMonitor')
 
 const app    = express()
 const server = http.createServer(app)
@@ -58,6 +59,7 @@ mongoose.connect(process.env.MONGO_URI, {
   socketTimeoutMS: 60000,
 })
   .then(() => console.log('✅  MongoDB connected'))
+  .then(() => startRetentionMonitor())
   .catch((err) => {
     console.error('❌  MongoDB connection error:', err.message)
     console.log('\n======================================================')

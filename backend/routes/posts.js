@@ -5,7 +5,6 @@ const Order = require('../models/Order')
 const Campaign = require('../models/Campaign')
 const Product = require('../models/Product')
 const Transaction = require('../models/Transaction')
-const User = require('../models/User')
 const { requireAuth, requireRole } = require('../middleware/auth')
 const { auditInstagramPost } = require('../services/metaAuditor')
 
@@ -64,12 +63,27 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
       orderId: orderId || undefined,
       postUrl,
       platform: platform || 'instagram',
-      status: 'approved',
+      status: 'monitoring',
       retentionDeadline: auditData.retentionDeadline,
       retentionDaysRemaining: auditData.retentionDaysRemaining,
       auditStatus: 'passed',
       auditResults: auditData.auditResults
     })
+
+    if (post.orderId) {
+      const order = await Order.findById(post.orderId)
+      if (order && !post.cashbackReleased) {
+        await Transaction.create({
+          userId: post.creatorId,
+          type: 'cashback',
+          amount: order.cashbackAmount || 500,
+          desc: 'Cashback held in escrow during retention period',
+          status: 'pending',
+          orderId: order._id,
+          postId: post._id,
+        })
+      }
+    }
 
     if (campaign && campaign.totalCreators !== undefined) {
       campaign.totalCreators = (campaign.totalCreators || 0) + 1
@@ -88,31 +102,27 @@ router.put('/:id/approve', requireAuth, requireRole('admin', 'brand'), async (re
     const post = await Post.findById(req.params.id).populate('campaignId').populate('orderId')
     if (!post) return res.status(404).json({ message: 'Post not found.' })
 
-    post.status = 'approved'
-    post.auditStatus = 'passed'
+    post.status = 'monitoring'
+    post.auditStatus = 'monitoring'
+    if (!post.retentionDeadline) {
+      post.retentionDeadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      post.retentionDaysRemaining = 7
+    }
     await post.save()
 
-    if (post.orderId) {
-      const order = post.orderId
-      if (!order.cashbackReleased) {
-        await Transaction.create({
-          userId: post.creatorId,
-          type: 'cashback',
-          amount: order.cashbackAmount || 500,
-          desc: `Cashback for ${post.campaignId?.name || post.campaignId?.title || 'campaign'}`,
-          status: 'completed',
-          orderId: order._id,
-          postId: post._id,
-        })
-
-        await Order.findByIdAndUpdate(order._id, { cashbackReleased: true })
-        await User.findByIdAndUpdate(post.creatorId, {
-          $inc: { totalEarnings: order.cashbackAmount || 500, completedCampaigns: 1 },
-        })
-      }
+    if (post.orderId && !post.cashbackReleased && !(await Transaction.exists({ postId: post._id, type: 'cashback' }))) {
+      await Transaction.create({
+        userId: post.creatorId,
+        type: 'cashback',
+        amount: post.orderId.cashbackAmount || 500,
+        desc: 'Cashback held in escrow during retention period',
+        status: 'pending',
+        orderId: post.orderId._id,
+        postId: post._id,
+      })
     }
 
-    res.json({ post, message: 'Post approved and cashback released.' })
+    res.json({ post, message: 'Post approved and cashback placed in escrow for retention monitoring.' })
   } catch (err) {
     console.error('[posts approve]', err)
     res.status(500).json({ message: 'Server error.' })

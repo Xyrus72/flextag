@@ -11,6 +11,8 @@ const postSchema = new mongoose.Schema({
   retentionDeadline: { type: Date },
   retentionDaysRemaining: { type: Number, default: 7 },
   cashbackReleased: { type: Boolean, default: false },
+  retentionViolationAt: { type: Date },
+  lastRetentionCheckAt: { type: Date },
   auditStatus: { type: String, enum: ['passed', 'failed', 'monitoring', 'flagged'], default: 'monitoring' },
   auditResults: {
     isPublic: { type: Boolean, default: true },

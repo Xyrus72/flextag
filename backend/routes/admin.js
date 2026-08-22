@@ -7,7 +7,33 @@ const Order    = require('../models/Order')
 const Post     = require('../models/Post')
 const Product  = require('../models/Product')
 const Transaction = require('../models/Transaction')
+const Alert     = require('../models/Alert')
 const { requireAuth, requireRole } = require('../middleware/auth')
+
+// ── GET /api/admin/alerts — active platform alerts ────────────────────────
+router.get('/alerts', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const alerts = await Alert.find({ acknowledged: false })
+      .populate('postId', 'postUrl creatorId retentionViolationAt')
+      .populate('orderId', 'orderId product')
+      .sort({ createdAt: -1 })
+    res.json({ alerts })
+  } catch (err) {
+    console.error('[admin alerts]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+router.put('/alerts/:id/acknowledge', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const alert = await Alert.findByIdAndUpdate(req.params.id, { acknowledged: true }, { new: true })
+    if (!alert) return res.status(404).json({ message: 'Alert not found.' })
+    res.json({ alert })
+  } catch (err) {
+    console.error('[admin alert acknowledge]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
 
 // ─── Helper: proxy a request to the Python bot ──────────────────────────────
 function proxyToPythonBot(payload) {

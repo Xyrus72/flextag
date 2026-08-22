@@ -3,6 +3,12 @@ import api from './api'
 export const getAdminStats = () =>
   api.get('/api/admin/stats').then(r => r.data)
 
+export const getAdminAlerts = () =>
+  api.get('/api/admin/alerts').then(r => r.data)
+
+export const acknowledgeAdminAlert = id =>
+  api.put(`/api/admin/alerts/${id}/acknowledge`).then(r => r.data)
+
 export const getAdminAnalytics = () =>
   api.get('/api/admin/analytics').then(r => r.data)
 

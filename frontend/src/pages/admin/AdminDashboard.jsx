@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { getAdminStats } from '../../services/admin'
+import { acknowledgeAdminAlert, getAdminAlerts, getAdminStats } from '../../services/admin'
 import { getPosts } from '../../services/posts'
 import { getUsers } from '../../services/users'
 
@@ -10,15 +10,17 @@ const AdminDashboard = () => {
   const [stats, setStats]                   = useState({})
   const [pendingPosts, setPendingPosts]      = useState([])
   const [unverifiedBrands, setUnverifiedBrands] = useState([])
+  const [retentionAlerts, setRetentionAlerts] = useState([])
   const [loading, setLoading]               = useState(true)
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [statsData, postsData, usersData] = await Promise.all([
-          getAdminStats(), getPosts({ status:'pending' }), getUsers({ role:'brand', isVerified:false })
+        const [statsData, alertsData, postsData, usersData] = await Promise.all([
+          getAdminStats(), getAdminAlerts(), getPosts({ status:'pending' }), getUsers({ role:'brand', isVerified:false })
         ])
         setStats(statsData)
+        setRetentionAlerts(alertsData.alerts || [])
         setPendingPosts((postsData.posts || []).slice(0, 5))
         setUnverifiedBrands((usersData.users || []).slice(0, 5))
       } catch (err) { console.error(err) }
@@ -37,6 +39,7 @@ const AdminDashboard = () => {
   ]
 
   const alerts = [
+    ...retentionAlerts.map(alert => ({ level:'critical', text:alert.title, detail:alert.message, alertId:alert._id, link:null })),
     pendingPosts.length   > 0 && { level:'warning', text:`${pendingPosts.length} post${pendingPosts.length>1?'s':''} pending review`, link:null },
     unverifiedBrands.length > 0 && { level:'info', text:`${unverifiedBrands.length} brand${unverifiedBrands.length>1?'s':''} awaiting verification`, link:'/admin/brand-verification' },
   ].filter(Boolean)
@@ -77,10 +80,12 @@ const AdminDashboard = () => {
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               {alerts.map((a, i) => (
                 <div key={i} style={{ padding:'14px 16px', borderRadius:14, background: a.level==='warning' ? 'rgba(245,158,11,0.08)' : 'rgba(124,58,237,0.08)', border: a.level==='warning' ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(124,58,237,0.25)' }}>
-                  <p style={{ fontSize:14, fontWeight:600, color: a.level==='warning' ? '#fbbf24' : '#a78bfa', margin:'0 0 6px' }}>
-                    {a.level==='warning' ? '⚠' : 'ℹ'} {a.text}
+                  <p style={{ fontSize:14, fontWeight:600, color: a.level==='critical' ? '#f87171' : a.level==='warning' ? '#fbbf24' : '#a78bfa', margin:'0 0 6px' }}>
+                    {a.level==='critical' ? '!' : a.level==='warning' ? '⚠' : 'ℹ'} {a.text}
                   </p>
+                  {a.detail && <p style={{ fontSize:12, color:'rgba(255,255,255,0.55)', margin:'0 0 8px' }}>{a.detail}</p>}
                   {a.link && <Link to={a.link} style={{ fontSize:12, color:'#a78bfa', textDecoration:'none' }}>Review now →</Link>}
+                  {a.alertId && <button onClick={async () => { await acknowledgeAdminAlert(a.alertId); setRetentionAlerts(items => items.filter(item => item._id !== a.alertId)) }} style={{ fontSize:12, color:'#fca5a5', background:'transparent', border:0, padding:0, cursor:'pointer' }}>Acknowledge</button>}
                 </div>
               ))}
             </div>

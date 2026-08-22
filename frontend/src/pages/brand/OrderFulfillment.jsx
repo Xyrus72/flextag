@@ -28,7 +28,10 @@ const OrderFulfillment = () => {
     getOrders({ status: 'all' }).then(data => setOrders(data.orders || [])).catch(console.error).finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    const timer = window.setTimeout(load, 0)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   const filtered = filter === 'all' ? orders : orders.filter(order => order.status === filter)
   const count = status => orders.filter(order => order.status === status).length

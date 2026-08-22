@@ -33,4 +33,18 @@ const auditInstagramPost = async (postUrl, postingRules = {}) => {
   }
 }
 
-module.exports = { auditInstagramPost }
+const pollInstagramPost = async postUrl => {
+  if (!process.env.META_ACCESS_TOKEN) return { isPublic: true, source: 'development-fallback' }
+
+  const params = new URLSearchParams({
+    id: postUrl,
+    fields: 'id,is_published,permalink_url',
+    access_token: process.env.META_ACCESS_TOKEN,
+  })
+  const response = await fetch(`https://graph.facebook.com/v22.0/?${params}`)
+  const data = await response.json()
+  if (!response.ok || data.error) throw new Error(data.error?.message || 'Meta API request failed')
+  return { isPublic: data.is_published !== false, source: 'meta-graph-api' }
+}
+
+module.exports = { auditInstagramPost, pollInstagramPost }
