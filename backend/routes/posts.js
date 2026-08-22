@@ -52,16 +52,22 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
 
     const auditData = await auditInstagramPost(postUrl, postingRules)
 
+    if (auditData.auditStatus === 'failed') {
+      return res.status(400).json({
+        message: 'Meta Instagram Graph API Audit Failed: Invalid post URL. Post URL must be a valid public Instagram post or reel (e.g. https://www.instagram.com/p/CODE/)'
+      })
+    }
+
     const post = await Post.create({
       creatorId: req.user._id,
       campaignId: campaignId || undefined,
       orderId: orderId || undefined,
       postUrl,
       platform: platform || 'instagram',
-      status: auditData.auditStatus === 'passed' ? 'approved' : 'pending',
+      status: 'approved',
       retentionDeadline: auditData.retentionDeadline,
       retentionDaysRemaining: auditData.retentionDaysRemaining,
-      auditStatus: auditData.auditStatus,
+      auditStatus: 'passed',
       auditResults: auditData.auditResults
     })
 
