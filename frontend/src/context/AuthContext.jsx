@@ -49,8 +49,10 @@ export const AuthProvider = ({ children }) => {
   const logout = async (navigateFn) => {
     try { await api.post('/api/auth/logout') } catch (_) {}
     setUser(null)
-    // Navigate to home immediately — works even if ProtectedRoute re-renders first
-    if (navigateFn) navigateFn('/', { replace: true })
+    // Navigate to home immediately — works even if ProtectedRoute re-renders first.
+    // Guard on typeof: callers sometimes wire this as onClick={logout}, which would
+    // pass a click Event (truthy but not callable) and throw.
+    if (typeof navigateFn === 'function') navigateFn('/', { replace: true })
     else window.location.href = '/'
   }
 
