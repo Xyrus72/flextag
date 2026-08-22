@@ -99,7 +99,7 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
 // ── PUT /api/orders/:id/status — brand updates status/tracking ─────────────
 router.put('/:id/status', requireAuth, requireRole('brand', 'admin'), async (req, res) => {
   try {
-    const { status, tracking } = req.body
+    const { status, tracking, returnReason } = req.body
     const order = await Order.findById(req.params.id)
     if (!order) return res.status(404).json({ message: 'Order not found.' })
 
@@ -107,13 +107,15 @@ router.put('/:id/status', requireAuth, requireRole('brand', 'admin'), async (req
       return res.status(403).json({ message: 'Access denied.' })
     }
 
-    const validStatuses = ['processing', 'packed', 'shipped', 'delivered', 'cancelled']
+    const validStatuses = ['processing', 'packed', 'shipped', 'delivered', 'cancelled', 'return_requested', 'returned']
     if (status && !validStatuses.includes(status)) {
       return res.status(400).json({ message: 'Invalid status.' })
     }
 
     if (status) order.status = status
     if (tracking !== undefined) order.tracking = tracking
+    if (returnReason !== undefined) order.returnReason = returnReason
+    if (status === 'return_requested' && !order.returnRequestedAt) order.returnRequestedAt = new Date()
     await order.save()
 
     res.json({ order, message: 'Order updated.' })
