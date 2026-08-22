@@ -1,10 +1,16 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createCampaign } from '../../services/campaigns'
-import { useAuth } from '../../context/AuthContext'
+
+// Instagram post format a creator's submission must match (verified by the backend audit).
+const CONTENT_TYPE_LABELS = {
+  any:      'Any post or reel',
+  reel:     'Reel',
+  post:     'Feed post (photo)',
+  carousel: 'Carousel',
+}
 
 const CampaignBuilder = () => {
-  const { user } = useAuth()
   const navigate = useNavigate()
   const [step, setStep]       = useState(1)
   const [submitting, setSubmitting] = useState(false)
@@ -12,7 +18,7 @@ const CampaignBuilder = () => {
   const [form, setForm]       = useState({
     title: '', category: 'Beauty', product: '', price: '', cashbackRate: 50, stock: '',
     minFollowers: 1000, hashtags: '', handles: '', deadline: '', retentionDays: 7,
-    budgetCap: '', isPrivate: false,
+    budgetCap: '', isPrivate: false, contentType: 'any',
   })
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
 
@@ -36,6 +42,7 @@ const CampaignBuilder = () => {
         retentionDays: Number(form.retentionDays),
         budgetCap:   form.budgetCap ? Number(form.budgetCap) : 0,
         isPrivate:   form.isPrivate,
+        contentType: form.contentType,
       })
       navigate('/brand')
     } catch (err) {
@@ -121,6 +128,11 @@ const CampaignBuilder = () => {
                 <input value={form.hashtags} onChange={set('hashtags')} placeholder="#GlowUpMatte, #FlextagCreator" className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" /></div>
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Required Tags (handles)</label>
                 <input value={form.handles} onChange={set('handles')} placeholder="@glowupbd" className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" /></div>
+              <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Required Content Type</label>
+                <select value={form.contentType} onChange={set('contentType')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none" style={{ background: '#0b0f24', color: '#fff' }}>
+                  {Object.entries(CONTENT_TYPE_LABELS).map(([v, l]) => <option key={v} value={v} style={{ background: '#0b0f24', color: '#fff' }}>{l}</option>)}
+                </select>
+                <p className="text-xs text-zinc-600 mt-1">Submitted posts must match this format to pass verification</p></div>
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Retention Period (days)</label>
                 <select value={form.retentionDays} onChange={set('retentionDays')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none" style={{ background: '#0b0f24', color: '#fff' }}>
                   {[3, 5, 7, 14, 30].map(d => <option key={d} value={d} style={{ background: '#0b0f24', color: '#fff' }}>{d} days</option>)}
@@ -142,6 +154,8 @@ const CampaignBuilder = () => {
                   ['Budget Cap',   form.budgetCap ? `৳${Number(form.budgetCap).toLocaleString()}` : 'Unlimited'],
                   ['Min Followers',Number(form.minFollowers).toLocaleString()],
                   ['Hashtags',     form.hashtags || '—'],
+                  ['Handles',      form.handles || '—'],
+                  ['Content type', CONTENT_TYPE_LABELS[form.contentType] || CONTENT_TYPE_LABELS.any],
                   ['Private',      form.isPrivate ? 'Yes ★' : 'No'],
                   ['Retention',    `${form.retentionDays} days`],
                 ].map(([l, v]) => (

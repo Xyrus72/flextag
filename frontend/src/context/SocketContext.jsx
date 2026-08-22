@@ -13,6 +13,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import { useAuth } from './AuthContext'
+import { API_URL } from '../config'
 
 const SocketContext = createContext(null)
 
@@ -27,7 +28,7 @@ export const SocketProvider = ({ children }) => {
 
     if (isAuthenticated) {
       // Connect — cookie session is sent automatically via withCredentials
-      const s = io('http://localhost:5000', {
+      const s = io(API_URL, {
         withCredentials: true,
         transports: ['websocket', 'polling'],
         reconnection: true,

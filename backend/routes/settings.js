@@ -2,6 +2,7 @@ const express  = require('express')
 const router   = express.Router()
 const Settings = require('../models/Settings')
 const { requireAuth, requireRole } = require('../middleware/auth')
+const { IG_SETTING_DEFAULTS, invalidateSettingsCache } = require('../utils/settings')
 
 const DEFAULTS = [
   { key: 'commissionRate',  value: 10,   label: 'Commission Rate (%)',             desc: 'Platform commission from each cashback payout' },
@@ -10,6 +11,8 @@ const DEFAULTS = [
   { key: 'minWithdrawal',   value: 500,  label: 'Min Withdrawal Threshold (৳)',    desc: 'Minimum balance required for creator cashout' },
   { key: 'retentionDays',   value: 7,    label: 'Default Retention Period',        desc: 'Days a post must stay live for cashback release' },
   { key: 'maxCashback',     value: 70,   label: 'Max Cashback Rate (%)',           desc: 'Maximum cashback percentage brands can offer' },
+  // Instagram audit / verification thresholds (numeric; on/off stored as 1/0)
+  ...IG_SETTING_DEFAULTS,
 ]
 
 // Seed defaults if not present
@@ -50,6 +53,7 @@ router.put('/', requireAuth, requireRole('admin'), async (req, res) => {
       )
       if (s) results.push(s)
     }
+    invalidateSettingsCache()
 
     res.json({ settings: results, message: 'Settings updated.' })
   } catch (err) {

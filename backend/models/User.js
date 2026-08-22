@@ -41,6 +41,16 @@ const userSchema = new mongoose.Schema({
   // Shared
   isVerified:  { type: Boolean, default: false },
   igVerified:  { type: Boolean, default: false },   // admin-verified Instagram identity
+  // Instagram audit summary (denormalized from IgAudit for lists / signup gating)
+  igPrecheck:        { type: String, enum: ['pending', 'passed', 'failed', 'skipped'], default: 'pending' },
+  igAuditedAt:       { type: Date, default: null },
+  igHealthScore:     { type: Number, default: null },
+  igFakeFollowerPct: { type: Number, default: null },
+  igIsPrivate:       { type: Boolean, default: null },
+  // Ownership proof: the creator puts this code in their Instagram bio, we confirm it → igVerified
+  igVerifyCode:      { type: String, default: '' },
+  igVerifyCodeAt:    { type: Date, default: null },
+  igVerifiedAt:      { type: Date, default: null },
   avatar:      { type: String, default: null },
   isSuper:     { type: Boolean, default: false },
 }, { timestamps: true })

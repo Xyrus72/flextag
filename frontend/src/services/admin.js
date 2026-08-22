@@ -47,8 +47,7 @@ export const rejectProduct = (id, reason) =>
   api.put(`/api/admin/products/${id}/reject`, { reason }).then(r => r.data)
 
 // Instagram ID Verification
-export const lookupInstagram = (username, max_posts = 10) =>
-  api.post('/api/admin/instagram-lookup', { username, max_posts }).then(r => r.data)
+export const lookupInstagram = (username, max_posts = 30) => api.post('/api/admin/instagram-lookup', { username, max_posts }).then(r => r.data)
 
 export const igVerifyCreator = (id, igVerified) =>
   api.put(`/api/admin/creators/${id}/ig-verify`, { igVerified }).then(r => r.data)

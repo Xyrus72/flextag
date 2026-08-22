@@ -16,9 +16,24 @@ export const AuthProvider = ({ children }) => {
       .finally(() => setIsLoading(false))
   }, [])
 
-  // ── Register ────────────────────────────────────────────────────────────────
+  // ── Register (admin-only: creates an account for someone else) ──────────────
+  // The server requires an admin session and does NOT log you in as the new
+  // user, so we don't touch local auth state here. Public signup uses the OTP
+  // flow below.
   const register = async (formData) => {
     const res = await api.post('/api/auth/register', formData)
+    return res.data.user
+  }
+
+  // ── OTP Registration — Step 1: send OTP ────────────────────────────────────
+  const sendOtp = async (email) => {
+    const res = await api.post('/api/auth/send-otp', { email })
+    return res.data
+  }
+
+  // ── OTP Registration — Step 2: verify OTP + create account ────────────────
+  const verifyOtp = async (formData) => {
+    const res = await api.post('/api/auth/verify-otp', formData)
     setUser(res.data.user)
     return res.data.user
   }
@@ -48,6 +63,8 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       register,
+      sendOtp,
+      verifyOtp,
     }}>
       {children}
     </AuthContext.Provider>

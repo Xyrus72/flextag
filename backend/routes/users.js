@@ -2,6 +2,9 @@ const express = require('express')
 const router  = express.Router()
 const User    = require('../models/User')
 const { requireAuth, requireRole } = require('../middleware/auth')
+const { normalizeHandle, handleRegex } = require('../services/instagram/endpoints')
+const { auditUserInBackground } = require('../services/instagram/audit')
+const IgAudit = require('../models/IgAudit')
 
 // ── GET /api/users/brand/ratings — creator reviews for current brand ────────
 router.get('/brand/ratings', requireAuth, requireRole('brand'), async (req, res) => {
@@ -160,15 +163,46 @@ router.put('/:id', requireAuth, async (req, res) => {
     const user = await User.findById(req.params.id)
     if (!user) return res.status(404).json({ message: 'User not found.' })
 
+    // Normalize the Instagram handle; a changed handle invalidates identity checks.
+    const prevHandle = normalizeHandle(user.instagramHandle)
+    let handleChanged = false
+    if (req.body.instagramHandle !== undefined) {
+      const raw = String(req.body.instagramHandle || '').trim()
+      const next = normalizeHandle(raw)
+      if (raw && !next) return res.status(400).json({ message: 'Enter a valid Instagram handle (letters, numbers, dots, underscores).' })
+      req.body.instagramHandle = next
+      handleChanged = next !== prevHandle
+      if (handleChanged && next && await User.exists({ role: 'creator', instagramHandle: handleRegex(next), _id: { $ne: user._id } })) {
+        return res.status(409).json({ message: `@${next} is already linked to another FlexTag account.` })
+      }
+    }
+
     allowed.forEach(k => {
       if (req.body[k] !== undefined) {
-        // Non-admin cannot change role/isVerified/tier
-        if (['isVerified', 'tier', 'role'].includes(k) && req.user.role !== 'admin') return
+        // Non-admin cannot change role / verification flags / tier
+        if (['isVerified', 'igVerified', 'tier', 'role'].includes(k) && req.user.role !== 'admin') return
         user[k] = req.body[k]
       }
     })
 
+    if (handleChanged) {
+      user.igVerified = false
+      user.igVerifiedAt = null
+      user.igVerifyCode = ''
+      user.igVerifyCodeAt = null
+      user.igPrecheck = 'pending'
+      user.igAuditedAt = null
+      user.igHealthScore = null
+      user.igFakeFollowerPct = null
+      user.igIsPrivate = null
+    }
+
     await user.save()
+    if (handleChanged && user.role === 'creator') {
+      // The old handle's audit no longer describes this creator.
+      await IgAudit.updateMany({ user: user._id }, { $set: { user: null } }).catch(() => {})
+      auditUserInBackground(user)
+    }
     const obj = user.toObject()
     delete obj.password
     res.json({ user: obj })
