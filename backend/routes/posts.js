@@ -54,7 +54,7 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
 
     if (auditData.auditStatus === 'failed') {
       return res.status(400).json({
-        message: 'Meta Instagram Graph API Audit Failed: Invalid post URL. Post URL must be a valid public Instagram post or reel (e.g. https://www.instagram.com/p/CODE/)'
+        message: 'Meta Instagram Graph API Audit Failed: Required campaign hashtag (#FlexTag) or brand tag (@flextag.official) was not detected in post caption or post URL is invalid.'
       })
     }
 
