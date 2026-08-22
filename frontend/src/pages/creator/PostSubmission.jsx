@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import { getOrders } from '../../services/orders'
 import { submitPost } from '../../services/posts'
@@ -7,6 +7,8 @@ const MOCK_DELIVERED = [
   { _id: 'ord-demo-1', orderId: 'ORD-8821', product: 'Matte Lipstick Collection', brand: 'AuraGlow Beauty', cashbackAmount: 600 },
   { _id: 'ord-demo-2', orderId: 'ORD-8822', product: 'Vitamin C Glow Serum', brand: 'Lumina Skincare', cashbackAmount: 950 },
   { _id: 'ord-demo-3', orderId: 'ORD-8823', product: 'Wireless Noise-Canceling Earbuds', brand: 'SoundPulse Tech', cashbackAmount: 1400 },
+  { _id: 'ord-demo-4', orderId: 'ORD-8824', product: 'Organic Rosewater Toner', brand: 'PureBotanika', cashbackAmount: 450 },
+  { _id: 'ord-demo-5', orderId: 'ORD-8825', product: 'Hydrating Night Repair Cream', brand: 'AuraGlow Beauty', cashbackAmount: 800 },
 ]
 
 const PostSubmission = () => {
@@ -15,17 +17,20 @@ const PostSubmission = () => {
 
   const [postUrl, setPostUrl] = useState('')
   const [selectedOrderId, setSelectedOrderId] = useState(preState.orderId || '')
+  const [orderQuery, setOrderQuery] = useState('')
+  const [dropdownOpen, setDropdownOpen] = useState(false)
   const [platform, setPlatform] = useState('instagram')
   const [orders, setOrders] = useState([])
   const [loadingOrders, setLoadingOrders] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [auditResult, setAuditResult] = useState(null)
   const [error, setError] = useState('')
 
   const [aiPrompt, setAiPrompt] = useState('')
   const [aiResponse, setAiResponse] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
+
+  const dropdownRef = useRef(null)
 
   useEffect(() => {
     getOrders()
@@ -34,23 +39,59 @@ const PostSubmission = () => {
         const delivered = fetched.filter(o => o.status === 'delivered')
         if (delivered.length > 0) {
           setOrders(delivered)
-          if (!selectedOrderId) setSelectedOrderId(delivered[0]._id)
+          const first = delivered[0]
+          if (!selectedOrderId) {
+            setSelectedOrderId(first._id)
+            setOrderQuery(`${first.product} — ${first.brand} (${first.orderId})`)
+          }
         } else if (fetched.length > 0) {
           setOrders(fetched)
-          if (!selectedOrderId) setSelectedOrderId(fetched[0]._id)
+          const first = fetched[0]
+          if (!selectedOrderId) {
+            setSelectedOrderId(first._id)
+            setOrderQuery(`${first.product} — ${first.brand} (${first.orderId})`)
+          }
         } else {
           setOrders(MOCK_DELIVERED)
-          if (!selectedOrderId) setSelectedOrderId(MOCK_DELIVERED[0]._id)
+          const first = MOCK_DELIVERED[0]
+          if (!selectedOrderId) {
+            setSelectedOrderId(first._id)
+            setOrderQuery(`${first.product} — ${first.brand} (${first.orderId})`)
+          }
         }
       })
       .catch(() => {
         setOrders(MOCK_DELIVERED)
-        if (!selectedOrderId) setSelectedOrderId(MOCK_DELIVERED[0]._id)
+        const first = MOCK_DELIVERED[0]
+        if (!selectedOrderId) {
+          setSelectedOrderId(first._id)
+          setOrderQuery(`${first.product} — ${first.brand} (${first.orderId})`)
+        }
       })
       .finally(() => setLoadingOrders(false))
   }, [])
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   const selectedOrder = orders.find(o => o._id === selectedOrderId) || MOCK_DELIVERED[0]
+
+  const filteredOrders = orders.filter(o => {
+    if (!orderQuery) return true
+    const q = orderQuery.toLowerCase()
+    return (
+      (o.product && o.product.toLowerCase().includes(q)) ||
+      (o.brand && o.brand.toLowerCase().includes(q)) ||
+      (o.orderId && o.orderId.toLowerCase().includes(q))
+    )
+  })
 
   const generateCaption = async () => {
     setAiLoading(true)
@@ -78,8 +119,7 @@ const PostSubmission = () => {
         postUrl,
         platform,
       }
-      const res = await submitPost(payload)
-      setAuditResult(res.post?.auditResults || null)
+      await submitPost(payload)
       setSubmitted(true)
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to submit. Please check post URL and try again.')
@@ -161,18 +201,60 @@ const PostSubmission = () => {
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Select Order</label>
-              {loadingOrders ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}><div className="spinner" style={{ width: 16, height: 16 }} /><span>Loading orders...</span></div>
-              ) : (
-                <select value={selectedOrderId} onChange={e => setSelectedOrderId(e.target.value)} className="field-select">
-                  {orders.map(o => (
-                    <option key={o._id} value={o._id} style={{ background: '#0d0d20' }}>
-                      {o.product} — {o.brand} ({o.orderId})
-                    </option>
-                  ))}
-                </select>
+            <div ref={dropdownRef} style={{ position: 'relative' }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+                Search Order / Product
+              </label>
+              
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  value={orderQuery}
+                  onFocus={() => setDropdownOpen(true)}
+                  onChange={e => { setOrderQuery(e.target.value); setDropdownOpen(true) }}
+                  placeholder="Type product name, brand, or order ID..."
+                  className="field-input"
+                  style={{ paddingRight: 36 }}
+                />
+                <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                  🔍
+                </span>
+              </div>
+
+              {dropdownOpen && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 6,
+                  maxHeight: 220, overflowY: 'auto', background: '#0d0d20',
+                  border: '1px solid rgba(124,58,237,0.3)', borderRadius: 14, zIndex: 50,
+                  boxShadow: '0 12px 36px rgba(0,0,0,0.5)', padding: 6
+                }}>
+                  {filteredOrders.length === 0 ? (
+                    <div style={{ padding: '12px 16px', fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
+                      No matching products found
+                    </div>
+                  ) : (
+                    filteredOrders.map(o => (
+                      <div
+                        key={o._id}
+                        onClick={() => {
+                          setSelectedOrderId(o._id)
+                          setOrderQuery(`${o.product} — ${o.brand} (${o.orderId})`)
+                          setDropdownOpen(false)
+                        }}
+                        style={{
+                          padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
+                          background: selectedOrderId === o._id ? 'rgba(124,58,237,0.2)' : 'transparent',
+                          transition: 'background 0.15s', marginBottom: 2
+                        }}
+                        onMouseEnter={e => { if (selectedOrderId !== o._id) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+                        onMouseLeave={e => { if (selectedOrderId !== o._id) e.currentTarget.style.background = 'transparent' }}
+                      >
+                        <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', margin: 0 }}>{o.product}</p>
+                        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }}>{o.brand} · <span style={{ color: '#a78bfa' }}>{o.orderId}</span></p>
+                      </div>
+                    ))
+                  )}
+                </div>
               )}
             </div>
 
