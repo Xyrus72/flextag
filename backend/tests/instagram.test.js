@@ -242,6 +242,55 @@ test('buildChecks: missing post → only the exists check; caption unavailable �
   assert.equal(statusFromChecks(noCaption), 'error')
 })
 
+/* ── HikerAPI provider normalizers (shapes captured from live responses) ──── */
+
+const hiker = require('../services/instagram/providers/hiker')
+
+test('hiker: normalizeHikerUser maps /v1/user/by/username', () => {
+  const p = hiker.normalizeHikerUser({ pk: 25025320, username: 'Instagram', full_name: 'Instagram', is_private: false, is_verified: true, is_business: false, media_count: 8562, follower_count: 686162597, following_count: 276, biography: 'Discover', external_url: 'http://help.instagram.com', profile_pic_url: 'https://cdn/p.jpg' })
+  assert.equal(p.igUserId, '25025320')
+  assert.equal(p.username, 'instagram')
+  assert.equal(p.followers, 686162597)
+  assert.equal(p.following, 276)
+  assert.equal(p.posts, 8562)
+  assert.equal(p.isVerified, true)
+  assert.equal(p.externalUrl, 'http://help.instagram.com')
+})
+
+test('hiker: normalizeHikerMedia maps medias/chunk items (caption_text, ISO taken_at, clips)', () => {
+  const m = hiker.normalizeHikerMedia({ pk: '3967266982361430113', id: '3967266982361430113_25025320', code: 'DcOkE0Myfhh', taken_at: '2026-08-19T15:59:32Z', media_type: 2, product_type: 'clips', like_count: 418786, comment_count: 13864, play_count: 91675152, like_and_view_counts_disabled: false, caption_text: '@kazaneat does football tricks #reels', user: { username: 'instagram' }, thumbnail_url: 'https://cdn/t.jpg' })
+  assert.equal(m.id, '3967266982361430113')
+  assert.equal(m.shortcode, 'DcOkE0Myfhh')
+  assert.equal(m.mediaType, 'reel')
+  assert.equal(m.likes, 418786)
+  assert.equal(m.comments, 13864)
+  assert.equal(m.views, 91675152)
+  assert.equal(m.takenAt.toISOString(), '2026-08-19T15:59:32.000Z')
+  assert.deepEqual(m.hashtags, ['reels'])
+  assert.deepEqual(m.mentions, ['kazaneat'])
+  assert.equal(m.owner, 'instagram')
+  assert.equal(m.url, 'https://www.instagram.com/reel/DcOkE0Myfhh/')
+  // hidden likes → null; missing play_count → null views
+  const hidden = hiker.normalizeHikerMedia({ code: 'X', media_type: 1, like_count: 5, like_and_view_counts_disabled: true, comment_count: 1, taken_at_ts: 1700000000 })
+  assert.equal(hidden.likes, null)
+  assert.equal(hidden.mediaType, 'image')
+  assert.equal(hidden.takenAt.getTime(), 1700000000000)
+})
+
+test('hiker: chunk envelopes and follower/comment normalizers', () => {
+  assert.deepEqual(hiker.chunkItems([[{ a: 1 }, { a: 2 }], 'cur_1']), [{ a: 1 }, { a: 2 }])
+  assert.equal(hiker.chunkCursor([[{ a: 1 }], 'cur_1']), 'cur_1')
+  assert.equal(hiker.chunkCursor([[{ a: 1 }], null]), null)
+  const f = hiker.normalizeHikerFollower({ pk: 1, username: 'Eloise457395', full_name: 'Eloise Lima', is_private: true, is_verified: false, profile_pic_url: 'https://cdn/x.jpg' })
+  assert.deepEqual(f, { username: 'eloise457395', fullName: 'Eloise Lima', isPrivate: true, isVerified: false, hasAnonymousPic: false })
+  assert.equal(hiker.normalizeHikerFollower({ username: 'bot123456', profile_pic_url: '' }).hasAnonymousPic, true)
+  const c = hiker.normalizeHikerComment({ user: { username: 'Fre365tyle' }, text: 'Ohh yeah! 🔥', created_at: 1787168284, comment_like_count: 90 }, 'DcOkE0Myfhh')
+  assert.equal(c.username, 'fre365tyle')
+  assert.equal(c.likes, 90)
+  assert.equal(c.createdAt.getTime(), 1787168284000)
+  assert.equal(c.shortcode, 'DcOkE0Myfhh')
+})
+
 test('splitList and embedToPost', () => {
   assert.deepEqual(splitList('#GlowUp, #FlexTag  #x', /^#/), ['glowup', 'flextag', 'x'])
   assert.deepEqual(splitList('@Brand,@other', /^@/), ['brand', 'other'])
