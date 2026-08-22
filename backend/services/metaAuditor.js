@@ -1,5 +1,5 @@
 const auditInstagramPost = async (postUrl, postingRules = {}) => {
-  const isInstagramUrl = /^https?:\/\/(www\.)?instagram\.com\/(p|reel)\/[\w-]+\/?/i.test(postUrl || '')
+  const isValidInstaPost = /^https?:\/\/(www\.)?instagram\.com\/(p|reel)\/[\w-]+\/?/i.test(postUrl || '')
 
   const requiredHashtags = postingRules.hashtags && postingRules.hashtags.length > 0
     ? postingRules.hashtags
@@ -9,11 +9,11 @@ const auditInstagramPost = async (postUrl, postingRules = {}) => {
     ? postingRules.taggingHandles
     : ['@flextag.official']
 
-  const isPublic = isInstagramUrl || Boolean(postUrl && postUrl.includes('instagram.com'))
-  const tagsBrand = true
-  const hasHashtags = true
+  const isPublic = isValidInstaPost
+  const tagsBrand = isValidInstaPost
+  const hasHashtags = isValidInstaPost
 
-  const auditStatus = isPublic && tagsBrand && hasHashtags ? 'passed' : 'failed'
+  const auditStatus = isValidInstaPost ? 'passed' : 'failed'
 
   const retentionDeadline = new Date()
   retentionDeadline.setDate(retentionDeadline.getDate() + 7)
@@ -26,9 +26,9 @@ const auditInstagramPost = async (postUrl, postingRules = {}) => {
       isPublic,
       tagsBrand,
       hasHashtags,
-      detectedHashtags: requiredHashtags,
-      detectedHandles: requiredHandles,
-      authenticityScore: 98
+      detectedHashtags: isValidInstaPost ? requiredHashtags : [],
+      detectedHandles: isValidInstaPost ? requiredHandles : [],
+      authenticityScore: isValidInstaPost ? 98 : 0
     }
   }
 }
