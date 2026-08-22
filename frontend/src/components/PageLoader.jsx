@@ -31,7 +31,7 @@ const PageLoader = ({ onDone }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#030303] overflow-hidden"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#050816] overflow-hidden"
       style={{
         transition: 'opacity 0.6s ease, transform 0.6s ease',
         opacity:   phase === 2 ? 0 : 1,
@@ -41,7 +41,7 @@ const PageLoader = ({ onDone }) => {
 
       {/* Radial glow */}
       <div className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(circle at 50% 50%, rgba(255,107,53,0.07) 0%, transparent 60%)' }} />
+        style={{ background: 'radial-gradient(circle at 50% 50%, rgba(124,58,237,0.09) 0%, transparent 60%)' }} />
 
       {/* Grid */}
       <div className="absolute inset-0 pointer-events-none"
@@ -51,14 +51,14 @@ const PageLoader = ({ onDone }) => {
       <div className="relative w-32 h-32 mb-10" style={{ perspective: '500px' }}>
         {[...Array(3)].map((_, i) => (
           <div key={i}
-            className="absolute inset-0 rounded-full border border-orange-500/30"
+            className="absolute inset-0 rounded-full border border-violet-500/30"
             style={{
               animation: `spin3d ${6 + i * 2}s linear infinite ${i % 2 === 0 ? '' : 'reverse'}`,
-              transform: `rotateX(${55 + i * 20}deg)`,
+              '--tilt': `${55 + i * 20}deg`,
             }} />
         ))}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center text-white text-3xl font-black italic shadow-2xl shadow-orange-500/40"
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7c3aed] to-[#06b6d4] flex items-center justify-center text-white text-3xl font-black italic shadow-2xl shadow-violet-500/40"
             style={{ animation: 'floatY 2s ease-in-out infinite' }}>
             F
           </div>
@@ -67,7 +67,7 @@ const PageLoader = ({ onDone }) => {
 
       {/* Brand name */}
       <h1 className="text-4xl font-black italic tracking-tighter text-white mb-1">
-        FlexTag<span className="text-orange-500">™</span>
+        FlexTag<span className="gradient-text">™</span>
       </h1>
       <p className="text-[10px] text-zinc-600 uppercase tracking-[0.3em] mb-10">Shop · Share · Earn</p>
 

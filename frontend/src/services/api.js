@@ -1,7 +1,8 @@
 import axios from 'axios'
+import { API_URL } from '../config'
 
 const api = axios.create({
-  baseURL: 'http://localhost:5001',
+  baseURL: API_URL,
   withCredentials: true,          // send cookies (session) with every request
   headers: { 'Content-Type': 'application/json' },
 })

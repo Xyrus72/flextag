@@ -44,6 +44,7 @@ const creatorLinks = [
 
 const CreatorLayout = () => (
   <div style={{ minHeight: '100vh', background: '#050816', position: 'relative' }}>
+    <div className="aurora-bg" />
     <div className="noise-overlay" />
     <Sidebar links={creatorLinks} />
     <main style={{ marginLeft: 256, minHeight: '100vh', position: 'relative', zIndex: 10 }}>

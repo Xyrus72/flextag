@@ -69,6 +69,7 @@ const Sidebar = ({ links = [] }) => {
               key={link.path}
               to={link.path}
               end={link.path === '/creator' || link.path === '/brand' || link.path === '/admin'}
+              className={({ isActive }) => `side-link${isActive ? ' active' : ''}`}
               style={({ isActive }) => ({
                 display: 'flex',
                 alignItems: 'center',
@@ -81,7 +82,7 @@ const Sidebar = ({ links = [] }) => {
                 color: isActive ? '#fff' : 'rgba(255,255,255,0.45)',
                 background: isActive ? 'rgba(124,58,237,0.12)' : 'transparent',
                 border: isActive ? '1px solid rgba(124,58,237,0.25)' : '1px solid transparent',
-                transition: 'all 0.15s ease',
+                boxShadow: isActive ? '0 0 20px rgba(124,58,237,0.15), inset 0 0 20px rgba(124,58,237,0.05)' : 'none',
                 justifyContent: 'flex-start',
                 position: 'relative',
               })}
@@ -100,10 +101,6 @@ const Sidebar = ({ links = [] }) => {
             >
               {({ isActive }) => (
                 <>
-                  {/* Active indicator bar */}
-                  {isActive && (
-                    <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3, borderRadius: '0 3px 3px 0', background: 'linear-gradient(180deg, #7c3aed, #06b6d4)' }} />
-                  )}
                   <span style={{ flexShrink: 0, opacity: isActive ? 1 : 0.5, color: isActive ? '#a78bfa' : 'currentColor' }}>{link.icon}</span>
                   <>
                     <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{link.label}</span>

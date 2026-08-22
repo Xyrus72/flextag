@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const BOT_URL = 'http://localhost:5000'
+import { BOT_URL } from '../../config'
 
 function StatTile({ label, value, color, icon, delay = 0 }) {
   return (

@@ -1,0 +1,360 @@
+﻿{
+  "info": {
+    "_postman_id": "f5e9712a-3b91-4d1a-89a1-flextagapi01",
+    "name": "FlexTag API — Assignment Collection (Port 1643)",
+    "description": "REST API collection for FlexTag assignment.\nAuth: Session Cookie (no Bearer token needed — Postman handles cookies automatically)\nPort: 1643",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",  "value": "http://localhost:1643", "type": "string" },
+    { "key": "userId",   "value": "", "type": "string" },
+    { "key": "addrId",   "value": "", "type": "string" },
+    { "key": "convId",   "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/health", "host": ["{{baseUrl}}"], "path": ["api","health"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Feature 1 — Creator Profile & Shipping Info Manager",
+      "item": [
+        {
+          "name": "AUTH — Register Creator Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.user && res.user._id) {",
+                  "  pm.collectionVariables.set('userId', res.user._id);",
+                  "  console.log('userId saved:', res.user._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rafat Creator\",\n  \"email\": \"rafat.creator@example.com\",\n  \"password\": \"securePass1643\",\n  \"phone\": \"01712345678\",\n  \"role\": \"creator\",\n  \"instagramHandle\": \"rafat_creates\",\n  \"followersCount\": 12000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] }
+          },
+          "response": []
+        },
+        {
+          "name": "AUTH — Register Admin Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.user && res.user._id) {",
+                  "  console.log('Admin registered:', res.user._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"FlexTag Admin\",\n  \"email\": \"admin1643@flextag.com\",\n  \"password\": \"admin1643\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] }
+          },
+          "response": []
+        },
+        {
+          "name": "AUTH — Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.user && res.user._id) {",
+                  "  pm.collectionVariables.set('userId', res.user._id);",
+                  "  console.log('Logged in. userId saved:', res.user._id);",
+                  "  console.log('Session cookie is managed automatically by Postman.');",
+                  "} else {",
+                  "  console.warn('Login failed:', JSON.stringify(res));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rafat.creator@example.com\",\n  \"password\": \"securePass1643\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] }
+          },
+          "response": []
+        },
+        {
+          "name": "AUTH — Get My Profile (Me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api","auth","me"] }
+          },
+          "response": []
+        },
+        {
+          "name": "AUTH — Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/auth/logout", "host": ["{{baseUrl}}"], "path": ["api","auth","logout"] }
+          },
+          "response": []
+        },
+        {
+          "name": "PROFILE — Get All Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?role=creator",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","users"],
+              "query": [{ "key": "role", "value": "creator" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PROFILE — Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "PROFILE — Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Refath bhai\",\n  \"phone\": \"00000000\",\n  \"instagramHandle\": \"refath\",\n  \"followersCount\": 1500,\n  \"engagementRate\": 4\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "PROFILE — Admin Verify User",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"isVerified\": true\n}" },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/verify", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}","verify"] }
+          },
+          "response": []
+        },
+        {
+          "name": "SHIPPING — Get All Addresses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/addresses", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}","addresses"] }
+          },
+          "response": []
+        },
+        {
+          "name": "SHIPPING — Add New Address",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.addresses && res.addresses.length > 0) {",
+                  "  const lastAddr = res.addresses[res.addresses.length - 1];",
+                  "  pm.collectionVariables.set('addrId', lastAddr._id);",
+                  "  console.log('addrId saved:', lastAddr._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Home\",\n  \"fullName\": \"Rafat Creator\",\n  \"phone\": \"01712345678\",\n  \"street\": \"123 Mirpur Road, Block B\",\n  \"city\": \"Dhaka\",\n  \"state\": \"Dhaka Division\",\n  \"zip\": \"1216\",\n  \"country\": \"Bangladesh\",\n  \"isDefault\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/addresses", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}","addresses"] }
+          },
+          "response": []
+        },
+        {
+          "name": "SHIPPING — Update Address",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Office\",\n  \"street\": \"456 Gulshan Avenue\",\n  \"city\": \"Dhaka\",\n  \"zip\": \"1212\",\n  \"country\": \"Bangladesh\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/addresses/{{addrId}}", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}","addresses","{{addrId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "SHIPPING — Set Address as Default",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/addresses/{{addrId}}/default", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}","addresses","{{addrId}}","default"] }
+          },
+          "response": []
+        },
+        {
+          "name": "SHIPPING — Delete Address",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/addresses/{{addrId}}", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}","addresses","{{addrId}}"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Feature 2 — Chat System (Conversations & Messages)",
+      "item": [
+        {
+          "name": "CHAT — Get Available Contacts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/contacts?role=brand",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","messages","contacts"],
+              "query": [{ "key": "role", "value": "brand" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CHAT — Get My Conversations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/messages/conversations", "host": ["{{baseUrl}}"], "path": ["api","messages","conversations"] }
+          },
+          "response": []
+        },
+        {
+          "name": "CHAT — Start or Find a Conversation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.conversation && res.conversation._id) {",
+                  "  pm.collectionVariables.set('convId', res.conversation._id);",
+                  "  console.log('convId saved:', res.conversation._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"type\": \"support\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/messages/conversations", "host": ["{{baseUrl}}"], "path": ["api","messages","conversations"] }
+          },
+          "response": []
+        },
+        {
+          "name": "CHAT — Start Direct Conversation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.conversation && res.conversation._id) {",
+                  "  pm.collectionVariables.set('convId', res.conversation._id);",
+                  "  console.log('convId saved:', res.conversation._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"targetUserId\": \"{{userId}}\",\n  \"type\": \"direct\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/messages/conversations", "host": ["{{baseUrl}}"], "path": ["api","messages","conversations"] }
+          },
+          "response": []
+        },
+        {
+          "name": "CHAT — Get Messages in Conversation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/messages/conversations/{{convId}}", "host": ["{{baseUrl}}"], "path": ["api","messages","conversations","{{convId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "CHAT — Send a Message (REST)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"conversationId\": \"{{convId}}\",\n  \"text\": \"Hello! I wanted to ask about the collaboration deal.\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/messages", "host": ["{{baseUrl}}"], "path": ["api","messages"] }
+          },
+          "response": []
+        },
+        {
+          "name": "CHAT — Admin: View All Conversations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/messages/all-conversations", "host": ["{{baseUrl}}"], "path": ["api","messages","all-conversations"] }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

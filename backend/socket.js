@@ -19,6 +19,16 @@ const Conversation = require('./models/Conversation')
 const Message      = require('./models/Message')
 const User         = require('./models/User')
 
+/**
+Conversation → Access conversation data
+Message      → Access message data
+User         → Access user data
+ 
+ */
+
+
+
+
 module.exports = function initSocket(io) {
   // ── Auth middleware: attach user from session ─────────────────────────────
   io.use((socket, next) => {
