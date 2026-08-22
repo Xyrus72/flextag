@@ -11,3 +11,6 @@ export const placeOrder = (data) =>
 
 export const updateOrderStatus = (id, data) =>
   api.put(`/api/orders/${id}/status`, data).then(r => r.data)
+
+export const updateOrder = (id, data) =>
+  updateOrderStatus(id, data)
