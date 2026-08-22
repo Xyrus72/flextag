@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import {
   motion, useScroll, useTransform, useMotionValue,
   useSpring, AnimatePresence, useInView, animate
 } from 'framer-motion'
+
+// WebGL hero scene — lazy so three.js never blocks first paint
+const Hero3D = lazy(() => import('../components/Hero3D'))
 
 /* ─── GLOBAL STYLES ────────────────────────────────────────────────────────── */
 const GLOBAL_CSS = `
@@ -412,6 +415,10 @@ export default function Landing() {
   const pX = useTransform(smoothX, [0, typeof window !== 'undefined' ? window.innerWidth : 1920], [-20, 20])
   const pY = useTransform(smoothY, [0, typeof window !== 'undefined' ? window.innerHeight : 1080], [-12, 12])
 
+  // True 3D tilt for the phone rig — follows the cursor across the viewport
+  const rigRotY = useTransform(smoothX, [0, typeof window !== 'undefined' ? window.innerWidth : 1920], [-10, 10])
+  const rigRotX = useTransform(smoothY, [0, typeof window !== 'undefined' ? window.innerHeight : 1080], [8, -8])
+
   return (
     <div style={{ background: 'var(--bg)', color: '#e2e8f0', minHeight: '100vh', overflowX: 'hidden', fontFamily: 'Inter, sans-serif' }}>
       <style>{GLOBAL_CSS}</style>
@@ -448,6 +455,13 @@ export default function Landing() {
           backgroundImage: 'linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px)',
           backgroundSize: '60px 60px',
         }} />
+
+        {/* WebGL layer — rising cashback coins + holographic cores */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
+          <Suspense fallback={null}>
+            <Hero3D />
+          </Suspense>
+        </div>
 
         <motion.div style={{ opacity: heroOpacity, y: heroTitleY, position: 'relative', zIndex: 10, width: '100%', maxWidth: 1200, padding: '0 24px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
@@ -568,7 +582,12 @@ export default function Landing() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              style={{ position: 'relative', height: 520, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{
+                position: 'relative', height: 520,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                perspective: 1200, transformStyle: 'preserve-3d',
+                rotateY: rigRotY, rotateX: rigRotX,
+              }}
             >
               {/* Glowing ring behind phone */}
               <div style={{

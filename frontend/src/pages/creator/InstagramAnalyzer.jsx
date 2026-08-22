@@ -32,7 +32,7 @@ const InstagramAnalyzer = () => {
       setData(json)
       setStatus({ text: '', error: false })
     } catch {
-      setStatus({ text: '❌ Cannot reach bot server. Make sure server.py is running on port 5000.', error: true })
+      setStatus({ text: '❌ Cannot reach bot server. Make sure server.py is running on port 8000.', error: true })
     } finally {
       setLoading(false)
     }

@@ -1,19 +1,85 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
-const steps = ['Account Type', 'Personal Info', 'Profile Details', 'Done']
+const steps = ['Account Type', 'Personal Info', 'Profile Details', 'Verify Email', 'Done']
 
+// ─── 6-digit OTP input component ──────────────────────────────────────────────
+const OtpInput = ({ value, onChange }) => {
+  const inputRefs = useRef([])
+  const digits = value.split('')
+
+  const handleKey = (i, e) => {
+    if (e.key === 'Backspace') {
+      if (digits[i]) {
+        const next = [...digits]
+        next[i] = ''
+        onChange(next.join(''))
+      } else if (i > 0) {
+        inputRefs.current[i - 1]?.focus()
+      }
+    }
+  }
+
+  const handleChange = (i, e) => {
+    const ch = e.target.value.replace(/\D/g, '').slice(-1)
+    if (!ch) return
+    const next = [...digits]
+    next[i] = ch
+    onChange(next.join(''))
+    if (i < 5) inputRefs.current[i + 1]?.focus()
+  }
+
+  const handlePaste = (e) => {
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+    if (pasted.length) {
+      onChange(pasted.padEnd(6, '').slice(0, 6))
+      inputRefs.current[Math.min(pasted.length, 5)]?.focus()
+    }
+    e.preventDefault()
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }} onPaste={handlePaste}>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <input
+          key={i}
+          id={`otp-digit-${i}`}
+          ref={el => { inputRefs.current[i] = el }}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={digits[i] || ''}
+          onChange={e => handleChange(i, e)}
+          onKeyDown={e => handleKey(i, e)}
+          onFocus={e => e.target.select()}
+          style={{
+            width: 52, height: 60, borderRadius: 14, textAlign: 'center',
+            fontSize: 24, fontWeight: 800, color: '#fff', caretColor: '#7c3aed',
+            background: digits[i] ? 'rgba(124,58,237,0.12)' : 'rgba(255,255,255,0.04)',
+            border: digits[i] ? '2px solid rgba(124,58,237,0.5)' : '2px solid rgba(255,255,255,0.08)',
+            outline: 'none', transition: 'all 0.2s',
+            boxShadow: digits[i] ? '0 0 16px rgba(124,58,237,0.2)' : 'none',
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ─── Register page ─────────────────────────────────────────────────────────────
 const Register = () => {
-  const { register } = useAuth()
+  const { sendOtp, verifyOtp } = useAuth()
   const navigate     = useNavigate()
   const [params]     = useSearchParams()
   const defaultRole  = params.get('role') === 'brand' ? 'brand' : 'creator'
 
-  const [step, setStep]     = useState(0)
-  const [role, setRole]     = useState(defaultRole)
+  const [step, setStep]       = useState(0)
+  const [role, setRole]       = useState(defaultRole)
   const [loading, setLoading] = useState(false)
-  const [error, setError]   = useState('')
+  const [error, setError]     = useState('')
+  const [otp, setOtp]         = useState('')
+  const [resendCooldown, setResendCooldown] = useState(0)
 
   const [form, setForm] = useState({
     name: '', email: '', password: '', phone: '',
@@ -23,11 +89,21 @@ const Register = () => {
 
   const set = k => e => setForm({ ...form, [k]: e.target.value })
 
+  // Countdown timer for resend button
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const t = setTimeout(() => setResendCooldown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [resendCooldown])
+
   const validate = () => {
     if (step === 1) {
       if (!form.name.trim())  return 'Full name is required.'
       if (!form.email.trim()) return 'Email address is required.'
       if (!form.password || form.password.length < 6) return 'Password must be at least 6 characters.'
+    }
+    if (step === 3) {
+      if (otp.length < 6) return 'Please enter the complete 6-digit code.'
     }
     return null
   }
@@ -36,11 +112,32 @@ const Register = () => {
     setError('')
     const err = validate()
     if (err) { setError(err); return }
+
+    // Step 0 → 1 and Step 1 → 2: just advance
     if (step < 2) { setStep(step + 1); return }
+
+    // Step 2 → 3: send OTP email
     if (step === 2) {
       setLoading(true)
       try {
-        await register({
+        await sendOtp(form.email)
+        setOtp('')
+        setResendCooldown(60)
+        setStep(3)
+      } catch (e) {
+        setError(e.response?.data?.message || 'Failed to send OTP. Please try again.')
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+
+    // Step 3 → 4: verify OTP + create account
+    if (step === 3) {
+      setLoading(true)
+      try {
+        await verifyOtp({
+          otp,
           name: form.name, email: form.email, password: form.password,
           phone: form.phone, role,
           instagramHandle: form.instagramHandle,
@@ -49,16 +146,33 @@ const Register = () => {
           companyName: form.companyName, website: form.website,
           productCategory: form.productCategory,
         })
-        setStep(3)
-      } catch (err) {
-        setError(err.response?.data?.message || 'Registration failed. Please try again.')
+        setStep(4)
+      } catch (e) {
+        setError(e.response?.data?.message || 'Verification failed. Please try again.')
       } finally {
         setLoading(false)
       }
       return
     }
-    if (step === 3) {
+
+    // Step 4 (Done): go to dashboard
+    if (step === 4) {
       navigate({ creator: '/creator', brand: '/brand' }[role] || '/', { replace: true })
+    }
+  }
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return
+    setError('')
+    setLoading(true)
+    try {
+      await sendOtp(form.email)
+      setOtp('')
+      setResendCooldown(60)
+    } catch (e) {
+      setError(e.response?.data?.message || 'Failed to resend OTP. Please try again.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -107,7 +221,7 @@ const Register = () => {
                   display: 'none',
                 }} className="sm:block">{s}</span>
               </div>
-              {i < 3 && (
+              {i < 4 && (
                 <div style={{
                   flex: 1, height: 2, margin: '0 6px', borderRadius: 1, transition: 'all 0.4s',
                   background: step > i ? 'linear-gradient(90deg,#22c55e,#7c3aed)' : 'rgba(255,255,255,0.06)',
@@ -202,13 +316,60 @@ const Register = () => {
             </div>
           )}
 
-          {/* Step 3 — Done */}
+          {/* Step 3 — Verify Email (OTP) */}
           {step === 3 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              {/* Icon */}
+              <div style={{ textAlign: 'center' }}>
+                <div style={{
+                  width: 64, height: 64, borderRadius: '50%', margin: '0 auto 16px',
+                  background: 'rgba(124,58,237,0.1)', border: '2px solid rgba(124,58,237,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 28, boxShadow: '0 0 32px rgba(124,58,237,0.2)',
+                }}>✉️</div>
+                <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', margin: '0 0 8px' }}>
+                  Check your inbox
+                </h2>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.7 }}>
+                  We sent a 6-digit verification code to<br />
+                  <strong style={{ color: 'rgba(167,139,250,0.8)' }}>{form.email}</strong>
+                </p>
+              </div>
+
+              {/* OTP Inputs */}
+              <OtpInput value={otp} onChange={setOtp} />
+
+              {/* Resend */}
+              <div style={{ textAlign: 'center' }}>
+                {resendCooldown > 0 ? (
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                    Resend code in <strong style={{ color: 'rgba(167,139,250,0.6)' }}>{resendCooldown}s</strong>
+                  </p>
+                ) : (
+                  <button
+                    id="otp-resend"
+                    onClick={handleResend}
+                    disabled={loading}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      fontSize: 13, color: '#a78bfa', fontWeight: 600, padding: 0,
+                      opacity: loading ? 0.5 : 1,
+                    }}
+                  >
+                    Didn't receive it? Resend code
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Step 4 — Done */}
+          {step === 4 && (
             <div style={{ textAlign: 'center', padding: '16px 0', display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(34,197,94,0.12)', border: '2px solid rgba(34,197,94,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: 36, boxShadow: '0 0 40px rgba(34,197,94,0.2)' }}>🎉</div>
               <div>
                 <h2 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: '0 0 8px' }}>You're all set!</h2>
-                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.6 }}>Your account has been created. Let's get you started on the platform.</p>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.6 }}>Your email is verified and account is ready. Let's get started!</p>
               </div>
             </div>
           )}
@@ -222,13 +383,13 @@ const Register = () => {
 
           {/* Navigation */}
           <div style={{ display: 'flex', gap: 12, marginTop: 28 }}>
-            {step > 0 && step < 3 && (
+            {step > 0 && step < 4 && (
               <button onClick={() => { setError(''); setStep(step - 1) }} className="btn-ghost" style={{ flex: 1 }}>← Back</button>
             )}
             <button id="register-next" onClick={next} disabled={loading} className="btn-primary" style={{ flex: 1, padding: '14px' }}>
               {loading ? (
-                <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> Creating…</>
-              ) : step === 3 ? 'Enter Dashboard →' : step === 2 ? 'Create Account →' : 'Continue →'}
+                <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> {step === 2 ? 'Sending…' : step === 3 ? 'Verifying…' : 'Creating…'}</>
+              ) : step === 4 ? 'Enter Dashboard →' : step === 3 ? 'Verify & Create Account →' : step === 2 ? 'Send Verification Code →' : 'Continue →'}
             </button>
           </div>
 

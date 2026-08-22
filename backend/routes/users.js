@@ -162,8 +162,8 @@ router.put('/:id', requireAuth, async (req, res) => {
 
     allowed.forEach(k => {
       if (req.body[k] !== undefined) {
-        // Non-admin cannot change role/isVerified/tier
-        if (['isVerified', 'tier', 'role'].includes(k) && req.user.role !== 'admin') return
+        // Non-admin cannot change role / verification flags / tier
+        if (['isVerified', 'igVerified', 'tier', 'role'].includes(k) && req.user.role !== 'admin') return
         user[k] = req.body[k]
       }
     })

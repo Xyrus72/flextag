@@ -24,7 +24,7 @@ const messageRoutes      = require('./routes/messages')
 
 const app    = express()
 const server = http.createServer(app)
-const PORT   = process.env.PORT || 5000
+const PORT   = process.env.PORT || 1643
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
 const corsOptions = {
@@ -43,25 +43,58 @@ app.use(cors(corsOptions))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
+// ─── Request Logger ───────────────────────────────────────────────────────────
+app.use((req, _res, next) => {
+  if (req.path.startsWith('/api/')) {
+    console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.path}`, req.body || '')
+  }
+  next()
+})
+
+
 // ─── Connect to MongoDB ───────────────────────────────────────────────────────
 mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 10000,
-  socketTimeoutMS: 45000,
-  tls: true,
-  tlsAllowInvalidCertificates: false,
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 60000,
 })
   .then(() => console.log('✅  MongoDB connected'))
-  .catch((err) => { console.error('❌  MongoDB connection error:', err.message); process.exit(1) })
+  .catch((err) => {
+    console.error('❌  MongoDB connection error:', err.message)
+    console.log('\n======================================================')
+    console.log('⚠️  DATABASE CONNECTION TIMED OUT / REJECTED!')
+    console.log('This is 100% because your IP address is not whitelisted in MongoDB Atlas.')
+    console.log('Please follow these steps to fix it in 2 minutes:')
+    console.log('1. Go to https://cloud.mongodb.com and log in.')
+    console.log('2. Click "Network Access" in the left sidebar under "Security".')
+    console.log('3. Click "+ Add IP Address" and select "Allow Access From Anywhere" (0.0.0.0/0).')
+    console.log('4. Click "Confirm" and wait 1 minute, then try running this again.')
+    console.log('======================================================\n')
+    process.exit(1)
+  })
 
 // ─── Session ──────────────────────────────────────────────────────────────────
+// A predictable secret lets anyone forge a session cookie, so refuse to boot
+// in production without a real one.
+if (!process.env.SESSION_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('❌  SESSION_SECRET is not set. Refusing to start in production.')
+    process.exit(1)
+  }
+  console.warn('⚠️   SESSION_SECRET is not set — using an insecure development default.')
+}
+
 const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET || 'flextag_secret',
+  secret: process.env.SESSION_SECRET || 'flextag_dev_only_secret',
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI,
     collectionName: 'sessions',
     ttl: 7 * 24 * 60 * 60,
+    mongoOptions: {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 60000,
+    },
   }),
   cookie: {
     secure: false,
