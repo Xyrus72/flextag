@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -105,7 +105,7 @@ const describeError = (err) => {
       ? 'Our Instagram connection expired — an admin needs to refresh it'
       : "Instagram connection isn't configured yet — ask an admin to add the session key" }
   }
-  if (status === 429) return { tone: 'warning', text: 'Instagram is rate-limiting us, try again in a few minutes' }
+  if (status === 429) return { tone: 'warning', text: message || 'Instagram is rate-limiting audits from this network — retrying now won’t help. Please try again later.' }
   if (status === 404) return { tone: 'error', text: message || "We couldn't find that Instagram account. Double-check the handle in your profile." }
   return { tone: 'error', text: message || 'Something went wrong while talking to Instagram. Please try again.' }
 }
@@ -762,6 +762,7 @@ const InstagramAnalyzer = () => {
   const [running, setRunning] = useState(false)
   const [error, setError]     = useState(null)
   const [notice, setNotice]   = useState(null)   // non-error info, e.g. "refresh throttled"
+  const cooldownRef = useRef(0)                   // after a 429, block re-fires for a bit (each retry worsens the IP throttle)
 
   const markOwnerVerified = () => setUser?.((u) => (u ? { ...u, igVerified: true, igVerifiedAt: new Date().toISOString() } : u))
 
@@ -779,6 +780,13 @@ const InstagramAnalyzer = () => {
   }, [])
 
   const run = async (force) => {
+    // Guard against rapid re-clicks after a rate-limit: firing more requests only
+    // deepens Instagram's per-IP throttle, so swallow clicks during the cooldown.
+    const waitMs = cooldownRef.current - Date.now()
+    if (waitMs > 0) {
+      setNotice(`Please wait about ${Math.ceil(waitMs / 1000)}s before trying again — repeated attempts make the rate limit worse.`)
+      return
+    }
     setRunning(true)
     setError(null)
     setNotice(null)
@@ -792,6 +800,7 @@ const InstagramAnalyzer = () => {
         setNotice(`Audits can be refreshed once per hour — showing results from ${relativeTime(data.audit?.fetchedAt)}; ${when}.`)
       }
     } catch (err) {
+      if (err?.response?.status === 429) cooldownRef.current = Date.now() + 60_000
       setError(describeError(err))
     } finally {
       setRunning(false)
