@@ -28,7 +28,10 @@ async function approvePost(post, { approvedBy = null, auto = false } = {}) {
   // Retention is measured from APPROVAL: the post must still be live this many days later.
   const retention = { status: 'pending', checkAt: new Date(now.getTime() + retentionDays * DAY), checkedAt: null }
 
-  const set = { status: 'approved', approvedAt: now, approvedBy: approvedBy || null, autoApproved: !!auto, retention }
+  const set = {
+    status: 'approved', approvedAt: now, approvedBy: approvedBy || null, autoApproved: !!auto, retention,
+    auditStatus: 'passed', retentionDaysRemaining: retentionDays,   // Module-3 auditor contract
+  }
   if (post.verification) set.verification = post.verification.toObject ? post.verification.toObject() : post.verification
 
   // 1. Claim: only a still-pending post can be approved, and only once.
@@ -39,8 +42,9 @@ async function approvePost(post, { approvedBy = null, auto = false } = {}) {
   let released = false
   const orderId = post.orderId?._id || post.orderId
   if (orderId) {
+    // Never pay for cancelled or returned orders (fulfillment module's return flow included).
     const order = await Order.findOneAndUpdate(
-      { _id: orderId, cashbackReleased: false, status: { $ne: 'cancelled' } },
+      { _id: orderId, cashbackReleased: false, status: { $nin: ['cancelled', 'return_requested', 'returned'] } },
       { $set: { cashbackReleased: true } },
       { new: false }, // returns the pre-update doc → cashbackAmount
     )
@@ -67,6 +71,8 @@ async function approvePost(post, { approvedBy = null, auto = false } = {}) {
   post.approvedBy = set.approvedBy
   post.autoApproved = set.autoApproved
   post.retention = retention
+  post.auditStatus = 'passed'
+  post.retentionDaysRemaining = retentionDays
   if (released) post.cashbackReleased = true
   return { post, released }
 }

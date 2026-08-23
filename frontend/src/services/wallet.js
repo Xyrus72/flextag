@@ -8,3 +8,6 @@ export const requestWithdrawal = (data) =>
 
 export const completeTransaction = (id) =>
   api.put(`/api/transactions/${id}/complete`).then(r => r.data)
+
+export const topUpWallet = (data) =>
+  api.post('/api/transactions/topup', data).then(r => r.data)

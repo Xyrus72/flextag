@@ -132,7 +132,7 @@ router.post('/verify-post', requireAuth, requireRole('creator', 'admin', 'brand'
   try {
     const { postId } = req.body || {}
     if (!postId) return res.status(400).json({ message: 'postId is required.' })
-    const post = await Post.findById(postId).populate('campaignId').populate('orderId').populate('creatorId', 'name instagramHandle igVerified')
+    const post = await Post.findById(postId).populate('campaignId').populate('orderId').populate('creatorId', 'name instagramHandle igVerified igHealthScore')
     if (!post) return res.status(404).json({ message: 'Post not found.' })
     if (req.user.role === 'creator' && String(post.creatorId?._id || post.creatorId) !== String(req.user._id)) return res.status(403).json({ message: 'Access denied.' })
     if (req.user.role === 'brand' && String(post.campaignId?.brandId) !== String(req.user._id)) return res.status(403).json({ message: 'Access denied.' })
