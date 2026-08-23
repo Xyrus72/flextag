@@ -90,7 +90,9 @@ const Cart = () => {
           <div style={{ display:'flex', flexDirection:'column', gap:12 }} className="lg:col-span-2">
             {items.map(item => (
               <div key={item._id} style={{ display:'flex', alignItems:'center', gap:16, padding:'16px 20px', borderRadius:18, ...panel }} >
-                <div style={{ width:60, height:60, borderRadius:14, background:'rgba(255,255,255,0.05)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:28, flexShrink:0 }}>{item.image || '📦'}</div>
+                <div style={{ width:60, height:60, borderRadius:14, background:'rgba(255,255,255,0.05)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:28, flexShrink:0, overflow: 'hidden' }}>
+                  {item.image?.startsWith('http') ? <img src={item.image} alt={item.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : (item.image || '📦')}
+                </div>
                 <div style={{ flex:1, minWidth:0 }}>
                   <p style={{ fontSize:14, fontWeight:600, color:'#fff', margin:'0 0 4px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{item.name}</p>
                   <p style={{ fontSize:12, color:'rgba(255,255,255,0.3)', margin:0 }}>{item.brand}</p>

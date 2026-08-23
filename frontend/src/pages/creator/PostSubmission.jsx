@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { getOrders } from '../../services/orders'
 import { submitPost } from '../../services/posts'
@@ -23,6 +23,9 @@ const STATUS_LABELS = {
 }
 
 const capitalize = (s = '') => s.charAt(0).toUpperCase() + s.slice(1)
+
+// How an order reads in the searchable picker (module-3 autocomplete, Habib)
+const orderLabel = (o) => `${o.product} — ${o.brand} (${o.orderId})`
 
 const statusOf = (post) =>
   STATUS_LABELS[post?.status] || (post?.status ? { label: capitalize(post.status), cls: 'badge-neutral' } : STATUS_LABELS.pending)
@@ -172,9 +175,14 @@ const PostSubmission = () => {
   const location = useLocation()
   const preState = location.state || {}
 
+  const preOrderId = preState.orderId || ''
+
   const [postUrl, setPostUrl]               = useState('')
-  const [selectedOrderId, setSelectedOrderId] = useState(preState.orderId || '')
+  const [selectedOrderId, setSelectedOrderId] = useState(preOrderId)
+  const [orderQuery, setOrderQuery]         = useState('')       // searchable picker text
+  const [dropdownOpen, setDropdownOpen]     = useState(false)
   const [platform, setPlatform]             = useState('instagram')
+  const dropdownRef = useRef(null)
   const [orders, setOrders]                 = useState([])
   const [loadingOrders, setLoadingOrders]   = useState(true)
   const [submitting, setSubmitting]         = useState(false)
@@ -191,14 +199,39 @@ const PostSubmission = () => {
   const [aiLoading, setAiLoading]   = useState(false)
 
   useEffect(() => {
-    // Load delivered orders that haven't had post submitted
+    // Only delivered orders can earn cashback (the backend enforces this too)
     getOrders({ status: 'delivered' })
-      .then(d => setOrders(d.orders || []))
+      .then(d => {
+        const list = d.orders || []
+        setOrders(list)
+        // Arrived from "My Orders" with an order preselected → show its label in the picker
+        const pre = preOrderId && list.find(o => o._id === preOrderId)
+        if (pre) setOrderQuery(orderLabel(pre))
+      })
       .catch(console.error)
       .finally(() => setLoadingOrders(false))
+  }, [preOrderId])
+
+  // Close the picker when clicking anywhere else
+  useEffect(() => {
+    const onDown = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
   }, [])
 
   const selectedOrder = orders.find(o => o._id === selectedOrderId)
+
+  const filteredOrders = orders.filter(o => {
+    const q = orderQuery.trim().toLowerCase()
+    if (!q || (selectedOrder && orderQuery === orderLabel(selectedOrder))) return true
+    return [o.product, o.brand, o.orderId].some(v => v && String(v).toLowerCase().includes(q))
+  })
+
+  const pickOrder = (o) => {
+    setSelectedOrderId(o._id)
+    setOrderQuery(orderLabel(o))
+    setDropdownOpen(false)
+  }
 
   const generateCaption = async () => {
     setAiLoading(true)
@@ -266,6 +299,8 @@ const PostSubmission = () => {
     setVerifying(false)
     setPostUrl('')
     setSelectedOrderId('')
+    setOrderQuery('')
+    setDropdownOpen(false)
     setError('')
   }
 
@@ -296,20 +331,44 @@ const PostSubmission = () => {
           <h2 className="text-lg font-bold text-white mb-5">Post Details</h2>
           {error && <p className="text-xs text-red-400 mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20">{error}</p>}
           <div className="space-y-4">
-            <div>
-              <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Select Order</label>
+            <div ref={dropdownRef} className="relative">
+              <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Search Order / Product</label>
               {loadingOrders ? (
                 <div className="flex items-center gap-2 text-zinc-500 text-sm"><div className="w-4 h-4 rounded-full border border-zinc-500 border-t-transparent animate-spin" /><span>Loading orders...</span></div>
               ) : (
-                <select value={selectedOrderId} onChange={e => setSelectedOrderId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none">
-                  <option value="">Choose a delivered order...</option>
-                  {orders.map(o => (
-                    <option key={o._id} value={o._id}>
-                      {o.product} — {o.brand} ({o.orderId})
-                    </option>
-                  ))}
-                </select>
+                <>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={orderQuery}
+                      onFocus={() => setDropdownOpen(true)}
+                      onChange={e => { setOrderQuery(e.target.value); setDropdownOpen(true); setSelectedOrderId('') }}
+                      placeholder="Type product name, brand, or order ID…"
+                      className="w-full px-4 py-3 pr-10 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none"
+                      autoComplete="off"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-zinc-500 pointer-events-none">🔍</span>
+                  </div>
+                  {dropdownOpen && (
+                    <div className="absolute left-0 right-0 mt-1.5 max-h-56 overflow-y-auto rounded-xl border border-violet-500/30 bg-[#0d0d20] shadow-2xl p-1.5 z-50">
+                      {filteredOrders.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-zinc-500 text-center">
+                          {orders.length ? 'No matching orders' : 'No delivered orders yet'}
+                        </div>
+                      ) : filteredOrders.map(o => (
+                        <button
+                          type="button"
+                          key={o._id}
+                          onClick={() => pickOrder(o)}
+                          className={`w-full text-left px-3.5 py-2.5 rounded-lg transition-colors ${selectedOrderId === o._id ? 'bg-violet-500/20' : 'hover:bg-white/5'}`}
+                        >
+                          <p className="text-sm font-semibold text-white m-0">{o.product}</p>
+                          <p className="text-[11px] text-zinc-500 m-0 mt-0.5">{o.brand} · <span className="text-violet-400">{o.orderId}</span></p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
               {orders.length === 0 && !loadingOrders && (
                 <p className="text-xs text-zinc-600 mt-1">No delivered orders found. Orders must be delivered before you can submit.</p>
