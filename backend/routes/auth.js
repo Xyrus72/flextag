@@ -42,7 +42,7 @@ router.post('/send-otp', otpSendLimiter, async (req, res) => {
       return res.status(409).json({ message: 'An account with this email already exists.' })
     }
 
-    const code = generateOtp(email)
+    const code = await generateOtp(email)
     await sendOtpEmail(email, code)
 
     return res.json({ message: `Verification code sent to ${email}.` })
@@ -84,7 +84,7 @@ router.post('/verify-otp', otpVerifyLimiter, async (req, res) => {
       if (!igHandle) {
         return res.status(400).json({ message: 'Your Instagram handle is required (letters, numbers, dots, underscores).' })
       }
-      const pre = checkOtp(email, otp)
+      const pre = await checkOtp(email, otp)
       if (!pre.ok) return res.status(400).json({ message: pre.reason })
       if (await User.exists({ role: 'creator', instagramHandle: handleRegex(igHandle) })) {
         return res.status(409).json({ message: `@${igHandle} is already linked to another FlexTag account.` })
@@ -110,8 +110,8 @@ router.post('/verify-otp', otpVerifyLimiter, async (req, res) => {
       }
     }
 
-    // Verify the OTP
-    const result = verifyOtp(email, otp)
+    // Verify the OTP (consumes it)
+    const result = await verifyOtp(email, otp)
     if (!result.ok) {
       return res.status(400).json({ message: result.reason })
     }

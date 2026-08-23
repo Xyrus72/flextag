@@ -1,5 +1,5 @@
 // Load backend/.env relative to this file so it works from any working directory
-require('dotenv').config({ path: require('path').join(__dirname, '.env') })
+require('dotenv').config({ path: require('path').join(__dirname, '.env'), override: true })
 
 const express    = require('express')
 const http       = require('http')
@@ -148,6 +148,9 @@ app.use('/api/disputes',     disputeRoutes)
 app.use('/api/categories',   categoryRoutes)
 app.use('/api/messages',     messageRoutes)
 app.use('/api/instagram',    require('./routes/instagram'))
+app.use('/api/ai',           require('./routes/ai'))
+app.use('/api/stats',        require('./routes/stats'))
+app.use('/api/notifications', require('./routes/notifications'))
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))

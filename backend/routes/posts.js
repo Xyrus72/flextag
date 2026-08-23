@@ -6,6 +6,7 @@ const Campaign = require('../models/Campaign')
 const { requireAuth, requireRole } = require('../middleware/auth')
 const { approvePost } = require('../services/postApproval')
 const { parsePostUrl } = require('../services/instagram/endpoints')
+const { notifySafe } = require('../services/notifications')
 
 const escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 // Orders in these states (incl. the fulfillment module's return flow) never earn cashback.
@@ -142,6 +143,9 @@ router.put('/:id/reject', requireAuth, requireRole('admin', 'brand'), async (req
     post.auditStatus = 'failed'
     post.rejectionReason = reason || 'Does not meet campaign requirements.'
     await post.save()
+
+    notifySafe(post.creatorId, { type: 'post_verified', icon: '⚠️', title: 'Post needs changes',
+      body: post.rejectionReason, link: '/creator/submit-post' })
 
     res.json({ post, message: 'Post rejected.' })
   } catch (err) {

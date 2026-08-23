@@ -15,6 +15,7 @@ const Order = require('../models/Order')
 const User = require('../models/User')
 const Campaign = require('../models/Campaign')
 const Product = require('../models/Product')
+const { notifySafe } = require('./notifications')
 
 const DAY = 86_400_000
 
@@ -44,6 +45,7 @@ async function approvePost(post, { approvedBy = null, auto = false } = {}) {
 
   // 2. Release cashback exactly once per order (never for cancelled orders).
   let released = false
+  let releasedAmount = 0
   const orderId = post.orderId?._id || post.orderId
   if (orderId) {
     // Only a DELIVERED order earns cashback — never processing/shipped, cancelled or returned.
@@ -66,6 +68,7 @@ async function approvePost(post, { approvedBy = null, auto = false } = {}) {
       })
       await User.findByIdAndUpdate(creatorId, { $inc: { totalEarnings: amount, completedCampaigns: 1 } })
       await Post.updateOne({ _id: post._id }, { $set: { cashbackReleased: true } })
+      releasedAmount = amount
       // Spend tracking for budget caps (Campaign.budgetUsed, module-2 Product.totalCashbackSpent)
       const campaignId = post.campaignId?._id || post.campaignId || order.campaignId
       if (campaignId) {
@@ -87,6 +90,16 @@ async function approvePost(post, { approvedBy = null, auto = false } = {}) {
   post.auditStatus = 'passed'
   post.retentionDaysRemaining = retentionDays
   if (released) post.cashbackReleased = true
+
+  // Tell the creator (never blocks the money path)
+  const creatorId = post.creatorId?._id || post.creatorId
+  if (released) {
+    notifySafe(creatorId, { type: 'cashback', icon: '💰', title: 'Cashback released!',
+      body: `৳${(releasedAmount || 0).toLocaleString()} for ${post.campaignId?.title || 'your campaign'} is in your wallet.`, link: '/creator/wallet' })
+  } else {
+    notifySafe(creatorId, { type: 'post_verified', icon: '✅', title: 'Post approved',
+      body: 'Your post passed verification. Keep it live for the retention period.', link: '/creator/campaign-tracker' })
+  }
   return { post, released }
 }
 
