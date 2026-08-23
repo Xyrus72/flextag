@@ -8,6 +8,7 @@ const { precheck: igPrecheck, auditUserInBackground } = require('../services/ins
 const { normalizeHandle, handleRegex } = require('../services/instagram/endpoints')
 const { getIgSettings }          = require('../utils/settings')
 const { createLimiter }          = require('../utils/rateLimit')
+const { generateReferralCode, resolveReferrer } = require('../services/referrals')
 
 // OTP endpoints are unauthenticated: cap them per IP so they can't be used to
 // spam inboxes, brute-force codes, or drive Instagram lookups through the gate.
@@ -124,8 +125,11 @@ router.post('/verify-otp', otpVerifyLimiter, async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10)
 
+    const referralCode = await generateReferralCode()
+    const referredBy = await resolveReferrer(req.body.referralCode)
     const user = await User.create({
       name, email, password: hashed, phone, role,
+      referralCode, referredBy,
       instagramHandle: role === 'creator' ? igHandle : normalizeHandle(instagramHandle),
       followersCount:  ig ? ig.followers : (Number(followersCount) || 0),
       tiktokHandle,

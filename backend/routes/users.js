@@ -6,6 +6,7 @@ const { normalizeHandle, handleRegex } = require('../services/instagram/endpoint
 const { auditUserInBackground } = require('../services/instagram/audit')
 const IgAudit = require('../models/IgAudit')
 const { notifySafe } = require('../services/notifications')
+const { generateReferralCode, REFERRAL_BONUS } = require('../services/referrals')
 
 // ── GET /api/users/brand/ratings — creator reviews for current brand ────────
 router.get('/brand/ratings', requireAuth, requireRole('brand'), async (req, res) => {
@@ -84,6 +85,22 @@ router.get('/portfolio/:handle', async (req, res) => {
     })
   } catch (err) {
     console.error('[users portfolio]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── GET /api/users/me/referrals — current user's referral code + stats ──────
+router.get('/me/referrals', requireAuth, async (req, res) => {
+  try {
+    let code = req.user.referralCode
+    if (!code) { code = await generateReferralCode(); await User.updateOne({ _id: req.user._id }, { $set: { referralCode: code } }) }
+    const [count, rewarded] = await Promise.all([
+      User.countDocuments({ referredBy: req.user._id }),
+      User.countDocuments({ referredBy: req.user._id, referralRewarded: true }),
+    ])
+    res.json({ code, count, rewarded, bonus: REFERRAL_BONUS })
+  } catch (err) {
+    console.error('[users referrals]', err)
     res.status(500).json({ message: 'Server error.' })
   }
 })

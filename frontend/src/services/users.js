@@ -39,3 +39,6 @@ export const setDefaultAddress = (userId, addrId) =>
 
 export const getPortfolio = (handle) =>
   api.get(`/api/users/portfolio/${encodeURIComponent(handle)}`).then(r => r.data)
+
+export const getMyReferrals = () =>
+  api.get('/api/users/me/referrals').then(r => r.data)
