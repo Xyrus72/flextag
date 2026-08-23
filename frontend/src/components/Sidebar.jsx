@@ -1,12 +1,12 @@
-import React from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-const Sidebar = ({ links = [] }) => {
+const Sidebar = ({ links = [], mobile = false, open = false, onClose }) => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
-  const handleLogout = () => logout(navigate)
+  const handleLogout = () => { onClose?.(); logout(navigate) }
+  const closeOnMobile = mobile ? onClose : undefined
 
   const roleColor = {
     creator: 'linear-gradient(135deg,#7c3aed,#06b6d4)',
@@ -24,12 +24,15 @@ const Sidebar = ({ links = [] }) => {
     <>
       {/* ── Sidebar ───────────────────────────────────────────── */}
       <aside style={{
-        position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 40,
+        position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: mobile ? 50 : 40,
         width: 256,
         background: 'rgba(5,8,22,0.98)',
         backdropFilter: 'blur(24px)',
         borderRight: '1px solid rgba(255,255,255,0.06)',
         display: 'flex', flexDirection: 'column',
+        transform: mobile ? (open ? 'translateX(0)' : 'translateX(-110%)') : 'none',
+        transition: 'transform 0.28s cubic-bezier(0.22,1,0.36,1)',
+        boxShadow: mobile && open ? '0 0 60px rgba(0,0,0,0.6)' : 'none',
       }}>
 
         {/* Purple top line */}
@@ -68,6 +71,7 @@ const Sidebar = ({ links = [] }) => {
             <NavLink
               key={link.path}
               to={link.path}
+              onClick={closeOnMobile}
               end={link.path === '/creator' || link.path === '/brand' || link.path === '/admin'}
               className={({ isActive }) => `side-link${isActive ? ' active' : ''}`}
               style={({ isActive }) => ({
