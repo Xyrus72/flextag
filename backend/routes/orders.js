@@ -5,6 +5,7 @@ const Campaign = require('../models/Campaign')
 const Product  = require('../models/Product')
 const Transaction = require('../models/Transaction')
 const { requireAuth, requireRole } = require('../middleware/auth')
+const { notifySafe } = require('../services/notifications')
 
 // helper to generate order IDs
 const genOrderId = () => 'ORD-' + Math.floor(1000 + Math.random() * 9000)
@@ -145,6 +146,7 @@ router.put('/:id/status', requireAuth, requireRole('brand', 'admin'), async (req
     const { status, tracking, returnReason } = req.body
     const order = await Order.findById(req.params.id)
     if (!order) return res.status(404).json({ message: 'Order not found.' })
+    const prevStatus = order.status
 
     if (req.user.role === 'brand' && order.brandId?.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Access denied.' })
@@ -159,7 +161,13 @@ router.put('/:id/status', requireAuth, requireRole('brand', 'admin'), async (req
     if (tracking !== undefined) order.tracking = tracking
     if (returnReason !== undefined) order.returnReason = returnReason
     if (status === 'return_requested' && !order.returnRequestedAt) order.returnRequestedAt = new Date()
+    const wasDelivered = prevStatus !== 'delivered' && order.status === 'delivered'
     await order.save()
+
+    if (wasDelivered) {
+      notifySafe(order.creatorId, { type: 'order', icon: '📦', title: 'Order delivered',
+        body: `Your ${order.product} arrived — post about it to earn ৳${(order.cashbackAmount || 0).toLocaleString()} cashback.`, link: '/creator/submit-post' })
+    }
 
     res.json({ order, message: 'Order updated.' })
   } catch (err) {
