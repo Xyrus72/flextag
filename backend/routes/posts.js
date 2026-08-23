@@ -36,6 +36,56 @@ router.get('/', requireAuth, async (req, res) => {
   }
 })
 
+// ── GET /api/posts/showcase — verified UGC + reach/engagement/ROI ───────────
+// Scoped by role: brand → own campaigns, creator → own posts, admin → all.
+router.get('/showcase', requireAuth, async (req, res) => {
+  try {
+    const filter = { status: 'approved' }
+    if (req.user.role === 'brand') {
+      const camps = await Campaign.find({ brandId: req.user._id }).select('_id')
+      filter.campaignId = { $in: camps.map(c => c._id) }
+    } else if (req.user.role === 'creator') {
+      filter.creatorId = req.user._id
+    }
+    const posts = await Post.find(filter)
+      .populate('creatorId', 'name instagramHandle avatar')
+      .populate('campaignId', 'title brand product')
+      .populate('orderId', 'cashbackAmount')
+      .sort({ approvedAt: -1, createdAt: -1 })
+      .limit(60)
+
+    let reach = 0, engagement = 0, cashbackSpent = 0
+    const creators = new Set()
+    const items = posts.map(p => {
+      const s = (p.verification && p.verification.snapshot) || {}
+      reach += Number(s.views) || 0
+      engagement += (Number(s.likes) || 0) + (Number(s.comments) || 0)
+      if (p.cashbackReleased) cashbackSpent += Number(p.orderId?.cashbackAmount) || 0
+      creators.add(String(p.creatorId?._id || p.creatorId))
+      return {
+        _id: p._id, postUrl: p.postUrl, autoApproved: !!p.autoApproved, createdAt: p.approvedAt || p.createdAt,
+        creator: p.creatorId && { name: p.creatorId.name, instagramHandle: p.creatorId.instagramHandle, avatar: p.creatorId.avatar },
+        campaign: p.campaignId && { title: p.campaignId.title, product: p.campaignId.product, brand: p.campaignId.brand },
+        snapshot: {
+          likes: s.likes ?? null, comments: s.comments ?? null, views: s.views ?? null,
+          thumbnail: s.thumbnail || '', caption: (s.caption || '').slice(0, 140), mediaType: s.mediaType || '',
+          permalink: s.permalink || p.postUrl,
+        },
+      }
+    })
+    res.json({
+      posts: items,
+      summary: {
+        posts: items.length, creators: creators.size, reach, engagement, cashbackSpent,
+        costPerEngagement: engagement > 0 ? Math.round((cashbackSpent / engagement) * 100) / 100 : 0,
+      },
+    })
+  } catch (err) {
+    console.error('[posts showcase]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
 // ── POST /api/posts — creator submits post ─────────────────────────────────
 router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
   try {

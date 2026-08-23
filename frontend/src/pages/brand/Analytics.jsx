@@ -1,23 +1,33 @@
 import React, { useState, useEffect } from 'react'
 import { getCampaigns } from '../../services/campaigns'
 import { getOrders } from '../../services/orders'
-import { getPosts } from '../../services/posts'
+import { getPosts, getShowcase } from '../../services/posts'
+
+const compact = (n) => {
+  const v = Number(n) || 0
+  if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M'
+  if (v >= 1e3) return (v / 1e3).toFixed(1) + 'k'
+  return v.toLocaleString()
+}
 
 const Analytics = () => {
   const [period, setPeriod]         = useState('month')
   const [campaigns, setCampaigns]   = useState([])
   const [kpis, setKpis]             = useState({ posts: 0, reach: 0, engagement: 0, cashbackPaid: 0, roi: 0 })
   const [monthlyData, setMonthlyData] = useState([])
+  const [showcase, setShowcase]     = useState({ posts: [], summary: null })
   const [loading, setLoading]       = useState(true)
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [campData, ordersData, postsData] = await Promise.all([
+        const [campData, ordersData, postsData, showcaseData] = await Promise.all([
           getCampaigns({ status: 'all' }),
           getOrders({ status: 'all' }),
           getPosts(),
+          getShowcase().catch(() => ({ posts: [], summary: null })),
         ])
+        setShowcase(showcaseData || { posts: [], summary: null })
 
         const camps  = campData.campaigns || []
         const orders = ordersData.orders  || []
@@ -96,6 +106,59 @@ const Analytics = () => {
             <p className="text-xs text-zinc-500 mt-1">{k.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* Performance & ROI (from verified post snapshots) */}
+      {showcase.summary && showcase.summary.posts > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: 'Reach (views)',      value: compact(showcase.summary.reach),      hint: 'across verified reels/videos', color: '#06b6d4' },
+            { label: 'Engagement',         value: compact(showcase.summary.engagement), hint: 'likes + comments on UGC',       color: '#ec4899' },
+            { label: 'Verified UGC',       value: String(showcase.summary.posts),       hint: `${showcase.summary.creators} creators`, color: '#7c3aed' },
+            { label: 'Cost / engagement',  value: `৳${showcase.summary.costPerEngagement}`, hint: 'cashback ÷ engagement',     color: '#22c55e' },
+          ].map(k => (
+            <div key={k.label} className="p-4 rounded-2xl border" style={{ background: `${k.color}0d`, borderColor: `${k.color}33` }}>
+              <p className="text-2xl font-extrabold text-white">{k.value}</p>
+              <p className="text-xs font-semibold mt-1" style={{ color: k.color }}>{k.label}</p>
+              <p className="text-[11px] text-zinc-500 mt-0.5">{k.hint}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* UGC gallery — the verified posts brands paid for */}
+      <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6 mb-8">
+        <h2 className="text-lg font-bold text-white mb-1">Your Campaign UGC</h2>
+        <p className="text-xs text-zinc-500 mb-5">Verified creator posts with live engagement — proof of what your budget produced</p>
+        {loading ? (
+          <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
+        ) : showcase.posts.length === 0 ? (
+          <div className="text-center py-10 text-zinc-500 text-sm">No verified posts yet — they appear here once creators post and pass verification.</div>
+        ) : (
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))' }}>
+            {showcase.posts.map(p => (
+              <a key={p._id} href={p.snapshot.permalink} target="_blank" rel="noreferrer"
+                className="group rounded-xl overflow-hidden border border-white/5 bg-white/[0.02] hover:border-violet-500/30 transition-all">
+                <div className="relative" style={{ aspectRatio: '1 / 1', background: '#0a0f23' }}>
+                  {p.snapshot.thumbnail
+                    ? <img src={p.snapshot.thumbnail} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = 'none' }} />
+                    : <div className="w-full h-full flex items-center justify-center text-3xl opacity-40">📸</div>}
+                  {p.snapshot.mediaType && <span className="absolute top-2 left-2 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-black/60 text-white">{p.snapshot.mediaType}</span>}
+                  {p.autoApproved && <span className="absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-violet-600/80 text-white">AUTO ✓</span>}
+                </div>
+                <div className="p-3">
+                  <p className="text-xs font-semibold text-white truncate">@{String(p.creator?.instagramHandle || '').replace(/^@/, '') || p.creator?.name}</p>
+                  <p className="text-[11px] text-zinc-500 truncate mb-2">{p.campaign?.product || p.campaign?.title}</p>
+                  <div className="flex items-center gap-3 text-[11px] text-zinc-400">
+                    <span>❤ {p.snapshot.likes == null ? '—' : compact(p.snapshot.likes)}</span>
+                    <span>💬 {compact(p.snapshot.comments)}</span>
+                    {p.snapshot.views != null && <span>▶ {compact(p.snapshot.views)}</span>}
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Chart */}
