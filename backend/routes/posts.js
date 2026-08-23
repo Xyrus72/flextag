@@ -8,6 +8,8 @@ const { approvePost } = require('../services/postApproval')
 const { parsePostUrl } = require('../services/instagram/endpoints')
 
 const escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+// Orders in these states (incl. the fulfillment module's return flow) never earn cashback.
+const NO_CASHBACK_STATUSES = ['cancelled', 'return_requested', 'returned']
 
 // ── GET /api/posts ─────────────────────────────────────────────────────────
 router.get('/', requireAuth, async (req, res) => {
@@ -22,8 +24,8 @@ router.get('/', requireAuth, async (req, res) => {
 
     const posts = await Post.find(filter)
       .populate('creatorId',  'name instagramHandle avatar followersCount tier igVerified igHealthScore igFakeFollowerPct')
-      .populate('campaignId', 'title brand brandId retentionDays cashbackRate hashtags handles contentType')
-      .populate('orderId',    'orderId cashbackAmount createdAt status')
+      .populate('campaignId', 'title name brand brandId retentionDays cashbackRate hashtags handles contentType postingRules')
+      .populate('orderId',    'orderId cashbackAmount createdAt status product')
       .sort({ createdAt: -1 })
 
     res.json({ posts })
@@ -55,7 +57,9 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
     if (orderId) {
       const order = await Order.findOne({ _id: orderId, creatorId: req.user._id, campaignId: campaign._id })
       if (!order) return res.status(404).json({ message: 'Order not found for this campaign.' })
-      if (order.status === 'cancelled') return res.status(400).json({ message: 'This order was cancelled, so no cashback can be claimed for it.' })
+      if (NO_CASHBACK_STATUSES.includes(order.status)) {
+        return res.status(400).json({ message: `This order is ${order.status.replace('_', ' ')}, so no cashback can be claimed for it.` })
+      }
       // One live submission per order; a rejected post may be fixed and resubmitted.
       const existing = await Post.findOne({ orderId, creatorId: req.user._id, status: { $ne: 'rejected' } })
       if (existing) return res.status(409).json({ message: 'Post already submitted for this order.' })
@@ -131,6 +135,7 @@ router.put('/:id/reject', requireAuth, requireRole('admin', 'brand'), async (req
     }
 
     post.status = 'rejected'
+    post.auditStatus = 'failed'
     post.rejectionReason = reason || 'Does not meet campaign requirements.'
     await post.save()
 

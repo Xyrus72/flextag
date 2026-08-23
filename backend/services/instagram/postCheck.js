@@ -49,7 +49,8 @@ function buildChecks({ campaign, order, creator, fetched }) {
       fetched.takenAt ? `Posted ${fetched.takenAt.toISOString().slice(0, 10)}, ordered ${new Date(order.createdAt).toISOString().slice(0, 10)}` : 'Post date unavailable')
   }
 
-  const reqTags = splitList(campaign?.hashtags, /^#/)
+  // Rules may live on a Campaign (comma-separated strings) or a module-2 Product (postingRules arrays).
+  const reqTags = [...new Set([...splitList(campaign?.hashtags, /^#/), ...splitList((campaign?.postingRules?.hashtags || []).join(','), /^#/)])]
   if (reqTags.length) {
     if (fetched.hashtags == null) add('hashtags', 'Required hashtags present', null, true, 'Caption unavailable — needs manual review')
     else {
@@ -59,7 +60,7 @@ function buildChecks({ campaign, order, creator, fetched }) {
     }
   }
 
-  const reqMentions = splitList(campaign?.handles, /^@/)
+  const reqMentions = [...new Set([...splitList(campaign?.handles, /^@/), ...splitList((campaign?.postingRules?.taggingHandles || []).join(','), /^@/)])]
   if (reqMentions.length) {
     if (fetched.mentions == null) add('mentions', 'Brand mentioned', null, true, 'Caption unavailable — needs manual review')
     else {
@@ -87,9 +88,28 @@ function statusFromChecks(checks) {
   return 'passed'
 }
 
+/**
+ * Fill the Module-3 "Meta Post Auditor" contract (post.auditStatus / auditResults)
+ * from the REAL verification, so the module's UI and API shape keep working
+ * while the numbers mean something.
+ */
+function applyAuditContract(post, verification, fetched, creator) {
+  const byKey = (k) => verification.checks.find((c) => c.key === k)
+  const passed = (k) => { const c = byKey(k); return c ? c.passed === true : null }
+  post.auditStatus = verification.status === 'passed' ? 'passed' : verification.status === 'failed' ? 'failed' : 'monitoring'
+  post.auditResults = {
+    isPublic:          passed('public'),
+    tagsBrand:         byKey('mentions') ? passed('mentions') : (fetched ? true : null),   // no mention rule → nothing to fail
+    hasHashtags:       byKey('hashtags') ? passed('hashtags') : (fetched ? true : null),
+    detectedHashtags:  (fetched?.hashtags || []).map((t) => '#' + t),
+    detectedHandles:   (fetched?.mentions || []).map((h) => '@' + h),
+    authenticityScore: Number.isFinite(Number(creator?.igHealthScore)) && creator?.igHealthScore !== null ? Number(creator.igHealthScore) : null,
+  }
+}
+
 async function loadPost(postOrId) {
   if (postOrId && typeof postOrId === 'object' && postOrId.postUrl) return postOrId
-  return Post.findById(postOrId).populate('campaignId').populate('orderId').populate('creatorId', 'name instagramHandle igVerified')
+  return Post.findById(postOrId).populate('campaignId').populate('orderId').populate('creatorId', 'name instagramHandle igVerified igHealthScore')
 }
 
 /**
@@ -103,7 +123,13 @@ async function verifyPost(postOrId, { by = null } = {}) {
   const s = await getIgSettings()
 
   const verification = { status: 'pending', checks: [], snapshot: null, checkedAt: new Date(), error: '', source: '' }
-  const finish = async () => { post.verification = verification; await post.save(); return { post, verification, autoApproved: false } }
+  const creatorForContract = post.creatorId && post.creatorId.instagramHandle !== undefined ? post.creatorId : null
+  const finish = async () => {
+    post.verification = verification
+    applyAuditContract(post, verification, null, creatorForContract)
+    await post.save()
+    return { post, verification, autoApproved: false }
+  }
 
   if (post.platform && post.platform !== 'instagram') {
     verification.status = 'error'
@@ -146,6 +172,7 @@ async function verifyPost(postOrId, { by = null } = {}) {
   if (!creator) verification.error = verification.error || 'Creator record missing — manual review.'
 
   post.verification = verification
+  applyAuditContract(post, verification, fetched, creator)
   // Automatic release requires: every required check passed, the setting is on,
   // AND the creator has proven they own the handle (igVerified). Otherwise the
   // post stays pending for a human.

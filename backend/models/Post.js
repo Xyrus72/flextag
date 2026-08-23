@@ -6,7 +6,7 @@ const postSchema = new mongoose.Schema({
   orderId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
   postUrl:    { type: String, required: true },
   platform:   { type: String, default: 'instagram' },
-  status:     { type: String, enum: ['pending', 'approved', 'rejected', 'deleted'], default: 'pending' },
+  status:     { type: String, enum: ['pending', 'approved', 'rejected', 'deleted', 'monitoring'], default: 'pending' },
   rejectionReason: { type: String, default: '' },
   retentionDeadline: { type: Date },
   cashbackReleased: { type: Boolean, default: false },
@@ -28,6 +28,21 @@ const postSchema = new mongoose.Schema({
   autoApproved: { type: Boolean, default: false },
   approvedAt:   { type: Date, default: null },
   approvedBy:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+
+  // ── Module-3 "Meta Post Auditor" contract (Habib) ─────────────────────────
+  // Kept for the module's UI/API shape, but FILLED FROM the real verification
+  // above (services/instagram/postCheck.js) — never from the stub auditor.
+  // Booleans default to null ("not checked yet"), not true.
+  auditStatus: { type: String, enum: ['passed', 'failed', 'monitoring', 'flagged'], default: 'monitoring' },
+  auditResults: {
+    isPublic:          { type: Boolean, default: null },
+    tagsBrand:         { type: Boolean, default: null },
+    hasHashtags:       { type: Boolean, default: null },
+    detectedHashtags:  { type: [String], default: [] },
+    detectedHandles:   { type: [String], default: [] },
+    authenticityScore: { type: Number, default: null },   // creator's Instagram health score (0-100)
+  },
+  retentionDaysRemaining: { type: Number, default: 7 },
 }, { timestamps: true })
 
 module.exports = mongoose.model('Post', postSchema)
