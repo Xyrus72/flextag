@@ -13,6 +13,7 @@ import AdminLayout from './layouts/AdminLayout'
 import Landing from './pages/Landing'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+const CreatorPortfolio = lazy(() => import('./pages/public/CreatorPortfolio'))
 
 // Dashboard pages are lazy-loaded per route so a landing visitor doesn't download
 // the entire creator/brand/admin app up front.
@@ -82,6 +83,7 @@ const AppRoutes = () => (
       </Route>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/u/:handle" element={<CreatorPortfolio />} />{/* public creator portfolio */}
 
       {/* ── Creator Routes ──────────────────────── */}
       <Route element={<ProtectedRoute allowedRoles={['creator']}><CreatorLayout /></ProtectedRoute>}>

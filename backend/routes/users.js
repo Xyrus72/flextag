@@ -49,6 +49,45 @@ router.get('/leaderboard', async (req, res) => {
   }
 })
 
+// ── GET /api/users/portfolio/:handle — PUBLIC creator portfolio ─────────────
+// Safe, shareable subset (no email / no fake-follower %). Powers /u/:handle.
+router.get('/portfolio/:handle', async (req, res) => {
+  try {
+    const handle = normalizeHandle(req.params.handle)
+    if (!handle) return res.status(400).json({ message: 'Invalid handle.' })
+    const creator = await User.findOne({ role: 'creator', instagramHandle: handleRegex(handle) })
+      .select('name instagramHandle avatar tier followersCount engagementRate igHealthScore igVerified completedCampaigns createdAt')
+      .lean()
+    if (!creator) return res.status(404).json({ message: 'Creator not found.' })
+
+    const Post = require('../models/Post')
+    const posts = await Post.find({ creatorId: creator._id, status: 'approved' })
+      .populate('campaignId', 'title brand product')
+      .sort({ approvedAt: -1, createdAt: -1 })
+      .limit(24)
+    const items = posts.map(p => {
+      const s = (p.verification && p.verification.snapshot) || {}
+      return {
+        _id: p._id, permalink: s.permalink || p.postUrl, thumbnail: s.thumbnail || '', mediaType: s.mediaType || '',
+        likes: s.likes ?? null, comments: s.comments ?? null, views: s.views ?? null,
+        brand: p.campaignId?.brand, product: p.campaignId?.product,
+      }
+    })
+    res.json({
+      creator: {
+        name: creator.name, instagramHandle: normalizeHandle(creator.instagramHandle), avatar: creator.avatar,
+        tier: creator.tier, followersCount: creator.followersCount, engagementRate: creator.engagementRate,
+        healthScore: creator.igHealthScore, igVerified: creator.igVerified, completedCampaigns: creator.completedCampaigns,
+        memberSince: creator.createdAt,
+      },
+      posts: items,
+    })
+  } catch (err) {
+    console.error('[users portfolio]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
 // ── GET /api/users/me/stats — dashboard stats for current user ─────────────
 router.get('/me/stats', requireAuth, async (req, res) => {
   try {
