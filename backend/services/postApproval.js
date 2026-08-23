@@ -13,6 +13,8 @@ const Post = require('../models/Post')
 const Transaction = require('../models/Transaction')
 const Order = require('../models/Order')
 const User = require('../models/User')
+const Campaign = require('../models/Campaign')
+const Product = require('../models/Product')
 
 const DAY = 86_400_000
 
@@ -30,9 +32,11 @@ async function approvePost(post, { approvedBy = null, auto = false } = {}) {
 
   const set = {
     status: 'approved', approvedAt: now, approvedBy: approvedBy || null, autoApproved: !!auto, retention,
+    retentionDeadline: retention.checkAt,                            // legacy field shown by CampaignTracker — keep it on the same clock
     auditStatus: 'passed', retentionDaysRemaining: retentionDays,   // Module-3 auditor contract
   }
   if (post.verification) set.verification = post.verification.toObject ? post.verification.toObject() : post.verification
+  if (post.auditResults) set.auditResults = post.auditResults.toObject ? post.auditResults.toObject() : post.auditResults
 
   // 1. Claim: only a still-pending post can be approved, and only once.
   const claimed = await Post.findOneAndUpdate({ _id: post._id, status: 'pending' }, { $set: set }, { new: true })
@@ -42,25 +46,33 @@ async function approvePost(post, { approvedBy = null, auto = false } = {}) {
   let released = false
   const orderId = post.orderId?._id || post.orderId
   if (orderId) {
-    // Never pay for cancelled or returned orders (fulfillment module's return flow included).
+    // Only a DELIVERED order earns cashback — never processing/shipped, cancelled or returned.
     const order = await Order.findOneAndUpdate(
-      { _id: orderId, cashbackReleased: false, status: { $nin: ['cancelled', 'return_requested', 'returned'] } },
+      { _id: orderId, cashbackReleased: false, status: 'delivered' },
       { $set: { cashbackReleased: true } },
       { new: false }, // returns the pre-update doc → cashbackAmount
     )
     if (order) {
       const creatorId = post.creatorId?._id || post.creatorId
+      const amount = order.cashbackAmount
       await Transaction.create({
         userId:  creatorId,
         type:    'cashback',
-        amount:  order.cashbackAmount,
+        amount,
         desc:    `Cashback for ${post.campaignId?.title || 'campaign'}`,
         status:  'completed',
         orderId: order._id,
         postId:  post._id,
       })
-      await User.findByIdAndUpdate(creatorId, { $inc: { totalEarnings: order.cashbackAmount, completedCampaigns: 1 } })
+      await User.findByIdAndUpdate(creatorId, { $inc: { totalEarnings: amount, completedCampaigns: 1 } })
       await Post.updateOne({ _id: post._id }, { $set: { cashbackReleased: true } })
+      // Spend tracking for budget caps (Campaign.budgetUsed, module-2 Product.totalCashbackSpent)
+      const campaignId = post.campaignId?._id || post.campaignId || order.campaignId
+      if (campaignId) {
+        const c = await Campaign.findByIdAndUpdate(campaignId, { $inc: { budgetUsed: amount } }, { new: true }).select('productId').lean().catch(() => null)
+        const productId = c?.productId || order.productId
+        if (productId) await Product.updateOne({ _id: productId }, { $inc: { totalCashbackSpent: amount } }).catch(() => {})
+      }
       released = true
     }
   }
@@ -71,6 +83,7 @@ async function approvePost(post, { approvedBy = null, auto = false } = {}) {
   post.approvedBy = set.approvedBy
   post.autoApproved = set.autoApproved
   post.retention = retention
+  post.retentionDeadline = retention.checkAt
   post.auditStatus = 'passed'
   post.retentionDaysRemaining = retentionDays
   if (released) post.cashbackReleased = true

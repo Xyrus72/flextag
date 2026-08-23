@@ -58,9 +58,15 @@ router.post('/withdraw', requireAuth, requireRole('creator'), async (req, res) =
       { $match: { userId: req.user._id, type: 'withdrawal', status: 'completed' } },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ])
+    // Same formula as GET /api/transactions (which the Wallet shows): cashback + top-ups − withdrawals
+    const completedTopUps = await Transaction.aggregate([
+      { $match: { userId: req.user._id, type: 'top_up', status: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ])
     const earned    = completedCashbacks[0]?.total   || 0
+    const toppedUp  = completedTopUps[0]?.total      || 0
     const withdrawn = completedWithdrawals[0]?.total || 0
-    const available = earned - withdrawn
+    const available = earned + toppedUp - withdrawn
 
     if (Number(amount) > available) {
       return res.status(400).json({ message: 'Insufficient available balance.' })

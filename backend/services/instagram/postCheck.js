@@ -6,6 +6,7 @@
  * Also performs the retention re-check (is the post still live at the deadline).
  */
 const Post = require('../../models/Post')
+const Product = require('../../models/Product')
 const ep = require('./endpoints')
 const { getProvider, withFallback } = require('./provider')
 const { embedToPost } = require('./providers/session')
@@ -95,7 +96,8 @@ function statusFromChecks(checks) {
  */
 function applyAuditContract(post, verification, fetched, creator) {
   const byKey = (k) => verification.checks.find((c) => c.key === k)
-  const passed = (k) => { const c = byKey(k); return c ? c.passed === true : null }
+  // null = not checked / could not be evaluated (never report that as a hard failure)
+  const passed = (k) => { const c = byKey(k); return !c || c.passed === null ? null : c.passed === true }
   post.auditStatus = verification.status === 'passed' ? 'passed' : verification.status === 'failed' ? 'failed' : 'monitoring'
   post.auditResults = {
     isPublic:          passed('public'),
@@ -105,6 +107,26 @@ function applyAuditContract(post, verification, fetched, creator) {
     detectedHandles:   (fetched?.mentions || []).map((h) => '@' + h),
     authenticityScore: Number.isFinite(Number(creator?.igHealthScore)) && creator?.igHealthScore !== null ? Number(creator.igHealthScore) : null,
   }
+}
+
+/**
+ * Campaign rules live on the Campaign (hashtags/handles strings); module-2 products
+ * carry `postingRules` arrays. A Campaign links to its Product via productId (or,
+ * for older data, brand + product name) — merge the Product's rules in so both apply.
+ */
+async function resolveRules(campaign) {
+  if (!campaign || campaign.postingRules) return campaign || null
+  try {
+    const product = campaign.productId
+      ? await Product.findById(campaign.productId).select('postingRules').lean()
+      : campaign.brandId && campaign.product
+        ? await Product.findOne({ brandId: campaign.brandId, name: campaign.product }).select('postingRules').lean()
+        : null
+    if (product?.postingRules) return Object.assign(campaign.toObject ? campaign.toObject() : { ...campaign }, { postingRules: product.postingRules })
+  } catch (err) {
+    console.warn('[instagram verify] product rules lookup failed:', err.message)
+  }
+  return campaign
 }
 
 async function loadPost(postOrId) {
@@ -162,7 +184,7 @@ async function verifyPost(postOrId, { by = null } = {}) {
   }
 
   const creator = post.creatorId && post.creatorId.instagramHandle !== undefined ? post.creatorId : null
-  verification.checks = buildChecks({ campaign: post.campaignId, order: post.orderId, creator, fetched })
+  verification.checks = buildChecks({ campaign: await resolveRules(post.campaignId), order: post.orderId, creator, fetched })
   verification.snapshot = fetched ? {
     likes: fetched.likes, comments: fetched.comments, views: fetched.views, takenAt: fetched.takenAt, mediaType: fetched.mediaType,
     caption: (fetched.caption || '').slice(0, 500), thumbnail: fetched.thumbnail || '', permalink: fetched.url, owner: fetched.owner,
@@ -177,12 +199,13 @@ async function verifyPost(postOrId, { by = null } = {}) {
   // AND the creator has proven they own the handle (igVerified). Otherwise the
   // post stays pending for a human.
   if (verification.status === 'passed' && s.autoApprovePosts && post.status === 'pending' && creator?.igVerified === true) {
-    await approvePost(post, { approvedBy: by, auto: true })
-    return { post, verification, autoApproved: true, pendingReason: null }
+    // `released` can be false when the order isn't delivered / was returned / already paid — the UI must not claim cashback then.
+    const { released } = await approvePost(post, { approvedBy: by, auto: true })
+    return { post, verification, autoApproved: true, released, pendingReason: null }
   }
   await post.save()
   const pendingReason = verification.status !== 'passed' ? 'checks' : !creator?.igVerified ? 'identity' : !s.autoApprovePosts ? 'manual' : 'state'
-  return { post, verification, autoApproved: false, pendingReason }
+  return { post, verification, autoApproved: false, released: false, pendingReason }
 }
 
 /**
