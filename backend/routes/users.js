@@ -5,6 +5,7 @@ const { requireAuth, requireRole } = require('../middleware/auth')
 const { normalizeHandle, handleRegex } = require('../services/instagram/endpoints')
 const { auditUserInBackground } = require('../services/instagram/audit')
 const IgAudit = require('../models/IgAudit')
+const { notifySafe } = require('../services/notifications')
 
 // ── GET /api/users/brand/ratings — creator reviews for current brand ────────
 router.get('/brand/ratings', requireAuth, requireRole('brand'), async (req, res) => {
@@ -129,6 +130,27 @@ router.get('/', requireAuth, async (req, res) => {
 
     res.json({ users })
   } catch (err) {
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── POST /api/users/:id/invite — brand invites a creator to a campaign ──────
+router.post('/:id/invite', requireAuth, requireRole('brand', 'admin'), async (req, res) => {
+  try {
+    const creator = await User.findOne({ _id: req.params.id, role: 'creator' }).select('_id name')
+    if (!creator) return res.status(404).json({ message: 'Creator not found.' })
+    const brandName = req.user.companyName || req.user.name
+    const message = String(req.body?.message || '').trim().slice(0, 200)
+    notifySafe(creator._id, {
+      type: 'invite', icon: '📨',
+      title: `${brandName} invited you to a campaign`,
+      body: message || `${brandName} wants you to promote one of their products. Browse the catalog to get started.`,
+      link: '/creator/catalog',
+      meta: { brandId: String(req.user._id), campaignId: req.body?.campaignId || null },
+    })
+    res.json({ message: `Invite sent to ${creator.name}.` })
+  } catch (err) {
+    console.error('[users invite]', err)
     res.status(500).json({ message: 'Server error.' })
   }
 })
