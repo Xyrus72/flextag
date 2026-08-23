@@ -2,11 +2,43 @@ const express  = require('express')
 const router   = express.Router()
 const Order    = require('../models/Order')
 const Campaign = require('../models/Campaign')
+const Product  = require('../models/Product')
 const Transaction = require('../models/Transaction')
 const { requireAuth, requireRole } = require('../middleware/auth')
 
 // helper to generate order IDs
 const genOrderId = () => 'ORD-' + Math.floor(1000 + Math.random() * 9000)
+
+/**
+ * Module-2 catalog products have no Campaign of their own, yet orders, posts and
+ * cashback all hang off a Campaign. Create (or reuse) a Campaign that mirrors the
+ * product — incl. its postingRules and budget — so the product → order → post →
+ * cashback chain works for catalog products too.
+ */
+async function ensureCampaignForProduct(product) {
+  const existing = await Campaign.findOne({ productId: product._id })
+  if (existing) return existing
+  if (product.status && product.status !== 'approved') return null
+  if (!product.brandId) return null
+  const rules = product.postingRules || {}
+  return Campaign.create({
+    title:        product.name,
+    brand:        product.brand,
+    brandId:      product.brandId,
+    product:      product.name,
+    productId:    product._id,
+    category:     product.category || 'Beauty',
+    price:        product.price,
+    cashbackRate: product.cashbackRate,
+    stock:        product.stock ?? 100,
+    stockLeft:    product.stock ?? 100,
+    minFollowers: product.creatorCriteria?.minFollowers ?? 1000,
+    hashtags:     (rules.hashtags || []).join(', '),
+    handles:      (rules.taggingHandles || []).join(', '),
+    budgetCap:    product.campaignBudget || 0,
+    isPrivate:    false,
+  })
+}
 
 // ── GET /api/orders ────────────────────────────────────────────────────────
 router.get('/', requireAuth, async (req, res) => {
@@ -55,7 +87,12 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
       return res.status(400).json({ message: 'campaignId and address required.' })
     }
 
-    const campaign = await Campaign.findById(campaignId)
+    // The cart may hold a Campaign id or (module-2 catalog) a Product id — bridge the latter.
+    let campaign = await Campaign.findById(campaignId)
+    if (!campaign) {
+      const product = await Product.findById(campaignId)
+      if (product) campaign = await ensureCampaignForProduct(product)
+    }
     if (!campaign || campaign.status !== 'active') {
       return res.status(400).json({ message: 'Campaign not found or not active.' })
     }
@@ -67,11 +104,17 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
     const cashbackAmount = Math.round(campaign.price * quantity * campaign.cashbackRate / 100)
     const total = campaign.price * quantity
 
+    // Budget cap: refuse new orders once the promised cashback would exceed the brand's budget.
+    if (campaign.budgetCap > 0 && (campaign.budgetUsed || 0) + cashbackAmount > campaign.budgetCap) {
+      return res.status(400).json({ message: 'This campaign has reached its cashback budget.' })
+    }
+
     const order = await Order.create({
       orderId:    genOrderId(),
       creatorId:  req.user._id,
       brandId:    campaign.brandId,
       campaignId: campaign._id,
+      productId:  campaign.productId || undefined,   // set for module-2 catalog products (spend tracking)
       product:    campaign.product,
       brand:      campaign.brand,
       image:      campaign.image || '📦',
