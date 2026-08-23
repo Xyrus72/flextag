@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { getOrders } from '../../services/orders'
-import { submitPost } from '../../services/posts'
+import { getPosts, submitPost } from '../../services/posts'
 import { verifyInstagramPost } from '../../services/instagram'
 
 // instagram.com/p/…, /reel/…, /reels/…, /tv/… — optionally prefixed by a username segment
@@ -39,7 +39,7 @@ const fmtDate = (d) => {
 }
 
 /** Translate submission + verification state into the headline/tone of the result card. */
-const describeOutcome = ({ platform, verifying, verifyFailed, verification, autoApproved, pendingReason }) => {
+const describeOutcome = ({ platform, verifying, verifyFailed, verification, autoApproved, released, pendingReason }) => {
   if (verifying) {
     return { tone: 'info', icon: 'spinner', title: 'Verifying your post on Instagram…', body: 'This usually takes about 10 seconds — hang tight.' }
   }
@@ -52,7 +52,10 @@ const describeOutcome = ({ platform, verifying, verifyFailed, verification, auto
   switch (verification.status) {
     case 'passed':
       if (autoApproved) {
-        return { tone: 'success', icon: 'check', title: 'Verified — cashback released 🎉', body: 'Every campaign check passed. Keep the post live for the full retention period.' }
+        // Approval and payment are separate facts: the order may be undelivered / returned / already paid.
+        return released
+          ? { tone: 'success', icon: 'check', title: 'Verified — cashback released 🎉', body: 'Every campaign check passed. Keep the post live for the full retention period.' }
+          : { tone: 'warning', icon: 'check', title: 'Approved — cashback on hold', body: 'Every check passed and the post is approved, but the cashback is held because the order is not delivered, is being returned, or was already paid out.' }
       }
       return pendingReason === 'identity'
         ? { tone: 'warning', icon: 'check', title: 'Verified — awaiting final approval', body: 'Every campaign check passed; an admin will release this cashback. Verify ownership of your Instagram account on the Account Audit page to get instant cashback next time.' }
@@ -133,8 +136,8 @@ const Row = ({ label, last, children }) => (
   </div>
 )
 
-const ResultCard = ({ platform, postUrl, post, verification, autoApproved, pendingReason, verifying, verifyFailed, onReset }) => {
-  const outcome    = describeOutcome({ platform, verifying, verifyFailed, verification, autoApproved, pendingReason })
+const ResultCard = ({ platform, postUrl, post, verification, autoApproved, released, pendingReason, verifying, verifyFailed, onReset }) => {
+  const outcome    = describeOutcome({ platform, verifying, verifyFailed, verification, autoApproved, released, pendingReason })
   const tone       = TONES[outcome.tone]
   const status     = statusOf(post)
   const checks     = verification?.checks || []
@@ -183,6 +186,7 @@ const PostSubmission = () => {
   const [dropdownOpen, setDropdownOpen]     = useState(false)
   const [platform, setPlatform]             = useState('instagram')
   const dropdownRef = useRef(null)
+  const submissionRef = useRef(0)   // bumps per submission/reset so a late verify result can't land on the next one
   const [orders, setOrders]                 = useState([])
   const [loadingOrders, setLoadingOrders]   = useState(true)
   const [submitting, setSubmitting]         = useState(false)
@@ -199,14 +203,19 @@ const PostSubmission = () => {
   const [aiLoading, setAiLoading]   = useState(false)
 
   useEffect(() => {
-    // Only delivered orders can earn cashback (the backend enforces this too)
-    getOrders({ status: 'delivered' })
-      .then(d => {
-        const list = d.orders || []
+    // Only delivered, unpaid orders without a live submission can be picked (the backend enforces all of it too)
+    Promise.all([
+      getOrders({ status: 'delivered' }),
+      getPosts().catch(() => ({ posts: [] })),
+    ])
+      .then(([o, p]) => {
+        const taken = new Set((p.posts || []).filter(x => x.status !== 'rejected').map(x => String(x.orderId?._id || x.orderId)))
+        const list = (o.orders || []).filter(x => !x.cashbackReleased && x.campaignId && !taken.has(String(x._id)))
         setOrders(list)
-        // Arrived from "My Orders" with an order preselected → show its label in the picker
-        const pre = preOrderId && list.find(o => o._id === preOrderId)
+        // Arrived from "My Orders" with an order preselected → show its label, or drop a stale/unusable preselection
+        const pre = preOrderId && list.find(x => x._id === preOrderId)
         if (pre) setOrderQuery(orderLabel(pre))
+        else if (preOrderId) setSelectedOrderId('')
       })
       .catch(console.error)
       .finally(() => setLoadingOrders(false))
@@ -233,6 +242,9 @@ const PostSubmission = () => {
     setDropdownOpen(false)
   }
 
+  // Gate on a RESOLVED order (not just an id): a preselected id is useless until the list has loaded
+  const canSubmit = !!selectedOrder && !!postUrl.trim() && !submitting && !loadingOrders
+
   const generateCaption = async () => {
     setAiLoading(true)
     await new Promise(r => setTimeout(r, 1200))
@@ -248,7 +260,7 @@ const PostSubmission = () => {
   }
 
   const handleSubmit = async () => {
-    if (!postUrl || !selectedOrderId) return
+    if (!canSubmit) return
     const url = postUrl.trim()
     if (platform === 'instagram' && !IG_POST_RE.test(url)) { setError(IG_URL_HINT); return }
 
@@ -257,8 +269,8 @@ const PostSubmission = () => {
     let created
     try {
       const data = await submitPost({
-        orderId:    selectedOrderId,
-        campaignId: selectedOrder?.campaignId?._id || selectedOrder?.campaignId,
+        orderId:    selectedOrder._id,
+        campaignId: selectedOrder.campaignId?._id || selectedOrder.campaignId,
         postUrl:    url,
         platform,
       })
@@ -270,30 +282,34 @@ const PostSubmission = () => {
     }
     setSubmitting(false)
     // This order now has a live submission — drop it from the picker so "Submit Another" can't re-pick it (409).
-    setOrders(os => os.filter(o => o._id !== selectedOrderId))
-    setResult({ post: created, verification: null, autoApproved: false, pendingReason: null, verifyFailed: false })
+    setOrders(os => os.filter(o => o._id !== selectedOrder._id))
+    setResult({ post: created, verification: null, autoApproved: false, released: false, pendingReason: null, verifyFailed: false })
     setSubmitted(true)
 
     // Instagram only: verify right away. A verifier outage must never read as a failed submission.
     if (platform !== 'instagram' || !created?._id) return
+    const token = ++submissionRef.current
     setVerifying(true)
     try {
       const v = await verifyInstagramPost(created._id)
+      if (token !== submissionRef.current) return   // user already moved on to another submission
       setResult({
         post: v?.post || created,
         verification: v?.verification || null,
         autoApproved: !!v?.autoApproved,
+        released: !!v?.released,
         pendingReason: v?.pendingReason || null,
         verifyFailed: false,
       })
     } catch {
-      setResult(r => ({ ...r, verifyFailed: true }))
+      if (token === submissionRef.current) setResult(r => ({ ...r, verifyFailed: true }))
     } finally {
-      setVerifying(false)
+      if (token === submissionRef.current) setVerifying(false)
     }
   }
 
   const reset = () => {
+    submissionRef.current++   // orphan any in-flight verification of the previous submission
     setSubmitted(false)
     setResult(null)
     setVerifying(false)
@@ -312,6 +328,7 @@ const PostSubmission = () => {
         post={result?.post}
         verification={result?.verification}
         autoApproved={!!result?.autoApproved}
+        released={!!result?.released}
         pendingReason={result?.pendingReason || null}
         verifying={verifying}
         verifyFailed={!!result?.verifyFailed}
@@ -404,7 +421,7 @@ const PostSubmission = () => {
               </p>
             </div>
 
-            <button onClick={handleSubmit} disabled={!postUrl || !selectedOrderId || submitting}
+            <button onClick={handleSubmit} disabled={!canSubmit}
               className="btn-primary" style={{ width:'100%', padding:14 }}>
               {submitting ? 'Submitting…' : 'Submit for Verification'}
             </button>

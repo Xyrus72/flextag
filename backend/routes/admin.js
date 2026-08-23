@@ -126,7 +126,8 @@ router.get('/financial', requireAuth, requireRole('admin'), async (req, res) => 
   try {
     // Per-campaign escrow liability
     const campaignEscrow = await Order.aggregate([
-      { $match: { cashbackReleased: false, status: { $ne: 'cancelled' } } },
+      // Liability = orders that can still be paid: exclude cancelled AND the fulfillment module's return states
+      { $match: { cashbackReleased: false, status: { $nin: ['cancelled', 'return_requested', 'returned'] } } },
       {
         $group: {
           _id: '$campaignId',

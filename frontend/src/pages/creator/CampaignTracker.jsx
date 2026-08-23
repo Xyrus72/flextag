@@ -24,7 +24,7 @@ const CampaignTracker = () => {
 
         // Build tracker items from active orders
         const items = orders
-          .filter(o => !['cancelled'].includes(o.status))
+          .filter(o => !['cancelled', 'return_requested', 'returned'].includes(o.status))
           .map(o => {
             const post = posts.find(p => p.orderId?._id === o._id || p.orderId === o._id)
             const campaign = o.campaignId

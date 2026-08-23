@@ -37,7 +37,8 @@ export const listInstagramAudits = (params = {}) => api.get('/api/instagram/audi
  * → { post, verification, autoApproved, pendingReason: null|'checks'|'identity'|'manual'|'state' }
  * ('identity' = content passed but the creator hasn't proven ownership of the handle yet)
  */
-export const verifyInstagramPost = (postId) => api.post('/api/instagram/verify-post', { postId }, { timeout: 30000 }).then(r => r.data)
+// 90 s: provider call (30 s) + session fallback (20 s + retry) + throttle wait can legitimately approach 75 s
+export const verifyInstagramPost = (postId) => api.post('/api/instagram/verify-post', { postId }, { timeout: 90000 }).then(r => r.data)
 
 /** Creator: get (or reuse) the bio code that proves ownership → { verified, handle, code, instructions, expiresInDays } */
 export const startIdentityVerification = () => api.post('/api/instagram/verify-identity/start').then(r => r.data)

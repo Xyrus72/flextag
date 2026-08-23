@@ -60,6 +60,10 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
       if (NO_CASHBACK_STATUSES.includes(order.status)) {
         return res.status(400).json({ message: `This order is ${order.status.replace('_', ' ')}, so no cashback can be claimed for it.` })
       }
+      // Cashback exists to reward a post about a product the creator actually received.
+      if (order.status !== 'delivered') {
+        return res.status(400).json({ message: 'Cashback can only be claimed once the order is delivered.' })
+      }
       // One live submission per order; a rejected post may be fixed and resubmitted.
       const existing = await Post.findOne({ orderId, creatorId: req.user._id, status: { $ne: 'rejected' } })
       if (existing) return res.status(409).json({ message: 'Post already submitted for this order.' })
