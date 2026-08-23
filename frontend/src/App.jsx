@@ -29,6 +29,8 @@ const Wallet            = lazy(() => import('./pages/creator/Wallet'))
 const Leaderboard       = lazy(() => import('./pages/creator/Leaderboard'))
 const Portfolio         = lazy(() => import('./pages/creator/Portfolio'))
 const InstagramAnalyzer = lazy(() => import('./pages/creator/InstagramAnalyzer'))
+const CheckoutSuccess   = lazy(() => import('./pages/creator/CheckoutSuccess'))
+const CheckoutFail      = lazy(() => import('./pages/creator/CheckoutFail'))
 
 const BrandDashboard    = lazy(() => import('./pages/brand/BrandDashboard'))
 const BrandProfile      = lazy(() => import('./pages/brand/BrandProfile'))
@@ -96,6 +98,8 @@ const AppRoutes = () => (
         <Route path="/creator/portfolio" element={<Portfolio />} />
         <Route path="/creator/profile" element={<Profile />} />
         <Route path="/creator/instagram-analyzer" element={<InstagramAnalyzer />} />
+        <Route path="/creator/checkout/success" element={<CheckoutSuccess />} />
+        <Route path="/creator/checkout/fail" element={<CheckoutFail />} />
         <Route path="/support/faq" element={<FAQ />} />
         <Route path="/support/tickets" element={<Tickets />} />
         <Route path="/support/chat" element={<Chat />} />
