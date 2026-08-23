@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom'
-import Sidebar from '../components/Sidebar'
+import AppShell from '../components/AppShell'
 import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, ShoppingBag, ShoppingCart, Package,
@@ -58,14 +58,7 @@ const creatorLinks = [
 ]
 
 const CreatorLayout = () => (
-  <div style={{ minHeight: '100vh', background: '#050816', position: 'relative' }}>
-    <div className="aurora-bg" />
-    <div className="noise-overlay" />
-    <Sidebar links={creatorLinks} />
-    <main style={{ marginLeft: 256, minHeight: '100vh', position: 'relative', zIndex: 10 }}>
-      <Outlet />
-    </main>
-  </div>
+  <AppShell links={creatorLinks}><Outlet /></AppShell>
 )
 
 export default CreatorLayout

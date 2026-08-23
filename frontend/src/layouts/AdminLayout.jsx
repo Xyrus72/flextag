@@ -1,6 +1,5 @@
-import React from 'react'
 import { Outlet } from 'react-router-dom'
-import Sidebar from '../components/Sidebar'
+import AppShell from '../components/AppShell'
 import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, BadgeCheck, FileSearch, Layers,
@@ -36,14 +35,7 @@ const adminLinks = [
 ]
 
 const AdminLayout = () => (
-  <div style={{ minHeight: '100vh', background: '#050816', position: 'relative' }}>
-    <div className="aurora-bg" />
-    <div className="noise-overlay" />
-    <Sidebar links={adminLinks} />
-    <main style={{ marginLeft: 256, minHeight: '100vh', position: 'relative', zIndex: 10 }}>
-      <Outlet />
-    </main>
-  </div>
+  <AppShell links={adminLinks}><Outlet /></AppShell>
 )
 
 export default AdminLayout

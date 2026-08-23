@@ -1,0 +1,16 @@
+{
+  "name": "FlexTag — Shop. Share. Earn Cashback.",
+  "short_name": "FlexTag",
+  "description": "Buy products you love, post about them, and earn 30–70% cashback. The creator-commerce platform for nano & micro-influencers.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#050816",
+  "theme_color": "#050816",
+  "categories": ["shopping", "social", "business"],
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "/products/flextag-logo.png", "sizes": "640x385", "type": "image/png", "purpose": "any" }
+  ]
+}

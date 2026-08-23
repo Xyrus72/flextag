@@ -1,6 +1,5 @@
-import React from 'react'
 import { Outlet } from 'react-router-dom'
-import Sidebar from '../components/Sidebar'
+import AppShell from '../components/AppShell'
 import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, Megaphone, Package, BarChart3,
@@ -34,14 +33,7 @@ const brandLinks = [
 ]
 
 const BrandLayout = () => (
-  <div style={{ minHeight: '100vh', background: '#050816', position: 'relative' }}>
-    <div className="aurora-bg" />
-    <div className="noise-overlay" />
-    <Sidebar links={brandLinks} />
-    <main style={{ marginLeft: 256, minHeight: '100vh', position: 'relative', zIndex: 10 }}>
-      <Outlet />
-    </main>
-  </div>
+  <AppShell links={brandLinks}><Outlet /></AppShell>
 )
 
 export default BrandLayout
