@@ -38,6 +38,11 @@ const userSchema = new mongoose.Schema({
   totalCampaigns:  { type: Number, default: 0 },
   totalCreators:   { type: Number, default: 0 },
 
+  // Referrals
+  referralCode:     { type: String, default: '', index: true },
+  referredBy:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  referralRewarded: { type: Boolean, default: false },
+
   // Shared
   isVerified:  { type: Boolean, default: false },
   igVerified:  { type: Boolean, default: false },   // admin-verified Instagram identity

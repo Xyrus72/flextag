@@ -281,6 +281,7 @@ const Register = () => {
           tiktokHandle: form.tiktokHandle,
           companyName: form.companyName, website: form.website,
           productCategory: form.productCategory,
+          referralCode: params.get('ref') || undefined,
         })
         setStep(4)
       } catch (e) {

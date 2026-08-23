@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getMyStats } from '../../services/users'
 import { getOrders } from '../../services/orders'
+import ReferralCard from '../../components/ReferralCard'
 
 const CreatorDashboard = () => {
   const { user } = useAuth()
@@ -60,6 +61,8 @@ const CreatorDashboard = () => {
         <h1 className="page-title">Welcome back, {user?.name?.split(' ')[0]} 👋</h1>
         <p className="page-subtitle">Here's your earning overview</p>
       </div>
+
+      <ReferralCard />
 
       {/* KPIs */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:16, marginBottom:32 }}>

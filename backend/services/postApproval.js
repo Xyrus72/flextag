@@ -16,6 +16,7 @@ const User = require('../models/User')
 const Campaign = require('../models/Campaign')
 const Product = require('../models/Product')
 const { notifySafe } = require('./notifications')
+const { onCampaignCompleted } = require('./referrals')
 
 const DAY = 86_400_000
 
@@ -67,6 +68,7 @@ async function approvePost(post, { approvedBy = null, auto = false } = {}) {
         postId:  post._id,
       })
       await User.findByIdAndUpdate(creatorId, { $inc: { totalEarnings: amount, completedCampaigns: 1 } })
+      onCampaignCompleted(creatorId)   // tier bump + first-campaign referral bonus (fire-and-forget)
       await Post.updateOne({ _id: post._id }, { $set: { cashbackReleased: true } })
       releasedAmount = amount
       // Spend tracking for budget caps (Campaign.budgetUsed, module-2 Product.totalCashbackSpent)
