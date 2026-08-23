@@ -11,3 +11,6 @@ export const approvePost = (id) =>
 
 export const rejectPost = (id, reason) =>
   api.put(`/api/posts/${id}/reject`, { reason }).then(r => r.data)
+
+export const getShowcase = () =>
+  api.get('/api/posts/showcase').then(r => r.data)
