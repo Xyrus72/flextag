@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { getOrders } from '../../services/orders'
 import { getPosts, submitPost } from '../../services/posts'
+import { generateCaptions } from '../../services/ai'
 import { verifyInstagramPost } from '../../services/instagram'
 
 // instagram.com/p/…, /reel/…, /reels/…, /tv/… — optionally prefixed by a username segment
@@ -245,18 +246,29 @@ const PostSubmission = () => {
   // Gate on a RESOLVED order (not just an id): a preselected id is useless until the list has loaded
   const canSubmit = !!selectedOrder && !!postUrl.trim() && !submitting && !loadingOrders
 
+  // Real AI caption via /api/ai/caption — the order lets the backend inject the
+  // campaign's required hashtags/mention verbatim. Falls back server-side to a
+  // template when no Anthropic key is set, so this always returns something.
   const generateCaption = async () => {
+    if (!aiPrompt) return
     setAiLoading(true)
-    await new Promise(r => setTimeout(r, 1200))
-    const product = selectedOrder?.product || 'this product'
-    const brand   = selectedOrder?.brand   || 'our partner brand'
-    const captions = {
-      bangla:   `✨ ${product} দিয়ে আজকের লুক! ${brand} থেকে পারফেক্ট প্রোডাক্ট পেলাম 🔥\n\n#FlextagCreator #${brand.replace(/\s+/g, '')}`,
-      english:  `✨ Obsessed with ${product} from @${brand.replace(/\s+/g, '').toLowerCase()}! Absolutely loving it. My new favorite! 🔥\n\n#FlextagCreator #${brand.replace(/\s+/g, '')}`,
-      banglish: `✨ Guys! ${product} ta literally AMAZING 🤩 ${brand} er ei product try korte hobe! Full recommend!\n\n#FlextagCreator`,
+    try {
+      const data = await generateCaptions({
+        orderId: selectedOrder?._id,
+        campaignId: selectedOrder?.campaignId?._id || selectedOrder?.campaignId,
+        product: selectedOrder?.product,
+        brand: selectedOrder?.brand,
+        language: aiPrompt,
+        count: 1,
+      })
+      setAiResponse(data?.captions?.[0]?.text || '')
+    } catch {
+      const product = selectedOrder?.product || 'this product'
+      const brand   = selectedOrder?.brand   || 'our partner brand'
+      setAiResponse(`✨ Loving ${product} from ${brand}! Honestly worth it. 🔥\n\n#FlextagCreator`)
+    } finally {
+      setAiLoading(false)
     }
-    setAiResponse(captions[aiPrompt] || captions.english)
-    setAiLoading(false)
   }
 
   const handleSubmit = async () => {
