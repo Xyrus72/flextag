@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { placeOrder } from '../../services/orders'
+import { initCheckout } from '../../services/checkout'
 import { getAddresses } from '../../services/users'
 import { useAuth } from '../../context/AuthContext'
 
@@ -58,13 +59,24 @@ const Cart = () => {
     if (!address.trim()) { setError('Please enter your shipping address.'); return }
     setPlacing(true); setError('')
     try {
+      if (paymentMethod === 'ssl') {
+        // Online payment → SSLCommerz gateway (cart cleared on the success page)
+        const { url } = await initCheckout({
+          items: items.map(i => ({ campaignId: i.campaignId || i._id, qty: i.qty })),
+          address: address.trim(),
+        })
+        if (!url) throw new Error('Payment gateway did not return a URL.')
+        window.location.href = url
+        return
+      }
+      // Cash / mobile-banking on delivery → create orders directly
       for (const item of items) {
         await placeOrder({ campaignId: item.campaignId || item._id, qty: item.qty, address: address.trim(), paymentMethod })
       }
       localStorage.removeItem(CART_KEY)
       navigate('/creator/orders')
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to place order. Please try again.')
+      setError(err.response?.data?.message || err.message || 'Failed to place order. Please try again.')
     } finally { setPlacing(false) }
   }
 

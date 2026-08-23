@@ -20,6 +20,11 @@ const orderSchema = new mongoose.Schema({
   returnRequestedAt: { type: Date },
   address:    { type: String, default: '' },
   paymentMethod: { type: String, default: 'bkash' },
+  // SSLCommerz online-payment fields (COD orders leave paymentStatus 'pending')
+  paymentStatus: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
+  transactionId: { type: String, default: '', index: true },
+  valId:         { type: String, default: '' },
+  paymentDetails:{ type: Object, default: {} },
   cashbackReleased: { type: Boolean, default: false },
 }, { timestamps: true })
 

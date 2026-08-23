@@ -151,6 +151,7 @@ app.use('/api/instagram',    require('./routes/instagram'))
 app.use('/api/ai',           require('./routes/ai'))
 app.use('/api/stats',        require('./routes/stats'))
 app.use('/api/notifications', require('./routes/notifications'))
+app.use('/api/checkout',     require('./routes/checkout'))
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))

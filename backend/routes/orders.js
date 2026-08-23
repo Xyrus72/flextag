@@ -176,3 +176,4 @@ router.put('/:id/status', requireAuth, requireRole('brand', 'admin'), async (req
 })
 
 module.exports = router
+module.exports.ensureCampaignForProduct = ensureCampaignForProduct
