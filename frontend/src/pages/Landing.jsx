@@ -4,6 +4,7 @@ import {
   motion, useScroll, useTransform, useMotionValue,
   useSpring, AnimatePresence, useInView, animate
 } from 'framer-motion'
+import { API_URL } from '../config'
 
 // WebGL hero scene — lazy so three.js never blocks first paint
 const Hero3D = lazy(() => import('../components/Hero3D'))
@@ -350,11 +351,21 @@ const AnimCounter = ({ values, interval = 1200, prefix = '', suffix = '' }) => {
 }
 
 /* ─── SECTION WRAPPER WITH SCROLL-BASED OPACITY ────────────────────────────── */
-/* ── Trusted-brands marquee ─────────────────────────────────────────────── */
+/* ── Category marquee (honest: the niches creators earn in, not brand claims) ─ */
 const MARQUEE_BRANDS = [
-  'AARONG', 'APEX', 'YELLOW', 'SAMSUNG BD', 'WALTON', 'DARAZ',
-  'CHALDAL', 'BATA', 'SAILOR', 'KAY KRAFT', 'RFL', 'PRAN',
+  'BEAUTY', 'SKINCARE', 'FASHION', 'LIFESTYLE', 'FOOD', 'TECH',
+  'FITNESS', 'HAIR CARE', 'HOME', 'ACCESSORIES', 'WELLNESS', 'GADGETS',
 ]
+
+/** Compact number formatting for headline stats (1200 → 1.2k, 3_400_000 → 3.4M). */
+const compactNum = (n) => {
+  n = Number(n) || 0
+  if (n >= 1e7) return (n / 1e6).toFixed(0) + 'M'
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'
+  if (n >= 1e4) return (n / 1e3).toFixed(0) + 'k'
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'k'
+  return n.toLocaleString()
+}
 
 const BrandMarquee = () => (
   <section className="brand-marquee" style={{
@@ -367,7 +378,7 @@ const BrandMarquee = () => (
       letterSpacing: '0.3em', textTransform: 'uppercase',
       color: 'rgba(255,255,255,0.25)', marginBottom: 24,
     }}>
-      Trusted by teams at
+      Creators earn across every category
     </p>
     <div style={{
       maskImage: 'linear-gradient(90deg, transparent, black 15%, black 85%, transparent)',
@@ -514,6 +525,14 @@ export default function Landing() {
     const onMove = e => { mouseX.set(e.clientX); mouseY.set(e.clientY) }
     window.addEventListener('mousemove', onMove)
     return () => window.removeEventListener('mousemove', onMove)
+  }, [])
+
+  // Live headline numbers — real DB counts, no invented figures
+  const [stats, setStats] = useState(null)
+  useEffect(() => {
+    let ok = true
+    fetch(`${API_URL}/api/stats/public`).then(r => r.json()).then(d => { if (ok && d && !d.message) setStats(d) }).catch(() => {})
+    return () => { ok = false }
   }, [])
 
   /* ── Individual section refs for scroll-driven animations ── */
@@ -694,8 +713,10 @@ export default function Landing() {
               ))}
             </div>
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
-              <span style={{ color: '#fff', fontWeight: 700 }}>12,400+</span> creators ·{' '}
-              <span style={{ color: '#fff', fontWeight: 700 }}>৳34M+</span> cashback paid
+              <span style={{ color: '#fff', fontWeight: 700 }}>{stats ? compactNum(stats.creators) : '—'}</span> creators ·{' '}
+              {stats && stats.cashbackPaid > 0
+                ? <><span style={{ color: '#fff', fontWeight: 700 }}>৳{compactNum(stats.cashbackPaid)}</span> cashback paid</>
+                : <><span style={{ color: '#fff', fontWeight: 700 }}>{stats ? compactNum(stats.brands) : '—'}</span> brand partners</>}
             </p>
           </motion.div>
         </motion.div>
@@ -829,12 +850,19 @@ export default function Landing() {
       <section style={{ position: 'relative', zIndex: 10, borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '40px 24px' }}>
         <ScrollSection>
           <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 32 }}>
-            {[
-              { value: '12,400+', label: 'Active Creators' },
-              { value: '৳34M+',  label: 'Cashback Paid' },
-              { value: '48+',    label: 'Brand Partners' },
-              { value: '4.8×',   label: 'Avg Brand ROI' },
-            ].map((s, i) => (
+            {(stats ? [
+              { value: compactNum(stats.creators), label: 'Active Creators' },
+              { value: compactNum(stats.brands), label: 'Brand Partners' },
+              { value: compactNum(stats.approvedPosts), label: 'Verified Posts' },
+              stats.cashbackPaid > 0
+                ? { value: `৳${compactNum(stats.cashbackPaid)}`, label: 'Cashback Paid' }
+                : { value: compactNum(stats.activeCampaigns), label: 'Live Campaigns' },
+            ] : [
+              { value: '—', label: 'Active Creators' },
+              { value: '—', label: 'Brand Partners' },
+              { value: '—', label: 'Verified Posts' },
+              { value: '—', label: 'Live Campaigns' },
+            ]).map((s, i) => (
               <motion.div
                 key={s.label}
                 initial={{ opacity: 0, y: 20 }}
