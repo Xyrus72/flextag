@@ -11,20 +11,25 @@
  */
 const hiker = require('./providers/hiker')
 const session = require('./providers/session')
+const graph = require('./providers/graph')
 const { IgError } = require('./client')
 
 const FALLBACK_CODES = new Set(['NO_SESSION', 'SESSION_INVALID', 'RATE_LIMITED', 'UNAVAILABLE', 'BAD_RESPONSE'])
+// Fallback preference order when the primary can't serve a call.
+const ALL = [hiker, session, graph]
 
 function getProvider() {
   const pref = String(process.env.IG_PROVIDER || 'auto').trim().toLowerCase()
   if (pref === 'hiker') return hiker
   if (pref === 'session') return session
-  return hiker.configured() ? hiker : session
+  if (pref === 'graph') return graph
+  // auto: HikerAPI if keyed, else a cookie session, else the Graph API.
+  return hiker.configured() ? hiker : session.configured() ? session : graph.configured() ? graph : session
 }
 
+/** First OTHER configured provider (in ALL order) to retry a failed call on. */
 function getFallbackProvider(primary) {
-  const other = primary === hiker ? session : hiker
-  return other.configured() ? other : null
+  return ALL.find((p) => p !== primary && p.configured()) || null
 }
 
 /**
@@ -47,6 +52,6 @@ async function withFallback(fn) {
 }
 
 /** True when at least one provider can serve live data. */
-const anyConfigured = () => hiker.configured() || session.configured()
+const anyConfigured = () => hiker.configured() || session.configured() || graph.configured()
 
-module.exports = { getProvider, getFallbackProvider, withFallback, anyConfigured, providers: { hiker, session } }
+module.exports = { getProvider, getFallbackProvider, withFallback, anyConfigured, providers: { hiker, session, graph } }
