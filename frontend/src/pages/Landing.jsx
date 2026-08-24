@@ -559,7 +559,6 @@ export default function Landing() {
   const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const heroScale  = useTransform(heroScroll, [0, 1], [1, 1.3])
   const heroOpacity= useTransform(heroScroll, [0, 0.7], [1, 0])
-  const phoneY     = useTransform(heroScroll, [0, 1], [0, -80])
   const camZ       = useTransform(heroScroll, [0, 1], ['perspective(1200px) scale(1)', 'perspective(1200px) scale(1.4)'])
 
   // Parallax for hero content
@@ -779,57 +778,6 @@ export default function Landing() {
           <StatChip icon="chat"   label="847 Comments"    color="#06b6d4" style={{ bottom: 120, left: '13%' }} delay={1.15} />
           <StatChip icon="users"  label="+1.2K Followers" color="#a78bfa" style={{ top: 90,  left: '15%' }} delay={1.3} />
           <StatChip icon="wallet" label="৳450 Cashback"   color="#22c55e" style={{ bottom: 60, right: '14%' }} delay={1.45} />
-
-          {/* Phone */}
-          <motion.div style={{ y: phoneY, position: 'relative', zIndex: 5 }}>
-            <PhoneMockup>
-              <div style={{ padding: 16, paddingTop: 30, height: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, background: 'linear-gradient(90deg, #7c3aed, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>FlexTag</span>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-                </div>
-                <div style={{
-                  background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(6,182,212,0.2))',
-                  border: '1px solid rgba(124,58,237,0.3)',
-                  borderRadius: 14, padding: '12px 14px',
-                }}>
-                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Wallet Balance</p>
-                  <p style={{ fontSize: 22, fontWeight: 900, color: '#fff' }}>৳18,400</p>
-                  <p style={{ fontSize: 8, color: '#a78bfa', marginTop: 2 }}>↑ +৳2,340 this week</p>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {[{ l: 'Posts', v: '24' }, { l: 'Orders', v: '31' }].map(st => (
-                    <div key={st.l} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
-                      <p style={{ fontSize: 16, fontWeight: 900, color: '#fff' }}>{st.v}</p>
-                      <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)' }}>{st.l}</p>
-                    </div>
-                  ))}
-                </div>
-                {[
-                  { img: '/products/nike-shoe.png', name: 'Nike Air Max', cash: '৳560', badge: 'LIVE' },
-                  { img: '/products/serum.png',     name: 'Glow Serum',   cash: '৳380', badge: '✓ DONE' },
-                ].map((pr, i) => (
-                  <div key={i} style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
-                    borderRadius: 12, padding: '8px 10px',
-                  }}>
-                    <img src={pr.img} alt={pr.name} style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 6, background: 'rgba(255,255,255,0.04)', flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 10, color: '#fff', fontWeight: 600 }}>{pr.name}</p>
-                      <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)' }}>Cashback: {pr.cash}</p>
-                    </div>
-                    <div style={{
-                      fontSize: 7, padding: '2px 6px', borderRadius: 6,
-                      background: pr.badge === 'LIVE' ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)',
-                      color: pr.badge === 'LIVE' ? '#ef4444' : '#22c55e',
-                      fontWeight: 700, border: `1px solid ${pr.badge === 'LIVE' ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`,
-                    }}>{pr.badge}</div>
-                  </div>
-                ))}
-              </div>
-            </PhoneMockup>
-          </motion.div>
 
           {/* Fade the rig's bottom edge into the next section */}
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 160, background: 'linear-gradient(180deg, transparent, #050816 85%)', zIndex: 9, pointerEvents: 'none' }} />
