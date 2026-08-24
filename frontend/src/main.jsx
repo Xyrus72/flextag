@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 
+// Apply the saved theme before first paint (dark is the default).
+document.documentElement.dataset.theme = localStorage.getItem('flextag-theme') === 'light' ? 'light' : 'dark'
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />

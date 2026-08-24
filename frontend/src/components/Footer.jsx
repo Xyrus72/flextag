@@ -39,7 +39,7 @@ const SOCIALS = [
 ]
 
 const Footer = () => (
-  <footer id="contact" className="relative z-20 border-t border-white/5 bg-[#030614] pt-16 pb-8 px-6 overflow-hidden">
+  <footer id="contact" className="relative z-20 border-t border-white/5 pt-16 pb-8 px-6 overflow-hidden" style={{ background: 'var(--footer-bg)' }}>
     {/* Top gradient line */}
     <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
     {/* Ambient glow */}
