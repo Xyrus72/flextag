@@ -22,6 +22,7 @@ const IG_SETTING_DEFAULTS = [
   { key: 'igAuditTtlDays',     value: envNum('IG_AUDIT_TTL_DAYS', 7),   label: 'IG Audit Freshness (days)',    desc: 'Re-use a cached audit for this many days before re-fetching' },
   { key: 'igFollowerSample',   value: envNum('IG_FOLLOWER_SAMPLE', 200), label: 'IG Follower Sample Size',     desc: 'How many followers to sample for the fake-follower estimate (max 500)' },
   { key: 'igPostsToFetch',     value: envNum('IG_POSTS_TO_FETCH', 30),  label: 'IG Posts to Analyze',          desc: 'How many recent posts to pull per audit (max 60)' },
+  { key: 'igUnverifiedRewardCap', value: envNum('IG_UNVERIFIED_REWARD_CAP', 500), label: 'Unverified Reward Cap (৳/order)', desc: 'Max reward per order for creators who have not bio-verified their Instagram (0 = no cap; higher tiers multiply it)' },
 ]
 
 let cache = { at: 0, map: null }
@@ -50,6 +51,7 @@ async function getIgSettings(opts) {
     followerSample: Math.min(500, Math.max(0, n('igFollowerSample', 200))),
     postsToFetch: Math.min(60, Math.max(6, n('igPostsToFetch', 30))),
     retentionDays: Math.max(0, n('retentionDays', 7)),
+    unverifiedRewardCap: Math.max(0, n('igUnverifiedRewardCap', 500)),
   }
 }
 

@@ -9,6 +9,9 @@ const campaignSchema = new mongoose.Schema({
   category:     { type: String, default: 'Beauty' },
   price:        { type: Number, required: true },
   cashbackRate: { type: Number, required: true },
+  // % of the reward applied as an INSTANT discount at checkout (rest = bonus on verified post).
+  // 0 = legacy pay-full-price-cashback-later.
+  instantSplitPct: { type: Number, default: 0, min: 0, max: 100 },
   stock:        { type: Number, default: 100 },
   stockLeft:    { type: Number, default: 100 },
   minFollowers: { type: Number, default: 1000 },

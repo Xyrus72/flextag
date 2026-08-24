@@ -9,11 +9,12 @@ function computeTier(completedCampaigns) {
 }
 
 const TIER_ORDER = ['bronze', 'silver', 'gold', 'platinum']
+// capX multiplies the unverified-creator per-order reward cap (utils/reward.js)
 const TIERS = {
-  bronze:   { min: 0,  perk: 'Standard cashback' },
-  silver:   { min: 3,  perk: 'Priority in brand discovery' },
-  gold:     { min: 10, perk: 'Priority + featured portfolio' },
-  platinum: { min: 25, perk: 'Top priority + early campaign access' },
+  bronze:   { min: 0,  capX: 1,        perk: 'Standard cashback' },
+  silver:   { min: 3,  capX: 2,        perk: 'Priority in brand discovery' },
+  gold:     { min: 10, capX: 4,        perk: 'Priority + featured portfolio' },
+  platinum: { min: 25, capX: Infinity, perk: 'Top priority + early campaign access' },
 }
 
 module.exports = { computeTier, TIER_ORDER, TIERS }

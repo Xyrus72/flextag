@@ -30,7 +30,7 @@ const PostProduct = () => {
   const [error, setError] = useState('')
   const [imgError, setImgError] = useState(false)
   const [form, setForm] = useState({
-    name: '', category: 'Beauty', price: '', cashbackRate: 50,
+    name: '', category: 'Beauty', price: '', cashbackRate: 50, instantSplitPct: 50,
     stock: '', description: '', image: '',
     campaignBudget: '50000', minFollowers: '1000',
     hashtags: '#FlexTag, #BrandPartner', taggingHandles: '@flextag.official',
@@ -61,6 +61,7 @@ const PostProduct = () => {
         category: form.category,
         price: Number(form.price),
         cashbackRate: Number(form.cashbackRate),
+        instantSplitPct: Number(form.instantSplitPct),
         stock: Number(form.stock) || 0,
         campaignBudget: Number(form.campaignBudget) || 50000,
         description: form.description,
@@ -85,7 +86,7 @@ const PostProduct = () => {
   const resetForm = () => {
     setDone(false)
     setForm({
-      name: '', category: 'Beauty', price: '', cashbackRate: 50,
+      name: '', category: 'Beauty', price: '', cashbackRate: 50, instantSplitPct: 50,
       stock: '', description: '', image: '', campaignBudget: '50000',
       minFollowers: '1000', hashtags: '#FlexTag, #BrandPartner', taggingHandles: '@flextag.official',
     })
@@ -184,6 +185,18 @@ const PostProduct = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 4 }}>
                   <span>10%</span><span>80%</span>
                 </div>
+              </Field>
+
+              <Field label={<>Instant Discount Split <span style={{ color: '#67e8f9', fontWeight: 900 }}>{form.instantSplitPct}%</span></>}>
+                <input type="range" min="0" max="100" step="10" value={form.instantSplitPct}
+                  onChange={e => setForm(f => ({ ...f, instantSplitPct: Number(e.target.value) }))}
+                  style={{ width: '100%', accentColor: '#06b6d4', cursor: 'pointer' }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 4 }}>
+                  <span>All after post</span><span>All instant</span>
+                </div>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 6 }}>
+                  Part of the reward comes off the bill at checkout; the rest releases after the post verifies. Instant discounts convert better — creators risk less upfront.
+                </p>
               </Field>
 
               {form.price && (

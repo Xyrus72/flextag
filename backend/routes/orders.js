@@ -4,8 +4,13 @@ const Order    = require('../models/Order')
 const Campaign = require('../models/Campaign')
 const Product  = require('../models/Product')
 const Transaction = require('../models/Transaction')
+const User     = require('../models/User')
 const { requireAuth, requireRole } = require('../middleware/auth')
 const { notifySafe } = require('../services/notifications')
+const { computeReward, rewardCapFor } = require('../utils/reward')
+const { commitInstant, reclaimInstant, inFlightReward } = require('../utils/rewardLedger')
+const { getIgSettings } = require('../utils/settings')
+const { computeTier } = require('../utils/tier')
 
 // helper to generate order IDs
 const genOrderId = () => 'ORD-' + Math.floor(1000 + Math.random() * 9000)
@@ -18,7 +23,12 @@ const genOrderId = () => 'ORD-' + Math.floor(1000 + Math.random() * 9000)
  */
 async function ensureCampaignForProduct(product) {
   const existing = await Campaign.findOne({ productId: product._id })
-  if (existing) return existing
+  if (existing) {
+    // Keep the money field the Cart displays in sync with what we charge.
+    const split = Math.min(100, Math.max(0, Number(product.instantSplitPct) || 0))
+    if (existing.instantSplitPct !== split) { existing.instantSplitPct = split; await existing.save() }
+    return existing
+  }
   if (product.status && product.status !== 'approved') return null
   if (!product.brandId) return null
   const rules = product.postingRules || {}
@@ -34,6 +44,7 @@ async function ensureCampaignForProduct(product) {
     stock:        product.stock ?? 100,
     stockLeft:    product.stock ?? 100,
     minFollowers: product.creatorCriteria?.minFollowers ?? 1000,
+    instantSplitPct: product.instantSplitPct ?? 0,
     hashtags:     (rules.hashtags || []).join(', '),
     handles:      (rules.taggingHandles || []).join(', '),
     budgetCap:    product.campaignBudget || 0,
@@ -102,11 +113,22 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
     }
 
     const quantity = Number(qty) || 1
-    const cashbackAmount = Math.round(campaign.price * quantity * campaign.cashbackRate / 100)
-    const total = campaign.price * quantity
+    // Reward split: instantDiscount comes off the bill now, bonus releases on verified post.
+    const r = computeReward({ price: campaign.price, qty: quantity, cashbackRate: campaign.cashbackRate, instantSplitPct: campaign.instantSplitPct })
 
-    // Budget cap: refuse new orders once the promised cashback would exceed the brand's budget.
-    if (campaign.budgetCap > 0 && (campaign.budgetUsed || 0) + cashbackAmount > campaign.budgetCap) {
+    // Fraud guard: unverified creators can only hold so much reward IN FLIGHT
+    // (sum over live unreleased orders — can't be dodged with many small orders).
+    const settings = await getIgSettings().catch(() => null)
+    const cap = rewardCapFor(req.user, settings?.unverifiedRewardCap ?? 500)
+    if (Number.isFinite(cap)) {
+      const inFlight = await inFlightReward(req.user._id)
+      if (inFlight + r.rewardTotal > cap) {
+        return res.status(400).json({ message: `Unverified accounts can hold at most ৳${cap.toLocaleString()} of pending rewards (you have ৳${inFlight.toLocaleString()} in flight). Verify your Instagram in Account Audit (bio code) to unlock more.` })
+      }
+    }
+
+    // Budget cap: refuse new orders once the full promised reward would exceed the brand's budget.
+    if (campaign.budgetCap > 0 && (campaign.budgetUsed || 0) + r.rewardTotal > campaign.budgetCap) {
       return res.status(400).json({ message: 'This campaign has reached its cashback budget.' })
     }
 
@@ -122,11 +144,14 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
       qty:        quantity,
       price:      campaign.price,
       cashbackRate:   campaign.cashbackRate,
-      cashbackAmount,
-      total,
+      cashbackAmount: r.bonus,
+      instantDiscount: r.instantDiscount,
+      rewardTotal:     r.rewardTotal,
+      total:           r.payable,
       address,
       paymentMethod: paymentMethod || 'bkash',
     })
+    await commitInstant(order)   // instant part is brand budget spent as of now
 
     // Decrement stock
     campaign.stockLeft = Math.max(0, campaign.stockLeft - quantity)
@@ -139,6 +164,44 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
     res.status(500).json({ message: 'Server error.' })
   }
 })
+
+/**
+ * A returned order whose cashback was ALREADY paid out gets clawed back:
+ * negative wallet transaction, earnings reversed, brand budget refunded.
+ * Atomic claim on cashbackClawedBack so a double status-update can't reverse twice.
+ */
+async function clawbackCashback(order) {
+  const claimed = await Order.findOneAndUpdate(
+    { _id: order._id, cashbackReleased: true, cashbackClawedBack: false },
+    { $set: { cashbackClawedBack: true } },
+    { new: false },
+  )
+  if (!claimed) return false
+  const amount = claimed.cashbackAmount || 0
+  if (amount > 0) {
+    await Transaction.create({
+      userId: claimed.creatorId, type: 'clawback', amount,
+      desc: `Cashback reversed — ${claimed.product} was returned`, status: 'completed', orderId: claimed._id,
+    })
+    await User.updateOne({ _id: claimed.creatorId }, { $inc: { totalEarnings: -amount } }).catch(() => {})
+    // The campaign no longer counts as completed — keep tier (and the fraud-cap
+    // multiplier it drives) honest.
+    const u = await User.findOneAndUpdate(
+      { _id: claimed.creatorId, completedCampaigns: { $gt: 0 } },
+      { $inc: { completedCampaigns: -1 } },
+      { new: true },
+    ).select('completedCampaigns tier').catch(() => null)
+    if (u) {
+      const tier = computeTier(u.completedCampaigns)
+      if (tier !== u.tier) await User.updateOne({ _id: u._id }, { $set: { tier } }).catch(() => {})
+    }
+    if (claimed.campaignId) await Campaign.updateOne({ _id: claimed.campaignId }, { $inc: { budgetUsed: -amount } }).catch(() => {})
+    if (claimed.productId) await Product.updateOne({ _id: claimed.productId }, { $inc: { totalCashbackSpent: -amount } }).catch(() => {})
+    notifySafe(claimed.creatorId, { type: 'cashback', icon: '↩️', title: 'Cashback reversed',
+      body: `৳${amount.toLocaleString()} was deducted because your ${claimed.product} order was returned.`, link: '/creator/wallet' })
+  }
+  return true
+}
 
 // ── PUT /api/orders/:id/status — brand updates status/tracking ─────────────
 router.put('/:id/status', requireAuth, requireRole('brand', 'admin'), async (req, res) => {
@@ -163,6 +226,17 @@ router.put('/:id/status', requireAuth, requireRole('brand', 'admin'), async (req
     if (status === 'return_requested' && !order.returnRequestedAt) order.returnRequestedAt = new Date()
     const wasDelivered = prevStatus !== 'delivered' && order.status === 'delivered'
     await order.save()
+
+    // Order died (cancelled/returned) → hand the instant discount back to the
+    // brand's budget; revived → commit it again. Both are atomic + idempotent.
+    const DEAD = ['cancelled', 'returned']
+    if (DEAD.includes(order.status) && !DEAD.includes(prevStatus)) await reclaimInstant(order)
+    else if (!DEAD.includes(order.status) && DEAD.includes(prevStatus)) await commitInstant(order)
+    // Returned AFTER the bonus was paid out → claw the payout back from the wallet.
+    if (order.status === 'returned' && order.cashbackReleased && !order.cashbackClawedBack) {
+      await clawbackCashback(order)
+      order.cashbackClawedBack = true
+    }
 
     if (wasDelivered) {
       notifySafe(order.creatorId, { type: 'order', icon: '📦', title: 'Order delivered',

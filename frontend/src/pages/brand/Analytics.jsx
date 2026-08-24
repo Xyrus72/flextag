@@ -37,7 +37,7 @@ const Analytics = () => {
         const enriched = camps.map(c => {
           const campOrders = orders.filter(o => o.campaignId?._id === c._id || o.campaignId === c._id)
           const campPosts  = posts.filter(p => p.campaignId?._id === c._id || p.campaignId === c._id)
-          const cashbackPaid = campOrders.filter(o => o.cashbackReleased).reduce((s, o) => s + o.cashbackAmount, 0)
+          const cashbackPaid = campOrders.filter(o => o.cashbackReleased).reduce((s, o) => s + (o.rewardTotal || o.cashbackAmount), 0)
           return {
             name:        c.product || c.title,
             posts:       campPosts.length,
@@ -50,7 +50,7 @@ const Analytics = () => {
 
         // Global KPIs
         const totalPosts    = posts.length
-        const totalCashback = orders.filter(o => o.cashbackReleased).reduce((s, o) => s + o.cashbackAmount, 0)
+        const totalCashback = orders.filter(o => o.cashbackReleased).reduce((s, o) => s + (o.rewardTotal || o.cashbackAmount), 0)
         setKpis({ posts: totalPosts, cashbackPaid: totalCashback })
 
         // Monthly orders chart (group by month)
@@ -61,7 +61,7 @@ const Analytics = () => {
           const key = monthNames[d.getMonth()]
           if (!byMonth[key]) byMonth[key] = { month: key, orders: 0, cashback: 0 }
           byMonth[key].orders  += 1
-          byMonth[key].cashback += o.cashbackAmount || 0
+          byMonth[key].cashback += o.rewardTotal || o.cashbackAmount || 0
         })
         setMonthlyData(Object.values(byMonth).slice(-6))
       } catch (err) {

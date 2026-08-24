@@ -22,6 +22,7 @@ router.get('/stats', requireAuth, requireRole('admin'), async (req, res) => {
       txResult,
       escrowResult,
       commissionResult,
+      clawbackResult,
     ] = await Promise.all([
       User.countDocuments({ role: 'creator' }),
       User.countDocuments({ role: 'brand' }),
@@ -40,17 +41,22 @@ router.get('/stats', requireAuth, requireRole('admin'), async (req, res) => {
         { $match: { type: 'cashback', status: 'completed' } },
         { $group: { _id: null, total: { $sum: { $multiply: ['$amount', 0.10] } } } },
       ]),
+      Transaction.aggregate([
+        { $match: { type: 'clawback', status: 'completed' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } },
+      ]),
     ])
 
+    const clawed = clawbackResult[0]?.total || 0
     res.json({
       totalCreators,
       totalBrands,
       verifiedBrands,
       activeCampaigns,
       pendingPosts,
-      totalGMV:          txResult[0]?.total      || 0,
+      totalGMV:          Math.max(0, (txResult[0]?.total || 0) - clawed),           // net of clawbacks
       cashbackLiability: escrowResult[0]?.total  || 0,
-      commissionRevenue: commissionResult[0]?.total || 0,
+      commissionRevenue: Math.max(0, (commissionResult[0]?.total || 0) - clawed * 0.10),
     })
   } catch (err) {
     console.error('[admin stats]', err)
@@ -167,15 +173,21 @@ router.get('/financial', requireAuth, requireRole('admin'), async (req, res) => 
     ])
 
     const totalEscrow = enriched.reduce((s, e) => s + e.escrow, 0)
-    const commissionTx = await Transaction.aggregate([
-      { $match: { type: 'cashback', status: 'completed' } },
-      { $group: { _id: null, total: { $sum: { $multiply: ['$amount', 0.10] } } } },
+    const [commissionTx, clawbackTx] = await Promise.all([
+      Transaction.aggregate([
+        { $match: { type: 'cashback', status: 'completed' } },
+        { $group: { _id: null, total: { $sum: { $multiply: ['$amount', 0.10] } } } },
+      ]),
+      Transaction.aggregate([
+        { $match: { type: 'clawback', status: 'completed' } },
+        { $group: { _id: null, total: { $sum: { $multiply: ['$amount', 0.10] } } } },
+      ]),
     ])
 
     res.json({
       campaignEscrow: enriched,
       totalEscrow,
-      commissionRevenue: commissionTx[0]?.total || 0,
+      commissionRevenue: Math.max(0, (commissionTx[0]?.total || 0) - (clawbackTx[0]?.total || 0)),
       upcomingPayouts,
     })
   } catch (err) {

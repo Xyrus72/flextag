@@ -6,6 +6,9 @@ const Campaign           = require('../models/Campaign')
 const Product            = require('../models/Product')
 const { requireAuth, requireRole } = require('../middleware/auth')
 const { ensureCampaignForProduct } = require('./orders')
+const { computeReward, rewardCapFor } = require('../utils/reward')
+const { commitInstant, inFlightReward } = require('../utils/rewardLedger')
+const { getIgSettings } = require('../utils/settings')
 
 const STORE_ID   = process.env.SSLCZ_STORE_ID
 const STORE_PASS = process.env.SSLCZ_STORE_PASSWORD
@@ -25,6 +28,12 @@ router.post('/init', requireAuth, requireRole('creator'), async (req, res) => {
     const { items, address } = req.body
     if (!items || !items.length || !address) return res.status(400).json({ message: 'items and address are required.' })
 
+    const settings = await getIgSettings().catch(() => null)
+    const cap = rewardCapFor(req.user, settings?.unverifiedRewardCap ?? 500)
+    // In-flight cap counts the WHOLE cart plus live unreleased orders, so it
+    // can't be dodged by splitting the reward across many line items.
+    let inFlight = Number.isFinite(cap) ? await inFlightReward(req.user._id) : 0
+
     let totalAmount = 0
     const orderDocs = []
     for (const item of items) {
@@ -39,21 +48,29 @@ router.post('/init', requireAuth, requireRole('creator'), async (req, res) => {
       const qty = Number(item.qty) || 1
       if (campaign.stockLeft < qty) return res.status(400).json({ message: `Insufficient stock for "${campaign.product}".` })
 
-      const itemTotal      = campaign.price * qty
-      const cashbackAmount = Math.round(itemTotal * campaign.cashbackRate / 100)
-      if (campaign.budgetCap > 0 && (campaign.budgetUsed || 0) + cashbackAmount > campaign.budgetCap) {
+      // Reward split: instant discount off the gateway amount, bonus released on verified post.
+      const r = computeReward({ price: campaign.price, qty, cashbackRate: campaign.cashbackRate, instantSplitPct: campaign.instantSplitPct })
+      if (Number.isFinite(cap) && inFlight + r.rewardTotal > cap) {
+        return res.status(400).json({ message: `Unverified accounts can hold at most ৳${cap.toLocaleString()} of pending rewards. Verify your Instagram in Account Audit (bio code) to unlock more.` })
+      }
+      inFlight += r.rewardTotal
+      if (campaign.budgetCap > 0 && (campaign.budgetUsed || 0) + r.rewardTotal > campaign.budgetCap) {
         return res.status(400).json({ message: `"${campaign.product}" has reached its cashback budget.` })
       }
-      totalAmount += itemTotal
+      totalAmount += r.payable
       orderDocs.push({
         orderId: genOrderId(), creatorId: req.user._id, brandId: campaign.brandId,
         campaignId: campaign._id, productId: campaign.productId || undefined,
         product: campaign.product, brand: campaign.brand, image: campaign.image || '📦',
-        qty, price: campaign.price, cashbackRate: campaign.cashbackRate, cashbackAmount, total: itemTotal,
+        qty, price: campaign.price, cashbackRate: campaign.cashbackRate,
+        cashbackAmount: r.bonus, instantDiscount: r.instantDiscount, rewardTotal: r.rewardTotal, total: r.payable,
         address: address.trim(), paymentMethod: 'sslcommerz', paymentStatus: 'pending', status: 'processing',
       })
     }
 
+    // NOTE: the instant discount is NOT committed to the brand's budget here —
+    // only when the payment confirms (success/IPN). Abandoned gateway sessions
+    // therefore never consume budget.
     const createdOrders = await Order.insertMany(orderDocs)
     const orderIds = createdOrders.map(o => o._id.toString())
     const tran_id = genTranId()
@@ -76,7 +93,7 @@ router.post('/init', requireAuth, requireRole('creator'), async (req, res) => {
     if (apiResponse?.GatewayPageURL) {
       res.json({ url: apiResponse.GatewayPageURL, tran_id })
     } else {
-      await Order.deleteMany({ _id: { $in: orderIds } })
+      await Order.deleteMany({ _id: { $in: orderIds } })   // nothing committed yet — plain cleanup
       console.error('[checkout init] SSLCommerz error:', apiResponse?.failedreason || apiResponse)
       res.status(502).json({ message: 'Payment gateway error. Check the SSLCommerz credentials.' })
     }
@@ -106,6 +123,7 @@ router.post('/success', async (req, res) => {
       order.paymentDetails = { bank_tran_id: req.body.bank_tran_id, card_type: req.body.card_type, card_brand: req.body.card_brand, store_amount: req.body.store_amount }
       await order.save()
       await Campaign.findByIdAndUpdate(order.campaignId, { $inc: { stockLeft: -order.qty, totalOrders: 1 } })
+      await commitInstant(order)   // payment confirmed → instant discount is brand budget spent (atomic, IPN-safe)
     }
     void value_a
     res.redirect(`${FRONTEND}/creator/checkout/success?tran_id=${tran_id}`)
@@ -119,6 +137,7 @@ router.post('/success', async (req, res) => {
 router.post('/fail', async (req, res) => {
   try {
     if (req.body?.tran_id) {
+      // Unpaid orders never committed the instant discount — nothing to hand back.
       await Order.updateMany({ transactionId: req.body.tran_id, paymentStatus: 'pending' }, { paymentStatus: 'failed', status: 'cancelled' })
     }
     res.redirect(`${FRONTEND}/creator/checkout/fail?reason=payment_failed`)
@@ -151,6 +170,7 @@ router.post('/ipn', async (req, res) => {
         for (const order of pending) {
           order.paymentStatus = 'paid'; order.valId = val_id; await order.save()
           await Campaign.findByIdAndUpdate(order.campaignId, { $inc: { stockLeft: -order.qty, totalOrders: 1 } })
+          await commitInstant(order)
         }
       }
     }

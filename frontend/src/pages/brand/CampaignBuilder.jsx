@@ -16,7 +16,7 @@ const CampaignBuilder = () => {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError]     = useState('')
   const [form, setForm]       = useState({
-    title: '', category: 'Beauty', product: '', price: '', cashbackRate: 50, stock: '',
+    title: '', category: 'Beauty', product: '', price: '', cashbackRate: 50, instantSplitPct: 50, stock: '',
     minFollowers: 1000, hashtags: '', handles: '', deadline: '', retentionDays: 7,
     budgetCap: '', isPrivate: false, contentType: 'any',
   })
@@ -34,6 +34,7 @@ const CampaignBuilder = () => {
         product:     form.product,
         price:       Number(form.price),
         cashbackRate: Number(form.cashbackRate),
+        instantSplitPct: Number(form.instantSplitPct),
         stock:       Number(form.stock) || 100,
         minFollowers: Number(form.minFollowers),
         hashtags:    form.hashtags,
@@ -107,6 +108,14 @@ const CampaignBuilder = () => {
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Cashback Rate: <span className="text-violet-400 font-bold">{form.cashbackRate}%</span></label>
                 <input type="range" min="30" max="70" value={form.cashbackRate} onChange={set('cashbackRate')} className="w-full accent-violet-500" />
                 <div className="flex justify-between text-xs text-zinc-600"><span>30%</span><span>70%</span></div></div>
+              <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Instant Discount Split: <span className="text-cyan-400 font-bold">{form.instantSplitPct}%</span></label>
+                <input type="range" min="0" max="100" step="10" value={form.instantSplitPct} onChange={set('instantSplitPct')} className="w-full accent-cyan-500" />
+                <div className="flex justify-between text-xs text-zinc-600"><span>All after post</span><span>All instant</span></div>
+                {form.price && form.cashbackRate > 0 && (() => {
+                  const reward = Math.round(Number(form.price) * Number(form.cashbackRate) / 100)
+                  const instant = Math.round(reward * Number(form.instantSplitPct) / 100)
+                  return <p className="text-xs text-zinc-500 mt-1.5">Creators get <span className="text-cyan-400 font-semibold">৳{instant.toLocaleString()} off at checkout</span> + <span className="text-emerald-400 font-semibold">৳{(reward - instant).toLocaleString()} bonus</span> after their post verifies. Instant discounts convert far better — creators risk less upfront.</p>
+                })()}</div>
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">★ Budget Cap (৳)</label>
                 <input type="number" value={form.budgetCap} onChange={set('budgetCap')} placeholder="e.g. 50000" className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" />
                 <p className="text-xs text-zinc-600 mt-1">Campaign auto-closes when cashback reaches this limit</p></div>
@@ -150,6 +159,7 @@ const CampaignBuilder = () => {
                   ['Product',      form.product || '—'],
                   ['Price',        form.price ? `৳${Number(form.price).toLocaleString()}` : '—'],
                   ['Cashback',     `${form.cashbackRate}%`],
+                  ['Reward Split', `${form.instantSplitPct}% instant / ${100 - Number(form.instantSplitPct)}% after post`],
                   ['Stock',        form.stock || '100'],
                   ['Budget Cap',   form.budgetCap ? `৳${Number(form.budgetCap).toLocaleString()}` : 'Unlimited'],
                   ['Min Followers',Number(form.minFollowers).toLocaleString()],

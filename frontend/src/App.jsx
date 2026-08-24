@@ -39,6 +39,7 @@ const CampaignBuilder   = lazy(() => import('./pages/brand/CampaignBuilder'))
 const OrderFulfillment  = lazy(() => import('./pages/brand/OrderFulfillment'))
 const Analytics         = lazy(() => import('./pages/brand/Analytics'))
 const InviteCampaign    = lazy(() => import('./pages/brand/InviteCampaign'))
+const CreatorAudit      = lazy(() => import('./pages/brand/CreatorAudit'))
 const BrandRatings      = lazy(() => import('./pages/brand/BrandRatings'))
 const PostProduct       = lazy(() => import('./pages/brand/PostProduct'))
 const MyProducts        = lazy(() => import('./pages/brand/MyProducts'))
@@ -116,6 +117,7 @@ const AppRoutes = () => (
         <Route path="/brand/orders" element={<OrderFulfillment />} />
         <Route path="/brand/analytics" element={<Analytics />} />
         <Route path="/brand/invite" element={<InviteCampaign />} />
+        <Route path="/brand/creator-audit" element={<CreatorAudit />} />
         <Route path="/brand/ratings" element={<BrandRatings />} />
         <Route path="/brand/profile" element={<BrandProfile />} />
         <Route path="/brand/chat" element={<Chat />} />

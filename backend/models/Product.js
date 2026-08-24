@@ -6,6 +6,8 @@ const productSchema = new mongoose.Schema({
   brandId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   price: { type: Number, required: true, min: 0 },
   cashbackRate: { type: Number, required: true, min: 0, max: 100 },
+  // % of the reward given as an instant checkout discount (mirrored onto the bridged Campaign)
+  instantSplitPct: { type: Number, default: 0, min: 0, max: 100 },
   category: { type: String, required: true },
   image: { type: String, default: '' },
   rating: { type: Number, default: 4.5 },

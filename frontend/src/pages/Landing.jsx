@@ -367,6 +367,16 @@ const compactNum = (n) => {
   return n.toLocaleString()
 }
 
+/** "3h ago" / "2d ago" for the payout ticker. */
+const timeAgo = (d) => {
+  const ms = Date.now() - new Date(d).getTime()
+  if (!Number.isFinite(ms) || ms < 0) return 'just now'
+  const h = Math.floor(ms / 3_600_000)
+  if (h < 1) return 'just now'
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
+}
+
 const BrandMarquee = () => (
   <section className="brand-marquee" style={{
     position: 'relative', zIndex: 10, padding: '36px 0',
@@ -878,6 +888,24 @@ export default function Landing() {
           </div>
         </ScrollSection>
       </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* PAYOUT PROOF TICKER — real recent cashback releases, names masked   */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {stats?.recentPayouts?.length > 0 && (
+        <section style={{ position: 'relative', zIndex: 10, borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '14px 0', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', gap: 48, width: 'max-content', animation: 'marqueeX 30s linear infinite' }}>
+            {[...stats.recentPayouts, ...stats.recentPayouts].map((p, i) => (
+              <span key={i} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>💸</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{p.name}</span> received
+                <span style={{ color: '#4ade80', fontWeight: 700 }}>৳{Number(p.amount).toLocaleString()}</span>
+                <span style={{ color: 'rgba(255,255,255,0.25)' }}>· {timeAgo(p.at)}</span>
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* TRUSTED-BY MARQUEE                                                  */}
