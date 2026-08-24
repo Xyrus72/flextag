@@ -43,9 +43,9 @@ const MyProducts = () => {
         {['all', 'pending', 'approved', 'rejected'].map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: '8px 18px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', textTransform: 'capitalize',
-            background: filter === f ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(255,255,255,0.04)',
-            color: filter === f ? '#fff' : 'rgba(255,255,255,0.4)',
-            border: filter === f ? 'none' : '1px solid rgba(255,255,255,0.07)',
+            background: filter === f ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
+            color: filter === f ? '#fff' : 'rgba(var(--ink-rgb),0.4)',
+            border: filter === f ? 'none' : '1px solid rgba(var(--ink-rgb),0.07)',
           }}>
             {f} ({counts[f]})
           </button>
@@ -73,11 +73,11 @@ const MyProducts = () => {
           {filtered.map(p => {
             const s = STATUS[p.status] || STATUS.pending
             return (
-              <div key={p._id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: '20px 22px', display: 'flex', gap: 16, alignItems: 'flex-start', transition: 'border-color 0.2s' }}
+              <div key={p._id} style={{ background: 'rgba(var(--ink-rgb),0.02)', border: '1px solid rgba(var(--ink-rgb),0.06)', borderRadius: 18, padding: '20px 22px', display: 'flex', gap: 16, alignItems: 'flex-start', transition: 'border-color 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(124,58,237,0.2)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}>
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(var(--ink-rgb),0.06)'}>
                 {/* Image */}
-                <div style={{ width: 72, height: 72, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>
+                <div style={{ width: 72, height: 72, borderRadius: 12, background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.07)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>
                   {p.image ? (
                     <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; e.target.parentNode.textContent = '📦' }} />
                   ) : '📦'}
@@ -86,7 +86,7 @@ const MyProducts = () => {
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
-                    <p style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{p.name}</p>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{p.name}</p>
                     <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
                       {s.icon} {s.label}
                     </span>
@@ -95,10 +95,10 @@ const MyProducts = () => {
                     </span>
                   </div>
                   <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', fontSize: 13 }}>
-                    <span style={{ color: 'rgba(255,255,255,0.4)' }}>Category: <span style={{ color: 'rgba(255,255,255,0.65)' }}>{p.category}</span></span>
-                    <span style={{ color: 'rgba(255,255,255,0.4)' }}>Price: <span style={{ color: '#fff', fontWeight: 700 }}>৳{Number(p.price).toLocaleString()}</span></span>
-                    <span style={{ color: 'rgba(255,255,255,0.4)' }}>Stock: <span style={{ color: 'rgba(255,255,255,0.65)' }}>{p.stock}</span></span>
-                    <span style={{ color: 'rgba(255,255,255,0.4)' }}>Submitted: <span style={{ color: 'rgba(255,255,255,0.5)' }}>{new Date(p.createdAt).toLocaleDateString()}</span></span>
+                    <span style={{ color: 'rgba(var(--ink-rgb),0.4)' }}>Category: <span style={{ color: 'rgba(var(--ink-rgb),0.65)' }}>{p.category}</span></span>
+                    <span style={{ color: 'rgba(var(--ink-rgb),0.4)' }}>Price: <span style={{ color: 'var(--text)', fontWeight: 700 }}>৳{Number(p.price).toLocaleString()}</span></span>
+                    <span style={{ color: 'rgba(var(--ink-rgb),0.4)' }}>Stock: <span style={{ color: 'rgba(var(--ink-rgb),0.65)' }}>{p.stock}</span></span>
+                    <span style={{ color: 'rgba(var(--ink-rgb),0.4)' }}>Submitted: <span style={{ color: 'rgba(var(--ink-rgb),0.5)' }}>{new Date(p.createdAt).toLocaleDateString()}</span></span>
                   </div>
 
                   {p.status === 'rejected' && p.rejectionReason && (

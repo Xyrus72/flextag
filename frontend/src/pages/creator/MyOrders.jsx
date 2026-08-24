@@ -41,8 +41,8 @@ const MyOrders = () => {
           <button key={f} onClick={() => setFilter(f)} style={{
             padding:'8px 18px', borderRadius:100, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit',
             textTransform:'capitalize', transition:'all 0.2s', border:'none',
-            background: filter === f ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(255,255,255,0.04)',
-            color: filter === f ? '#fff' : 'rgba(255,255,255,0.45)',
+            background: filter === f ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
+            color: filter === f ? '#fff' : 'rgba(var(--ink-rgb),0.45)',
             boxShadow: filter === f ? '0 0 16px rgba(124,58,237,0.3)' : 'none',
           }}>
             {f === 'all' ? `All Orders (${orders.length})` : `${f} (${orders.filter(o => o.status === f).length})`}
@@ -59,22 +59,22 @@ const MyOrders = () => {
           {filtered.map(o => {
             const sc = statusConfig[o.status] || statusConfig.processing
             return (
-              <div key={o._id} style={{ padding:'20px', borderRadius:18, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', transition:'all 0.2s' }}
+              <div key={o._id} style={{ padding:'20px', borderRadius:18, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.07)', transition:'all 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.borderColor='rgba(124,58,237,0.25)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor='rgba(255,255,255,0.07)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor='rgba(var(--ink-rgb),0.07)'}
               >
                 <div style={{ display:'flex', alignItems:'flex-start', gap:16 }}>
-                  <div style={{ width:52, height:52, borderRadius:14, background:'rgba(255,255,255,0.05)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, flexShrink:0 }}>{o.image || '📦'}</div>
+                  <div style={{ width:52, height:52, borderRadius:14, background:'rgba(var(--ink-rgb),0.05)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, flexShrink:0 }}>{o.image || '📦'}</div>
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
-                      <p style={{ fontSize:14, fontWeight:600, color:'#fff', margin:0, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{o.product}</p>
+                      <p style={{ fontSize:14, fontWeight:600, color: 'var(--text)', margin:0, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{o.product}</p>
                       <span className={`badge ${sc.text === 'text-emerald-400' ? 'badge-success' : sc.text === 'text-red-400' ? 'badge-error' : sc.text === 'text-yellow-400' ? 'badge-warning' : 'badge-cyan'}`} style={{ marginLeft:12, flexShrink:0 }}>{sc.label}</span>
                     </div>
-                    <p style={{ fontSize:12, color:'rgba(255,255,255,0.3)', marginBottom:12 }}>{o.brand} · {o.orderId} · {new Date(o.createdAt).toLocaleDateString()}</p>
+                    <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.3)', marginBottom:12 }}>{o.brand} · {o.orderId} · {new Date(o.createdAt).toLocaleDateString()}</p>
                     <div style={{ display:'flex', flexWrap:'wrap', gap:16, fontSize:13 }}>
-                      <div><span style={{ color:'rgba(255,255,255,0.35)' }}>Paid: </span><span style={{ color:'#fff', fontWeight:600 }}>৳{o.total?.toLocaleString()}</span></div>
-                      <div><span style={{ color:'rgba(255,255,255,0.35)' }}>Cashback: </span><span style={{ color:'#4ade80', fontWeight:600 }}>৳{o.cashbackAmount?.toLocaleString()}</span></div>
-                      {o.tracking && <div><span style={{ color:'rgba(255,255,255,0.35)' }}>Tracking: </span><span style={{ color:'#67e8f9', fontFamily:'monospace', fontSize:11 }}>{o.tracking}</span></div>}
+                      <div><span style={{ color:'rgba(var(--ink-rgb),0.35)' }}>Paid: </span><span style={{ color: 'var(--text)', fontWeight:600 }}>৳{o.total?.toLocaleString()}</span></div>
+                      <div><span style={{ color:'rgba(var(--ink-rgb),0.35)' }}>Cashback: </span><span style={{ color:'#4ade80', fontWeight:600 }}>৳{o.cashbackAmount?.toLocaleString()}</span></div>
+                      {o.tracking && <div><span style={{ color:'rgba(var(--ink-rgb),0.35)' }}>Tracking: </span><span style={{ color:'#67e8f9', fontFamily:'monospace', fontSize:11 }}>{o.tracking}</span></div>}
                     </div>
                     {o.status === 'delivered' && !o.cashbackReleased && (
                       <div style={{ marginTop:14 }}>

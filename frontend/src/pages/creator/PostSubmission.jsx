@@ -379,7 +379,7 @@ const PostSubmission = () => {
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-zinc-500 pointer-events-none">🔍</span>
                   </div>
                   {dropdownOpen && (
-                    <div className="absolute left-0 right-0 mt-1.5 max-h-56 overflow-y-auto rounded-xl border border-violet-500/30 bg-[#0d0d20] shadow-2xl p-1.5 z-50">
+                    <div className="absolute left-0 right-0 mt-1.5 max-h-56 overflow-y-auto rounded-xl border border-violet-500/30 bg-[var(--bg-2)] shadow-2xl p-1.5 z-50">
                       {filteredOrders.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-zinc-500 text-center">
                           {orders.length ? 'No matching orders' : 'No delivered orders yet'}
@@ -411,9 +411,9 @@ const PostSubmission = () => {
                   <button key={p} onClick={() => { setPlatform(p); setError('') }} style={{
                     flex:1, padding:'10px', borderRadius:12, fontSize:13, fontWeight:600, cursor:'pointer',
                     fontFamily:'inherit', textTransform:'capitalize', transition:'all 0.2s', border:'none',
-                    background: platform === p ? 'rgba(124,58,237,0.12)' : 'rgba(255,255,255,0.04)',
-                    color: platform === p ? '#a78bfa' : 'rgba(255,255,255,0.4)',
-                    outline: platform === p ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                    background: platform === p ? 'rgba(124,58,237,0.12)' : 'rgba(var(--ink-rgb),0.04)',
+                    color: platform === p ? '#a78bfa' : 'rgba(var(--ink-rgb),0.4)',
+                    outline: platform === p ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(var(--ink-rgb),0.08)',
                   }}>
                     {p}
                   </button>

@@ -17,7 +17,7 @@ const VALUE_PROPS = [
 
 const AuthShell = ({ tagline = 'Sign in to your account', children }) => (
   <div style={{
-    minHeight: '100vh', background: '#050816', position: 'relative',
+    minHeight: '100vh', background: 'var(--bg)', position: 'relative',
     overflow: 'hidden', fontFamily: 'Inter, sans-serif',
     display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)',
   }} className="auth-shell">
@@ -38,7 +38,7 @@ const AuthShell = ({ tagline = 'Sign in to your account', children }) => (
     {/* ── LEFT — Brand panel ─────────────────────────────────────────────── */}
     <div className="auth-brand-panel" style={{
       position: 'relative', overflow: 'hidden',
-      borderRight: '1px solid rgba(255,255,255,0.06)',
+      borderRight: '1px solid rgba(var(--ink-rgb),0.06)',
       background: 'linear-gradient(160deg, rgba(124,58,237,0.08) 0%, rgba(5,8,22,0) 45%, rgba(6,182,212,0.05) 100%)',
       display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
       padding: '48px 56px',
@@ -71,7 +71,7 @@ const AuthShell = ({ tagline = 'Sign in to your account', children }) => (
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          style={{ fontSize: 'clamp(32px, 3.2vw, 46px)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.08, color: '#fff', margin: '0 0 16px' }}
+          style={{ fontSize: 'clamp(32px, 3.2vw, 46px)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.08, color: 'var(--text)', margin: '0 0 16px' }}
         >
           Turn influence into
           <br />
@@ -81,7 +81,7 @@ const AuthShell = ({ tagline = 'Sign in to your account', children }) => (
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.15 }}
-          style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, maxWidth: 420, margin: '0 0 36px' }}
+          style={{ fontSize: 15, color: 'rgba(var(--ink-rgb),0.45)', lineHeight: 1.7, maxWidth: 420, margin: '0 0 36px' }}
         >
           The creator-commerce platform trusted by nano & micro-influencers
           across Bangladesh. Shop products, share authentic content, earn cashback.
@@ -97,15 +97,15 @@ const AuthShell = ({ tagline = 'Sign in to your account', children }) => (
               style={{
                 display: 'flex', alignItems: 'center', gap: 14,
                 padding: '14px 18px', borderRadius: 16,
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.07)',
+                background: 'rgba(var(--ink-rgb),0.03)',
+                border: '1px solid rgba(var(--ink-rgb),0.07)',
                 backdropFilter: 'blur(12px)',
               }}
             >
               <span style={{ fontSize: 22, flexShrink: 0 }}>{v.icon}</span>
               <div>
-                <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: 0 }}>{v.title}</p>
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }}>{v.desc}</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{v.title}</p>
+                <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.4)', margin: '2px 0 0' }}>{v.desc}</p>
               </div>
             </motion.div>
           ))}
@@ -124,16 +124,16 @@ const AuthShell = ({ tagline = 'Sign in to your account', children }) => (
             <div key={i} style={{
               width: 30, height: 30, borderRadius: '50%',
               background: `linear-gradient(135deg, hsl(${262 + i * 18}, 75%, 58%), hsl(${195 + i * 12}, 80%, 52%))`,
-              border: '2px solid #050816',
+              border: '2px solid var(--bg)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 10, fontWeight: 800, color: '#fff',
               marginLeft: i > 0 ? -9 : 0,
             }}>{l}</div>
           ))}
         </div>
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
-          <span style={{ color: '#fff', fontWeight: 700 }}>12,400+</span> creators ·{' '}
-          <span style={{ color: '#fff', fontWeight: 700 }}>340+</span> brands on FlexTag
+        <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)', margin: 0 }}>
+          <span style={{ color: 'var(--text)', fontWeight: 700 }}>12,400+</span> creators ·{' '}
+          <span style={{ color: 'var(--text)', fontWeight: 700 }}>340+</span> brands on FlexTag
         </p>
       </motion.div>
     </div>
@@ -150,11 +150,11 @@ const AuthShell = ({ tagline = 'Sign in to your account', children }) => (
           <Link to="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 38, height: 38, borderRadius: 12, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 17, color: '#fff', fontStyle: 'italic', boxShadow: '0 0 24px rgba(124,58,237,0.4)' }}>F</div>
             <div style={{ textAlign: 'left' }}>
-              <div style={{ fontWeight: 900, fontSize: 21, color: '#fff', fontStyle: 'italic', letterSpacing: '-0.03em', lineHeight: 1 }}>FlexTag™</div>
+              <div style={{ fontWeight: 900, fontSize: 21, color: 'var(--text)', fontStyle: 'italic', letterSpacing: '-0.03em', lineHeight: 1 }}>FlexTag™</div>
               <div style={{ fontSize: 9, color: 'rgba(167,139,250,0.6)', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 2 }}>Shop · Share · Earn</div>
             </div>
           </Link>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', marginTop: 16, fontWeight: 300 }}>{tagline}</p>
+          <p style={{ fontSize: 14, color: 'rgba(var(--ink-rgb),0.35)', marginTop: 16, fontWeight: 300 }}>{tagline}</p>
         </div>
 
         {children}

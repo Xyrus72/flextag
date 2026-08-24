@@ -19,8 +19,8 @@ const CheckoutFail = () => {
             <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
           </svg>
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#fff', marginBottom: 8 }}>Payment Failed</h1>
-        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>Payment Failed</h1>
+        <p style={{ color: 'rgba(var(--ink-rgb),0.5)', fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
           {REASONS[reason] || 'Your payment did not go through.'} No charge was made and your cart is intact — you can try again.
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>

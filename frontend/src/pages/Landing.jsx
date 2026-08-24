@@ -999,9 +999,9 @@ export default function Landing() {
                       {/* Creator info overlay */}
                       <div style={{ position: 'absolute', bottom: 52, left: 10, right: 42, zIndex: 10 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg, #f59e0b, #ec4899)', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900, color: 'var(--text)' }}>T</div>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)' }}>@tasnim.creates</span>
-                          <div style={{ padding: '1px 7px', borderRadius: 100, border: '1px solid #fff', fontSize: 8, color: 'var(--text)', fontWeight: 600 }}>Follow</div>
+                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg, #f59e0b, #ec4899)', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900, color: '#fff' }}>T</div>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>@tasnim.creates</span>
+                          <div style={{ padding: '1px 7px', borderRadius: 100, border: '1px solid #fff', fontSize: 8, color: '#fff', fontWeight: 600 }}>Follow</div>
                         </div>
                         <p style={{ fontSize: 9, color: 'rgba(var(--ink-rgb),0.85)', lineHeight: 1.5 }}>Nike Air Max 270 🔥 Obsessed! #FlexTag #NikeCampaign</p>
                       </div>
@@ -1424,7 +1424,7 @@ export default function Landing() {
                     {/* Avatar + badge */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 38, height: 38, borderRadius: '50%', background: `linear-gradient(135deg, ${c.color}, ${c.color}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 15, color: 'var(--text)', border: '2px solid rgba(var(--ink-rgb),0.15)', flexShrink: 0 }}>{c.init}</div>
+                        <div style={{ width: 38, height: 38, borderRadius: '50%', background: `linear-gradient(135deg, ${c.color}, ${c.color}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 15, color: '#fff', border: '2px solid rgba(var(--ink-rgb),0.15)', flexShrink: 0 }}>{c.init}</div>
                         <div>
                           <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>{c.name}</p>
                           <p style={{ fontSize: 9, color: 'rgba(var(--ink-rgb),0.4)' }}>{c.followers} followers</p>
@@ -1618,7 +1618,7 @@ export default function Landing() {
                       style={{
                         marginTop: 32, padding: '14px', borderRadius: 14,
                         background: 'linear-gradient(135deg, #06b6d4, #7c3aed)',
-                        textAlign: 'center', color: 'var(--text)', fontWeight: 700, fontSize: 14,
+                        textAlign: 'center', color: '#fff', fontWeight: 700, fontSize: 14,
                       }}
                     >Launch Campaign →</motion.div>
                   </GlassCard>
@@ -1662,7 +1662,7 @@ export default function Landing() {
               <a href="/register?role=creator" style={{
                 padding: '13px 28px', borderRadius: 12,
                 background: 'linear-gradient(135deg,#7c3aed,#06b6d4)',
-                color: 'var(--text)', fontWeight: 700, fontSize: 13,
+                color: '#fff', fontWeight: 700, fontSize: 13,
                 textDecoration: 'none', letterSpacing: '0.02em',
                 boxShadow: '0 0 24px rgba(124,58,237,0.35)',
                 transition: 'all 0.2s',

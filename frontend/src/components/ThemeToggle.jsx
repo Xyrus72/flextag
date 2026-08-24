@@ -1,25 +1,13 @@
-import { useEffect, useState } from 'react'
 import { Sun, Moon } from 'lucide-react'
+import { useTheme } from '../context/ThemeContext'
 
-const KEY = 'flextag-theme'
-const getStoredTheme = () => localStorage.getItem(KEY) === 'light' ? 'light' : 'dark'
-const apply = (t) => { document.documentElement.dataset.theme = t }
-
-/** White/dark mode switch — persists to localStorage, flips CSS tokens on <html>. */
+/** White/dark mode switch — reflects and updates the shared ThemeContext. */
 const ThemeToggle = () => {
-  const [theme, setTheme] = useState(getStoredTheme)
-
-  useEffect(() => { apply(theme) }, [theme])
-
-  const flip = () => {
-    const next = theme === 'dark' ? 'light' : 'dark'
-    localStorage.setItem(KEY, next)
-    setTheme(next)
-  }
+  const { theme, toggleTheme } = useTheme()
 
   return (
     <button
-      onClick={flip}
+      onClick={toggleTheme}
       aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
       title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
       style={{

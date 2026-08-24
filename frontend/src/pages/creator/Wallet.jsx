@@ -73,17 +73,17 @@ const Wallet = () => {
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:16, marginBottom:28 }}>
         {balCards.map(b => (
           <div key={b.label} style={{ padding:24, borderRadius:20, background:b.grad, border:`1px solid ${b.border}`, backdropFilter:'blur(20px)' }}>
-            <p style={{ fontSize:10, fontWeight:600, letterSpacing:'0.15em', textTransform:'uppercase', color:'rgba(255,255,255,0.4)', marginBottom:10 }}>{b.label}</p>
+            <p style={{ fontSize:10, fontWeight:600, letterSpacing:'0.15em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.4)', marginBottom:10 }}>{b.label}</p>
             <p style={{ fontSize:30, fontWeight:900, color:b.text, letterSpacing:'-0.03em' }}>{loading ? '—' : b.value}</p>
-            <p style={{ fontSize:12, color:'rgba(255,255,255,0.3)', marginTop:6 }}>{b.sub}</p>
+            <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.3)', marginTop:6 }}>{b.sub}</p>
           </div>
         ))}
       </div>
 
       <div style={{ display:'grid', gap:20 }} className="lg:grid-cols-3">
         {/* Transactions */}
-        <div style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:20, padding:24, gridColumn:'span 2' }} className="lg:col-span-2">
-          <h2 style={{ fontSize:16, fontWeight:700, color:'#fff', margin:'0 0 20px' }}>Transaction History</h2>
+        <div style={{ background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:20, padding:24, gridColumn:'span 2' }} className="lg:col-span-2">
+          <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>Transaction History</h2>
           {loading ? (
             <div style={{ display:'flex', justifyContent:'center', padding:'48px 0' }}><div className="spinner" /></div>
           ) : transactions.length === 0 ? (
@@ -92,15 +92,15 @@ const Wallet = () => {
             <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
               {transactions.map(t => (
                 <div key={t._id} style={{ display:'flex', alignItems:'center', gap:14, padding:'12px 14px', borderRadius:12, transition:'background 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(var(--ink-rgb),0.02)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <div style={{ width:38, height:38, borderRadius:10, background: t.type==='cashback' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                     {txIcon(t.type)}
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
-                    <p style={{ fontSize:14, fontWeight:500, color:'#fff', margin:0, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{t.desc || t.type}</p>
-                    <p style={{ fontSize:12, color:'rgba(255,255,255,0.25)', marginTop:2 }}>{new Date(t.createdAt).toLocaleDateString()}</p>
+                    <p style={{ fontSize:14, fontWeight:500, color: 'var(--text)', margin:0, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{t.desc || t.type}</p>
+                    <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.25)', marginTop:2 }}>{new Date(t.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div style={{ textAlign:'right', flexShrink:0 }}>
                     <p style={{ fontSize:14, fontWeight:700, color: (t.type==='cashback'||t.type==='top_up') ? '#4ade80' : '#f87171', margin:0 }}>
@@ -117,8 +117,8 @@ const Wallet = () => {
         {/* Controls Column */}
         <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
           {/* Add Cash */}
-          <div style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:20, padding:24 }}>
-            <h2 style={{ fontSize:16, fontWeight:700, color:'#fff', margin:'0 0 20px' }}>Add Cash</h2>
+          <div style={{ background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:20, padding:24 }}>
+            <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>Add Cash</h2>
             
             {topUpSuccess && <div style={{ padding:'10px 14px', borderRadius:12, background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.2)', marginBottom:14 }}><p style={{ fontSize:13, color:'#4ade80', margin:0 }}>{topUpSuccess}</p></div>}
             {topUpError   && <div style={{ padding:'10px 14px', borderRadius:12, background:'rgba(239,68,68,0.1)',  border:'1px solid rgba(239,68,68,0.2)',  marginBottom:14 }}><p style={{ fontSize:13, color:'#f87171', margin:0 }}>{topUpError}</p></div>}
@@ -138,21 +138,21 @@ const Wallet = () => {
           </div>
 
           {/* Withdraw */}
-          <div style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:20, padding:24 }}>
-            <h2 style={{ fontSize:16, fontWeight:700, color:'#fff', margin:'0 0 20px' }}>Withdraw</h2>
+          <div style={{ background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:20, padding:24 }}>
+            <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>Withdraw</h2>
 
             <div style={{ padding:'12px 14px', borderRadius:12, background:'rgba(124,58,237,0.08)', border:'1px solid rgba(124,58,237,0.2)', marginBottom:16 }}>
               <p style={{ fontSize:12, color:'#a78bfa', fontWeight:600, margin:'0 0 4px' }}>Minimum withdrawal: ৳{minThreshold}</p>
-              <p style={{ fontSize:11, color:'rgba(255,255,255,0.3)', margin:0 }}>Reduces processing fees</p>
+              <p style={{ fontSize:11, color:'rgba(var(--ink-rgb),0.3)', margin:0 }}>Reduces processing fees</p>
             </div>
 
             {withdrawSuccess && <div style={{ padding:'10px 14px', borderRadius:12, background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.2)', marginBottom:14 }}><p style={{ fontSize:13, color:'#4ade80', margin:0 }}>{withdrawSuccess}</p></div>}
             {withdrawError   && <div style={{ padding:'10px 14px', borderRadius:12, background:'rgba(239,68,68,0.1)',  border:'1px solid rgba(239,68,68,0.2)',  marginBottom:14 }}><p style={{ fontSize:13, color:'#f87171', margin:0 }}>{withdrawError}</p></div>}
 
             {available < minThreshold ? (
-              <div style={{ padding:16, borderRadius:14, background:'rgba(255,255,255,0.03)', textAlign:'center' }}>
-                <p style={{ fontSize:14, color:'rgba(255,255,255,0.4)', margin:'0 0 6px' }}>Insufficient balance</p>
-                <p style={{ fontSize:12, color:'rgba(255,255,255,0.2)', margin:0 }}>Need ৳{(minThreshold-available).toLocaleString()} more</p>
+              <div style={{ padding:16, borderRadius:14, background:'rgba(var(--ink-rgb),0.03)', textAlign:'center' }}>
+                <p style={{ fontSize:14, color:'rgba(var(--ink-rgb),0.4)', margin:'0 0 6px' }}>Insufficient balance</p>
+                <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.2)', margin:0 }}>Need ৳{(minThreshold-available).toLocaleString()} more</p>
               </div>
             ) : (
               <div style={{ display:'flex', flexDirection:'column', gap:12 }}>

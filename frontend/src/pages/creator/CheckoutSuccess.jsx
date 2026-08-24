@@ -17,13 +17,13 @@ const CheckoutSuccess = () => {
           </svg>
         </div>
         <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8, background: 'linear-gradient(135deg,#34d399,#06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Payment Successful!</h1>
-        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
+        <p style={{ color: 'rgba(var(--ink-rgb),0.5)', fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
           Your order is placed and payment confirmed. The brand will ship your item soon — post about it once it arrives to earn your cashback.
         </p>
         {tranId && (
-          <div style={{ padding: '16px 20px', borderRadius: 16, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 28 }}>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Transaction ID</p>
-            <p style={{ fontSize: 14, color: '#fff', fontFamily: 'monospace', margin: '4px 0 0' }}>{tranId}</p>
+          <div style={{ padding: '16px 20px', borderRadius: 16, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.08)', marginBottom: 28 }}>
+            <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Transaction ID</p>
+            <p style={{ fontSize: 14, color: 'var(--text)', fontFamily: 'monospace', margin: '4px 0 0' }}>{tranId}</p>
           </div>
         )}
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>

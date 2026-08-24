@@ -7,10 +7,10 @@ const CATEGORIES = ['Beauty', 'Fashion', 'Tech', 'Lifestyle', 'Food', 'Health', 
 const Field = ({ label, required, hint, children }) => (
   <div>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-      <label style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+      <label style={{ fontSize: 11, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.4)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
         {label} {required && <span style={{ color: '#a78bfa' }}>*</span>}
       </label>
-      {hint && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{hint}</span>}
+      {hint && <span style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.2)' }}>{hint}</span>}
     </div>
     {children}
   </div>
@@ -18,8 +18,8 @@ const Field = ({ label, required, hint, children }) => (
 
 const inputStyle = {
   width: '100%', padding: '12px 16px', borderRadius: 12,
-  border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.04)',
-  color: '#fff', fontSize: 14, outline: 'none', fontFamily: 'inherit',
+  border: '1px solid rgba(var(--ink-rgb),0.07)', background: 'rgba(var(--ink-rgb),0.04)',
+  color: 'var(--text)', fontSize: 14, outline: 'none', fontFamily: 'inherit',
   boxSizing: 'border-box', transition: 'border-color 0.15s',
 }
 
@@ -104,14 +104,14 @@ const PostProduct = () => {
           display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38,
           boxShadow: '0 0 40px rgba(124,58,237,0.15)',
         }}>⏳</div>
-        <h2 style={{ fontSize: 24, fontWeight: 800, color: '#fff', marginBottom: 12 }}>Campaign Submitted for Review</h2>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, lineHeight: 1.75, marginBottom: 28 }}>
+        <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', marginBottom: 12 }}>Campaign Submitted for Review</h2>
+        <p style={{ color: 'rgba(var(--ink-rgb),0.4)', fontSize: 14, lineHeight: 1.75, marginBottom: 28 }}>
           Your product campaign has been configured with a{' '}
           <span style={{ color: '#06b6d4', fontWeight: 700 }}>৳{Number(form.campaignBudget || 50000).toLocaleString()} budget cap</span> and is now{' '}
           <span style={{ color: '#fbbf24', fontWeight: 700 }}>pending admin approval</span>.
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <button onClick={resetForm} style={{ padding: '11px 24px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s' }}>
+          <button onClick={resetForm} style={{ padding: '11px 24px', borderRadius: 12, border: '1px solid rgba(var(--ink-rgb),0.1)', background: 'rgba(var(--ink-rgb),0.05)', color: 'rgba(var(--ink-rgb),0.75)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s' }}>
             + Create Another
           </button>
           <button onClick={() => navigate('/brand/my-products')} style={{ padding: '11px 24px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 20px rgba(124,58,237,0.35)' }}>
@@ -129,8 +129,8 @@ const PostProduct = () => {
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#a78bfa', display: 'inline-block' }} />
           <span style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Module 2 — Campaign Creator</span>
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#fff', marginBottom: 8 }}>Campaign Creator & Budget Control</h1>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.38)', lineHeight: 1.6 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>Campaign Creator & Budget Control</h1>
+        <p style={{ fontSize: 14, color: 'rgba(var(--ink-rgb),0.38)', lineHeight: 1.6 }}>
           Configure product campaigns, set total cashback budget caps, define creator eligibility, and specify social posting rules.
         </p>
       </div>
@@ -145,8 +145,8 @@ const PostProduct = () => {
             </div>
           )}
 
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 24, marginBottom: 16 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 20 }}>① Basic Information</p>
+          <div style={{ background: 'rgba(var(--ink-rgb),0.02)', border: '1px solid rgba(var(--ink-rgb),0.06)', borderRadius: 18, padding: 24, marginBottom: 16 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.25)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 20 }}>① Basic Information</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <Field label="Product / Campaign Name" required>
                 <input value={form.name} onChange={set('name')} placeholder="e.g. Matte Lipstick Collection" style={inputStyle} />
@@ -154,7 +154,7 @@ const PostProduct = () => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <Field label="Category" required>
-                  <select value={form.category} onChange={set('category')} style={{ ...inputStyle, background: '#0d0d20', cursor: 'pointer' }}>
+                  <select value={form.category} onChange={set('category')} style={{ ...inputStyle, background: 'var(--bg-2)', cursor: 'pointer' }}>
                     {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </Field>
@@ -171,8 +171,8 @@ const PostProduct = () => {
             </div>
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 24, marginBottom: 16 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 20 }}>② Pricing & Cashback Rates</p>
+          <div style={{ background: 'rgba(var(--ink-rgb),0.02)', border: '1px solid rgba(var(--ink-rgb),0.06)', borderRadius: 18, padding: 24, marginBottom: 16 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.25)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 20 }}>② Pricing & Cashback Rates</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <Field label="Retail Price (৳)" required>
                 <input type="number" value={form.price} onChange={set('price')} placeholder="1200" min="0" style={inputStyle} />
@@ -182,7 +182,7 @@ const PostProduct = () => {
                 <input type="range" min="10" max="80" value={form.cashbackRate}
                   onChange={e => setForm(f => ({ ...f, cashbackRate: Number(e.target.value) }))}
                   style={{ width: '100%', accentColor: '#7c3aed', cursor: 'pointer' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 4 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'rgba(var(--ink-rgb),0.2)', marginTop: 4 }}>
                   <span>10%</span><span>80%</span>
                 </div>
               </Field>
@@ -191,10 +191,10 @@ const PostProduct = () => {
                 <input type="range" min="0" max="100" step="10" value={form.instantSplitPct}
                   onChange={e => setForm(f => ({ ...f, instantSplitPct: Number(e.target.value) }))}
                   style={{ width: '100%', accentColor: '#06b6d4', cursor: 'pointer' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 4 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'rgba(var(--ink-rgb),0.2)', marginTop: 4 }}>
                   <span>All after post</span><span>All instant</span>
                 </div>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 6 }}>
+                <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', marginTop: 6 }}>
                   Part of the reward comes off the bill at checkout; the rest releases after the post verifies. Instant discounts convert better — creators risk less upfront.
                 </p>
               </Field>
@@ -214,7 +214,7 @@ const PostProduct = () => {
             </div>
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 24, marginBottom: 16 }}>
+          <div style={{ background: 'rgba(var(--ink-rgb),0.02)', border: '1px solid rgba(var(--ink-rgb),0.06)', borderRadius: 18, padding: 24, marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: '#06b6d4', letterSpacing: '0.12em', textTransform: 'uppercase' }}>③ Campaign Budget Cap & Spend Control ★</p>
               <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 100, background: 'rgba(6,182,212,0.12)', color: '#67e8f9', border: '1px solid rgba(6,182,212,0.25)' }}>Financial Safeguard</span>
@@ -223,14 +223,14 @@ const PostProduct = () => {
               <Field label="Max Total Cashback Budget Cap (৳)" required hint="auto-closes when cap reached">
                 <input type="number" value={form.campaignBudget} onChange={set('campaignBudget')} placeholder="50000" min="1000" style={inputStyle} />
               </Field>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>
+              <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)', lineHeight: 1.6 }}>
                 Once your total cashback payouts reach this cap, the campaign automatically closes to new creator purchases, protecting your brand from unmanaged liability.
               </p>
             </div>
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 24, marginBottom: 16 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 20 }}>④ Creator Eligibility & Posting Rules</p>
+          <div style={{ background: 'rgba(var(--ink-rgb),0.02)', border: '1px solid rgba(var(--ink-rgb),0.06)', borderRadius: 18, padding: 24, marginBottom: 16 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.25)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 20 }}>④ Creator Eligibility & Posting Rules</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <Field label="Minimum Followers Required">
                 <input type="number" value={form.minFollowers} onChange={set('minFollowers')} placeholder="1000" min="0" style={inputStyle} />
@@ -247,17 +247,17 @@ const PostProduct = () => {
             </div>
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 24, marginBottom: 20 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 20 }}>⑤ Product Image</p>
+          <div style={{ background: 'rgba(var(--ink-rgb),0.02)', border: '1px solid rgba(var(--ink-rgb),0.06)', borderRadius: 18, padding: 24, marginBottom: 20 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.25)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 20 }}>⑤ Product Image</p>
             <Field label="Image URL" hint="paste direct link">
               <input value={form.image} onChange={set('image')} placeholder="https://example.com/product-image.jpg" style={inputStyle} />
             </Field>
             {form.image && !imgError && (
               <div style={{ marginTop: 14, display: 'flex', gap: 12, alignItems: 'center' }}>
-                <div style={{ width: 70, height: 70, borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden', background: 'rgba(255,255,255,0.03)', flexShrink: 0 }}>
+                <div style={{ width: 70, height: 70, borderRadius: 10, border: '1px solid rgba(var(--ink-rgb),0.08)', overflow: 'hidden', background: 'rgba(var(--ink-rgb),0.03)', flexShrink: 0 }}>
                   <img src={form.image} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => setImgError(true)} />
                 </div>
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>Image preview — visible to creators in catalog.</p>
+                <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)' }}>Image preview — visible to creators in catalog.</p>
               </div>
             )}
           </div>
@@ -266,9 +266,9 @@ const PostProduct = () => {
             style={{
               width: '100%', padding: '15px', borderRadius: 14, border: 'none', fontFamily: 'inherit',
               background: submitting || !form.name || !form.price
-                ? 'rgba(255,255,255,0.04)'
+                ? 'rgba(var(--ink-rgb),0.04)'
                 : 'linear-gradient(135deg, #7c3aed 0%, #2563eb 50%, #06b6d4 100%)',
-              color: submitting || !form.name || !form.price ? 'rgba(255,255,255,0.2)' : '#fff',
+              color: submitting || !form.name || !form.price ? 'rgba(var(--ink-rgb),0.2)' : '#fff',
               fontSize: 15, fontWeight: 700,
               cursor: submitting || !form.name || !form.price ? 'not-allowed' : 'pointer',
               boxShadow: submitting || !form.name || !form.price ? 'none' : '0 8px 36px rgba(124,58,237,0.35)',
@@ -279,16 +279,16 @@ const PostProduct = () => {
         </div>
 
         <div style={{ position: 'sticky', top: 24 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>Campaign Live Preview</p>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.25)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>Campaign Live Preview</p>
 
-          <div style={{ borderRadius: 18, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden' }}>
-            <div style={{ aspectRatio: '1.1', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ borderRadius: 18, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)', overflow: 'hidden' }}>
+            <div style={{ aspectRatio: '1.1', background: 'rgba(var(--ink-rgb),0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
               {form.image && !imgError ? (
                 <img src={form.image} alt="product" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => setImgError(true)} />
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 52, opacity: 0.18 }}>📦</span>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.15)' }}>No image added</span>
+                  <span style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.15)' }}>No image added</span>
                 </div>
               )}
               <div style={{ position: 'absolute', top: 12, right: 12, padding: '5px 12px', borderRadius: 8, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', fontSize: 12, fontWeight: 800 }}>
@@ -300,8 +300,8 @@ const PostProduct = () => {
             </div>
 
             <div style={{ padding: '18px 18px 20px' }}>
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 4 }}>Your Brand</p>
-              <p style={{ fontSize: 15, fontWeight: 700, color: form.name ? '#fff' : 'rgba(255,255,255,0.18)', marginBottom: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.25)', marginBottom: 4 }}>Your Brand</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: form.name ? '#fff' : 'rgba(var(--ink-rgb),0.18)', marginBottom: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {form.name || 'Campaign Name'}
               </p>
 
@@ -316,7 +316,7 @@ const PostProduct = () => {
 
               <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
                 <div>
-                  <p style={{ fontSize: 20, fontWeight: 800, color: '#fff' }}>
+                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)' }}>
                     ৳{form.price ? Number(form.price).toLocaleString() : '—'}
                   </p>
                   {netPrice && (

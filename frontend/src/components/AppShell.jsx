@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import Sidebar from './Sidebar'
 import NotificationBell from './NotificationBell'
+import ThemeToggle from './ThemeToggle'
 import useMediaQuery from '../hooks/useMediaQuery'
 
 /**
@@ -19,7 +20,7 @@ const AppShell = ({ links = [], children }) => {
   const primary = links.slice(0, 4)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#050816', position: 'relative' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative' }}>
       <div className="aurora-bg" />
       <div className="noise-overlay" />
 
@@ -36,22 +37,26 @@ const AppShell = ({ links = [], children }) => {
         <header style={{
           position: 'sticky', top: 0, zIndex: 30, height: 56,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px',
-          background: 'rgba(5,8,22,0.92)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)',
+          background: 'rgba(var(--nav-rgb),0.92)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(var(--ink-rgb),0.06)',
         }}>
           <button type="button" onClick={() => setOpen(true)} aria-label="Open menu" style={{
-            width: 40, height: 40, borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-            color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            width: 40, height: 40, borderRadius: 12, background: 'rgba(var(--ink-rgb),0.05)', border: '1px solid rgba(var(--ink-rgb),0.1)',
+            color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
           }}><Menu size={20} /></button>
           <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
             <img src="/products/flextag-logo.png" alt="FlexTag" style={{ height: 30, width: 'auto', objectFit: 'contain' }} />
           </Link>
-          <NotificationBell />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <ThemeToggle />
+            <NotificationBell />
+          </div>
         </header>
       )}
 
-      {/* Desktop floating bell */}
+      {/* Desktop floating theme toggle + bell */}
       {!isMobile && (
-        <div style={{ position: 'fixed', top: 16, right: 22, zIndex: 35 }}>
+        <div style={{ position: 'fixed', top: 16, right: 22, zIndex: 35, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ThemeToggle />
           <NotificationBell />
         </div>
       )}
@@ -68,14 +73,14 @@ const AppShell = ({ links = [], children }) => {
         <nav style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30, height: 64,
           display: 'flex', alignItems: 'stretch',
-          background: 'rgba(5,8,22,0.95)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(var(--nav-rgb),0.95)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(var(--ink-rgb),0.08)',
         }}>
           {primary.map(l => (
             <NavLink key={l.path} to={l.path} end={isRoot(l.path)}
               style={({ isActive }) => ({
                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
                 textDecoration: 'none', fontSize: 9.5, fontWeight: 600,
-                color: isActive ? '#a78bfa' : 'rgba(255,255,255,0.45)',
+                color: isActive ? '#a78bfa' : 'rgba(var(--ink-rgb),0.45)',
               })}>
               <span style={{ transform: 'scale(0.85)' }}>{l.icon}</span>
               <span style={{ whiteSpace: 'nowrap', maxWidth: 72, overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.label.split(' ')[0]}</span>
@@ -83,7 +88,7 @@ const AppShell = ({ links = [], children }) => {
           ))}
           <button type="button" onClick={() => setOpen(true)}
             style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
-              background: 'none', border: 'none', cursor: 'pointer', fontSize: 9.5, fontWeight: 600, color: 'rgba(255,255,255,0.45)', fontFamily: 'inherit' }}>
+              background: 'none', border: 'none', cursor: 'pointer', fontSize: 9.5, fontWeight: 600, color: 'rgba(var(--ink-rgb),0.45)', fontFamily: 'inherit' }}>
             <Menu size={20} />
             <span>More</span>
           </button>

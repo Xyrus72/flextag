@@ -14,8 +14,8 @@ import { getMyInstagramAudit, runInstagramAudit, startIdentityVerification, chec
 const EASE = [0.22, 1, 0.36, 1]
 
 const PANEL = {
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.08)',
+  background: 'rgba(var(--ink-rgb),0.04)',
+  border: '1px solid rgba(var(--ink-rgb),0.08)',
   borderRadius: 20,
   padding: 24,
   backdropFilter: 'blur(20px)',
@@ -30,7 +30,7 @@ const QUALITY = {
   good:    { color: '#22c55e',                 badge: 'badge-success', label: 'Good audience' },
   fair:    { color: '#f59e0b',                 badge: 'badge-warning', label: 'Fair audience' },
   poor:    { color: '#ef4444',                 badge: 'badge-error',   label: 'Poor audience' },
-  unknown: { color: 'rgba(255,255,255,0.45)', badge: 'badge-neutral', label: 'Unknown' },
+  unknown: { color: 'rgba(var(--ink-rgb),0.45)', badge: 'badge-neutral', label: 'Unknown' },
 }
 
 const TYPE_BADGE = {
@@ -133,7 +133,7 @@ const Panel = ({ children, delay = 0, style }) => (
 
 const SectionTitle = ({ icon: Icon, color = '#a78bfa', children, right }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
-    <h2 style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>
+    <h2 style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
       {Icon && (
         <span style={{ width: 30, height: 30, borderRadius: 9, background: `${color}1f`, border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon size={15} style={{ color }} />
@@ -141,7 +141,7 @@ const SectionTitle = ({ icon: Icon, color = '#a78bfa', children, right }) => (
       )}
       {children}
     </h2>
-    {right && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{right}</div>}
+    {right && <div style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)' }}>{right}</div>}
   </div>
 )
 
@@ -169,7 +169,7 @@ const Avatar = ({ src, name, size = 76 }) => {
   const showImg = Boolean(src) && !failed
   return (
     <div style={{ width: size, height: size, borderRadius: '50%', padding: 3, background: IG_GRADIENT, flexShrink: 0, boxShadow: '0 0 28px rgba(253,29,29,0.22)' }}>
-      <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#0a0f23', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: Math.round(size * 0.36), fontWeight: 800, color: '#fff' }}>
+      <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'var(--bg-2)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: Math.round(size * 0.36), fontWeight: 800, color: 'var(--text)' }}>
         {showImg
           ? <img src={src} alt="" referrerPolicy="no-referrer" onError={() => setFailed(true)} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           : initialOf(name)}
@@ -182,8 +182,8 @@ const Thumb = ({ src, alt }) => {
   const [failed, setFailed] = useState(false)
   if (!src || failed) {
     return (
-      <div style={{ width: 48, height: 48, borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Camera size={16} style={{ color: 'rgba(255,255,255,0.25)' }} />
+      <div style={{ width: 48, height: 48, borderRadius: 10, background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Camera size={16} style={{ color: 'rgba(var(--ink-rgb),0.25)' }} />
       </div>
     )
   }
@@ -193,7 +193,7 @@ const Thumb = ({ src, alt }) => {
       alt={alt || ''}
       referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
-      style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', display: 'block', flexShrink: 0, border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', display: 'block', flexShrink: 0, border: '1px solid rgba(var(--ink-rgb),0.08)' }}
     />
   )
 }
@@ -242,19 +242,19 @@ const ProfileHeader = ({ profile, username, eligibility, ownerVerified, fetchedA
         {/* keyed by URL so a refreshed (re-signed) picture remounts instead of keeping a stale "failed" state */}
         <Avatar key={profile.profilePicUrl || 'none'} src={profile.profilePicUrl} name={name} />
         <div style={{ flex: 1, minWidth: 220 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>{name || 'Unknown account'}</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>{name || 'Unknown account'}</h2>
           {handle && (
             <a href={`https://www.instagram.com/${encodeURIComponent(handle)}/`} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#a78bfa', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
               @{handle} <ExternalLink size={12} />
             </a>
           )}
           {profile.biography && (
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, margin: '8px 0 0', maxWidth: 560 }}>{truncate(profile.biography, 160)}</p>
+            <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.5)', lineHeight: 1.5, margin: '8px 0 0', maxWidth: 560 }}>{truncate(profile.biography, 160)}</p>
           )}
           <ProfileBadges profile={profile} eligibility={eligibility} ownerVerified={ownerVerified} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, marginLeft: 'auto' }}>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)', display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
             <Clock size={12} /> Audited {relativeTime(fetchedAt)}
           </span>
           <RefreshButton running={running} onClick={onRefresh} />
@@ -295,13 +295,13 @@ const buildKpis = (profile, metrics) => {
 }
 
 const KpiTile = ({ icon: Icon, color, label, value, sub, tone }) => (
-  <div className="stat-card" style={{ padding: '18px 20px', background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)' }}>
+  <div className="stat-card" style={{ padding: '18px 20px', background: 'rgba(var(--ink-rgb),0.03)', borderColor: 'rgba(var(--ink-rgb),0.07)' }}>
     <div style={{ width: 36, height: 36, borderRadius: 10, background: `${color}1f`, border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
       <Icon size={16} style={{ color }} />
     </div>
     <p style={{ fontSize: 24, fontWeight: 800, color: TONE_COLOR[tone] || '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.1, fontStyle: value === 'hidden' ? 'italic' : 'normal' }}>{value}</p>
-    <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', margin: '6px 0 0' }}>{label}</p>
-    {sub && <p style={{ fontSize: 11, color: TONE_COLOR[tone] || 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>{sub}</p>}
+    <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.3)', margin: '6px 0 0' }}>{label}</p>
+    {sub && <p style={{ fontSize: 11, color: TONE_COLOR[tone] || 'rgba(var(--ink-rgb),0.4)', margin: '4px 0 0' }}>{sub}</p>}
   </div>
 )
 
@@ -317,11 +317,11 @@ const HealthGauge = ({ score, grade }) => {
   const r = 54
   const c = 2 * Math.PI * r
   const s = clamp(isNum(score) ? Number(score) : 0, 0, 100)
-  const color = GRADE_COLOR[grade] || 'rgba(255,255,255,0.4)'
+  const color = GRADE_COLOR[grade] || 'rgba(var(--ink-rgb),0.4)'
   return (
     <div style={{ position: 'relative', width: 150, height: 150, flexShrink: 0 }} role="img" aria-label={`Health score ${Math.round(s)} out of 100, grade ${grade || 'unknown'}`}>
       <svg viewBox="0 0 140 140" width="150" height="150" style={{ transform: 'rotate(-90deg)', display: 'block' }}>
-        <circle cx="70" cy="70" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+        <circle cx="70" cy="70" r={r} fill="none" stroke="rgba(var(--ink-rgb),0.06)" strokeWidth="10" />
         <motion.circle
           cx="70" cy="70" r={r} fill="none" stroke={color} strokeWidth="10" strokeLinecap="round"
           strokeDasharray={c}
@@ -332,10 +332,10 @@ const HealthGauge = ({ score, grade }) => {
         />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-        <span style={{ fontSize: 36, fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', lineHeight: 1 }}>{Math.round(s)}</span>
-        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 4 }}>/ 100</span>
+        <span style={{ fontSize: 36, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.04em', lineHeight: 1 }}>{Math.round(s)}</span>
+        <span style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.35)', letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 4 }}>/ 100</span>
       </div>
-      <div style={{ position: 'absolute', right: 4, bottom: 4, width: 36, height: 36, borderRadius: '50%', background: '#0a0f23', border: `2px solid ${color}`, color, fontWeight: 800, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 14px ${color}66` }}>
+      <div style={{ position: 'absolute', right: 4, bottom: 4, width: 36, height: 36, borderRadius: '50%', background: 'var(--bg-2)', border: `2px solid ${color}`, color, fontWeight: 800, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 14px ${color}66` }}>
         {grade || '?'}
       </div>
     </div>
@@ -352,12 +352,12 @@ const BreakdownBar = ({ item, index }) => {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{item.label || item.key}</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{item.label || item.key}</span>
         <span style={{ fontSize: 12, fontWeight: 700, color, whiteSpace: 'nowrap' }}>
-          {score}<span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}> / {max}</span>
+          {score}<span style={{ color: 'rgba(var(--ink-rgb),0.3)', fontWeight: 500 }}> / {max}</span>
         </span>
       </div>
-      <div style={{ height: 6, borderRadius: 6, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+      <div style={{ height: 6, borderRadius: 6, background: 'rgba(var(--ink-rgb),0.06)', overflow: 'hidden' }}>
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${ratio * 100}%` }}
@@ -365,7 +365,7 @@ const BreakdownBar = ({ item, index }) => {
           style={{ height: '100%', borderRadius: 6, background: color, boxShadow: `0 0 10px ${color}66` }}
         />
       </div>
-      {item.detail && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '6px 0 0', lineHeight: 1.45 }}>{item.detail}</p>}
+      {item.detail && <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', margin: '6px 0 0', lineHeight: 1.45 }}>{item.detail}</p>}
     </div>
   )
 }
@@ -394,7 +394,7 @@ const HealthCard = ({ health, delay }) => {
   const breakdown = Array.isArray(health.breakdown) ? health.breakdown : []
   const flags = Array.isArray(health.flags) ? health.flags.filter(Boolean) : []
   const grade = health.grade
-  const color = GRADE_COLOR[grade] || 'rgba(255,255,255,0.4)'
+  const color = GRADE_COLOR[grade] || 'rgba(var(--ink-rgb),0.4)'
   return (
     <Panel delay={delay}>
       <SectionTitle icon={Activity} color="#7c3aed" right={grade ? <span style={{ color, fontWeight: 700 }}>Grade {grade}</span> : null}>
@@ -403,16 +403,16 @@ const HealthCard = ({ health, delay }) => {
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flex: '0 0 auto', marginInline: 'auto' }}>
           <HealthGauge score={health.score} grade={grade} />
-          <span style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' }}>Health score</span>
+          <span style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.3)' }}>Health score</span>
         </div>
         <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: 16 }}>
           {breakdown.length
             ? breakdown.map((item, i) => <BreakdownBar key={item.key || item.label || i} item={item} index={i} />)
-            : <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>No breakdown available.</p>}
+            : <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.35)', margin: 0 }}>No breakdown available.</p>}
         </div>
       </div>
       <div style={{ marginTop: 20 }}>
-        <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', margin: '0 0 8px' }}>Flags</p>
+        <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.3)', margin: '0 0 8px' }}>Flags</p>
         <FlagList flags={flags} />
       </div>
     </Panel>
@@ -441,12 +441,12 @@ const AudienceCard = ({ audience, depth, delay }) => {
           {pct == null ? '—' : `${pct}%`}
         </span>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>estimated fake followers</span>
+          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.35)' }}>estimated fake followers</span>
           <span className={`badge ${q.badge}`} style={{ alignSelf: 'flex-start' }}>{q.label}</span>
         </div>
       </div>
       {explanation && (
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: '12px 0 0', lineHeight: 1.5 }}>{explanation}</p>
+        <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.45)', margin: '12px 0 0', lineHeight: 1.5 }}>{explanation}</p>
       )}
 
       {signals.length > 0 && (
@@ -454,12 +454,12 @@ const AudienceCard = ({ audience, depth, delay }) => {
           {signals.map((s, i) => {
             const active = isNum(s.weight) && Number(s.weight) > 0
             return (
-              <div key={`${s.key || 'signal'}-${i}`} style={{ display: 'flex', justifyContent: 'space-between', gap: 14, padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <div key={`${s.key || 'signal'}-${i}`} style={{ display: 'flex', justifyContent: 'space-between', gap: 14, padding: '10px 0', borderTop: '1px solid rgba(var(--ink-rgb),0.05)' }}>
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: '#fff', margin: 0 }}>{s.label || s.key}</p>
-                  {s.detail && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0', lineHeight: 1.45 }}>{s.detail}</p>}
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{s.label || s.key}</p>
+                  {s.detail && <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', margin: '3px 0 0', lineHeight: 1.45 }}>{s.detail}</p>}
                 </div>
-                <span style={{ fontSize: 13, fontWeight: 700, color: active ? '#fbbf24' : 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: active ? '#fbbf24' : 'rgba(var(--ink-rgb),0.5)', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   {s.value == null || s.value === '' ? '—' : String(s.value)}
                 </span>
               </div>
@@ -468,7 +468,7 @@ const AudienceCard = ({ audience, depth, delay }) => {
         </div>
       )}
 
-      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '16px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.3)', margin: '16px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
         <Users size={12} />
         {sampleSize > 0 ? `Based on a sample of ${fmtNum(sampleSize)} followers` : 'No follower sample was available for this audit'}
       </p>
@@ -489,7 +489,7 @@ const PostRow = ({ post }) => {
       <td>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 220 }}>
           <Thumb key={post.thumbnail || post.shortcode || 'none'} src={post.thumbnail} alt="" />
-          <span style={{ fontSize: 13, color: caption ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.3)', lineHeight: 1.45, fontStyle: caption ? 'normal' : 'italic', maxWidth: 360 }}>
+          <span style={{ fontSize: 13, color: caption ? 'rgba(var(--ink-rgb),0.75)' : 'rgba(var(--ink-rgb),0.3)', lineHeight: 1.45, fontStyle: caption ? 'normal' : 'italic', maxWidth: 360 }}>
             {caption || 'No caption'}
           </span>
         </div>
@@ -498,8 +498,8 @@ const PostRow = ({ post }) => {
       <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(post.takenAt)}</td>
       <td style={TD_NUM}>
         {post.likes == null
-          ? <span style={{ color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>hidden</span>
-          : <span style={{ color: '#fff', fontWeight: 600 }}>{fmtNum(post.likes)}</span>}
+          ? <span style={{ color: 'rgba(var(--ink-rgb),0.3)', fontStyle: 'italic' }}>hidden</span>
+          : <span style={{ color: 'var(--text)', fontWeight: 600 }}>{fmtNum(post.likes)}</span>}
       </td>
       <td style={TD_NUM}>{fmtNum(post.comments)}</td>
       <td style={TD_NUM}>{post.views == null ? '—' : fmtNum(post.views)}</td>
@@ -545,12 +545,12 @@ const PostsTable = ({ posts, metrics, delay }) => {
             </tbody>
             <tfoot>
               <tr style={{ background: 'rgba(124,58,237,0.06)' }}>
-                <td colSpan={3} style={{ fontWeight: 600, color: 'rgba(255,255,255,0.55)', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <td colSpan={3} style={{ fontWeight: 600, color: 'rgba(var(--ink-rgb),0.55)', borderTop: '1px solid rgba(var(--ink-rgb),0.08)' }}>
                   Totals across {fmtNum(analyzed)} analyzed posts
                 </td>
-                <td style={{ ...TD_NUM, fontWeight: 700, color: '#fff', borderTop: '1px solid rgba(255,255,255,0.08)' }}>{fmtNum(metrics.totalLikes)}</td>
-                <td style={{ ...TD_NUM, fontWeight: 700, color: '#fff', borderTop: '1px solid rgba(255,255,255,0.08)' }}>{fmtNum(metrics.totalComments)}</td>
-                <td colSpan={2} style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
+                <td style={{ ...TD_NUM, fontWeight: 700, color: 'var(--text)', borderTop: '1px solid rgba(var(--ink-rgb),0.08)' }}>{fmtNum(metrics.totalLikes)}</td>
+                <td style={{ ...TD_NUM, fontWeight: 700, color: 'var(--text)', borderTop: '1px solid rgba(var(--ink-rgb),0.08)' }}>{fmtNum(metrics.totalComments)}</td>
+                <td colSpan={2} style={{ borderTop: '1px solid rgba(var(--ink-rgb),0.08)' }} />
               </tr>
             </tfoot>
           </table>
@@ -570,7 +570,7 @@ const CommentSamples = ({ comments, delay }) => {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '18px 24px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#fff', fontSize: 15, fontWeight: 700, fontFamily: 'inherit', textAlign: 'left' }}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '18px 24px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text)', fontSize: 15, fontWeight: 700, fontFamily: 'inherit', textAlign: 'left' }}
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ width: 30, height: 30, borderRadius: 9, background: 'rgba(96,165,250,0.12)', border: '1px solid rgba(96,165,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -578,21 +578,21 @@ const CommentSamples = ({ comments, delay }) => {
           </span>
           Recent comments ({comments.length})
         </span>
-        <ChevronDown size={18} style={{ transition: 'transform 0.25s ease', transform: open ? 'rotate(180deg)' : 'none', color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
+        <ChevronDown size={18} style={{ transition: 'transform 0.25s ease', transform: open ? 'rotate(180deg)' : 'none', color: 'rgba(var(--ink-rgb),0.4)', flexShrink: 0 }} />
       </button>
       {open && (
         <div style={{ padding: '0 24px 20px', maxHeight: 420, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {comments.map((c, i) => (
-            <div key={`${c.shortcode || ''}-${c.username || ''}-${i}`} style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div key={`${c.shortcode || ''}-${c.username || ''}-${i}`} style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 12, background: 'rgba(var(--ink-rgb),0.02)', border: '1px solid rgba(var(--ink-rgb),0.05)' }}>
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', color: '#a78bfa', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {initialOf(c.username)}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>@{c.username || 'unknown'}</span>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{fmtDate(c.createdAt)}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>@{c.username || 'unknown'}</span>
+                  <span style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.3)' }}>{fmtDate(c.createdAt)}</span>
                 </div>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: '4px 0 0', lineHeight: 1.5, wordBreak: 'break-word' }}>{c.text || ''}</p>
+                <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.6)', margin: '4px 0 0', lineHeight: 1.5, wordBreak: 'break-word' }}>{c.text || ''}</p>
               </div>
             </div>
           ))}
@@ -617,8 +617,8 @@ const RunAuditCard = ({ handle, running, onRun, precheckPending }) => (
     <div style={{ width: 60, height: 60, borderRadius: 18, background: IG_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', boxShadow: '0 0 32px rgba(253,29,29,0.25)' }}>
       <InstagramGlyph size={28} />
     </div>
-    <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>Run your first audit</h2>
-    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '10px auto 0', maxWidth: 460 }}>
+    <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>Run your first audit</h2>
+    <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.5)', lineHeight: 1.6, margin: '10px auto 0', maxWidth: 460 }}>
       We&apos;ll pull the latest posts and a follower sample for <strong style={{ color: '#a78bfa' }}>@{handle}</strong> to score account health,
       estimate fake followers and confirm your FlexTag eligibility. Takes about 15 seconds.
     </p>
@@ -629,7 +629,7 @@ const RunAuditCard = ({ handle, running, onRun, precheckPending }) => (
     )}
     <button type="button" className="btn-primary" disabled={running} onClick={onRun} style={{ marginTop: 22, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
       {running
-        ? <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} /> Pulling your latest posts… ~15 s</>
+        ? <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2, borderColor: 'rgba(var(--ink-rgb),0.3)', borderTopColor: '#fff' }} /> Pulling your latest posts… ~15 s</>
         : <><Activity size={15} /> Run my audit</>}
     </button>
   </Panel>
@@ -676,35 +676,35 @@ const IdentityCard = ({ handle, onVerified }) => {
       </SectionTitle>
       {msg && <Banner tone={msg.tone} text={msg.text} />}
       {phase === 'done' ? (
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.6)', margin: 0, lineHeight: 1.6 }}>
           Ownership confirmed. Posts that pass every campaign check are now approved automatically and cashback lands in your wallet right away. You can remove the code from your bio.
         </p>
       ) : phase === 'code' || phase === 'checking' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <code style={{ fontSize: 18, fontWeight: 800, letterSpacing: '0.08em', color: '#fff', background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '8px 14px' }}>{data?.code}</code>
+            <code style={{ fontSize: 18, fontWeight: 800, letterSpacing: '0.08em', color: 'var(--text)', background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(var(--ink-rgb),0.12)', borderRadius: 10, padding: '8px 14px' }}>{data?.code}</code>
             <button type="button" className="btn-ghost" onClick={copy} style={{ padding: '8px 12px', fontSize: 11 }}>Copy</button>
-            {data?.expiresInDays && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>valid {data.expiresInDays} days</span>}
+            {data?.expiresInDays && <span style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)' }}>valid {data.expiresInDays} days</span>}
           </div>
-          <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+          <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: 'rgba(var(--ink-rgb),0.6)', lineHeight: 1.7 }}>
             {(data?.instructions || []).map((line, i) => <li key={i}>{line}</li>)}
           </ol>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button type="button" className="btn-primary" disabled={busy} onClick={check} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
               {phase === 'checking'
-                ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} /> Checking your bio…</>
+                ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, borderColor: 'rgba(var(--ink-rgb),0.3)', borderTopColor: '#fff' }} /> Checking your bio…</>
                 : <><ShieldCheck size={14} /> Verify now</>}
             </button>
           </div>
         </div>
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.6, maxWidth: 560 }}>
+          <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.6)', margin: 0, lineHeight: 1.6, maxWidth: 560 }}>
             Automatic cashback is only released for accounts we know you own. Add a one-time code to your Instagram bio and we&apos;ll confirm it — it takes about a minute, and you can delete the code afterwards.
           </p>
           <button type="button" className="btn-primary" disabled={busy} onClick={start} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
             {phase === 'loading'
-              ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} /> One moment…</>
+              ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, borderColor: 'rgba(var(--ink-rgb),0.3)', borderTopColor: '#fff' }} /> One moment…</>
               : <><ShieldCheck size={14} /> Get my code</>}
           </button>
         </div>
@@ -818,7 +818,7 @@ const InstagramAnalyzer = () => {
         <h1 className="page-title">Account Audit</h1>
         <p className="page-subtitle">
           {shownHandle
-            ? <>Health, audience quality and recent performance for <strong style={{ color: '#fff' }}>@{shownHandle}</strong></>
+            ? <>Health, audience quality and recent performance for <strong style={{ color: 'var(--text)' }}>@{shownHandle}</strong></>
             : 'Health, audience quality and recent performance of your Instagram account'}
         </p>
       </div>

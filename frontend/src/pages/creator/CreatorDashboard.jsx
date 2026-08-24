@@ -51,7 +51,7 @@ const CreatorDashboard = () => {
   }
   const tier = tierInfo[user?.tier] || tierInfo.bronze
 
-  const panel = { background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:20, padding:24, backdropFilter:'blur(20px)' }
+  const panel = { background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:20, padding:24, backdropFilter:'blur(20px)' }
 
   return (
     <div className="page-root">
@@ -67,13 +67,13 @@ const CreatorDashboard = () => {
       {/* KPIs */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:16, marginBottom:32 }}>
         {kpis.map(s => (
-          <div key={s.label} className="stat-card" style={{ background:`rgba(255,255,255,0.03)`, borderColor:`rgba(255,255,255,0.07)` }}>
+          <div key={s.label} className="stat-card" style={{ background:`rgba(var(--ink-rgb),0.03)`, borderColor:`rgba(var(--ink-rgb),0.07)` }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
               <div style={{ width:44, height:44, borderRadius:12, background:s.color, border:`1px solid ${s.border}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>{s.icon}</div>
               {loading && <div className="spinner" style={{ width:16, height:16, borderWidth:2 }} />}
             </div>
-            <p style={{ fontSize:28, fontWeight:800, color:'#fff', letterSpacing:'-0.03em', marginBottom:4 }}>{loading ? '—' : s.value}</p>
-            <p style={{ fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(255,255,255,0.3)', marginBottom:6 }}>{s.label}</p>
+            <p style={{ fontSize:28, fontWeight:800, color: 'var(--text)', letterSpacing:'-0.03em', marginBottom:4 }}>{loading ? '—' : s.value}</p>
+            <p style={{ fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.3)', marginBottom:6 }}>{s.label}</p>
             <p style={{ fontSize:12, color:s.text }}>{s.sub}</p>
           </div>
         ))}
@@ -83,7 +83,7 @@ const CreatorDashboard = () => {
         {/* Recent Orders */}
         <div style={{ ...panel, gridColumn:'span 2' }} className="lg:col-span-2">
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
-            <h2 style={{ fontSize:16, fontWeight:700, color:'#fff', margin:0 }}>Recent Orders</h2>
+            <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:0 }}>Recent Orders</h2>
             <Link to="/creator/orders" style={{ fontSize:11, color:'rgba(167,139,250,0.7)', textDecoration:'none', textTransform:'uppercase', letterSpacing:'0.1em', display:'flex', alignItems:'center', gap:4 }}>
               View all →
             </Link>
@@ -99,14 +99,14 @@ const CreatorDashboard = () => {
           ) : (
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               {recentOrders.map(o => (
-                <div key={o._id} style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px', borderRadius:14, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ width:44, height:44, borderRadius:12, background:'rgba(255,255,255,0.05)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0 }}>{o.image || '📦'}</div>
+                <div key={o._id} style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px', borderRadius:14, background:'rgba(var(--ink-rgb),0.02)', border:'1px solid rgba(var(--ink-rgb),0.05)' }}>
+                  <div style={{ width:44, height:44, borderRadius:12, background:'rgba(var(--ink-rgb),0.05)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0 }}>{o.image || '📦'}</div>
                   <div style={{ flex:1, minWidth:0 }}>
-                    <p style={{ fontSize:14, fontWeight:600, color:'#fff', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', margin:0 }}>{o.product}</p>
-                    <p style={{ fontSize:12, color:'rgba(255,255,255,0.3)', marginTop:2 }}>{o.brand} · {o.orderId}</p>
+                    <p style={{ fontSize:14, fontWeight:600, color: 'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', margin:0 }}>{o.product}</p>
+                    <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.3)', marginTop:2 }}>{o.brand} · {o.orderId}</p>
                   </div>
                   <div style={{ textAlign:'right', flexShrink:0 }}>
-                    <p style={{ fontSize:15, fontWeight:700, color:'#fff', margin:0 }}>৳{o.total?.toLocaleString()}</p>
+                    <p style={{ fontSize:15, fontWeight:700, color: 'var(--text)', margin:0 }}>৳{o.total?.toLocaleString()}</p>
                     <p style={{ fontSize:12, color:'#4ade80', marginTop:2 }}>+৳{o.cashbackAmount?.toLocaleString()}</p>
                   </div>
                 </div>
@@ -119,26 +119,26 @@ const CreatorDashboard = () => {
         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
           {/* Tier */}
           <div style={panel}>
-            <h2 style={{ fontSize:15, fontWeight:700, color:'#fff', margin:'0 0 16px' }}>Tier Progress</h2>
+            <h2 style={{ fontSize:15, fontWeight:700, color: 'var(--text)', margin:'0 0 16px' }}>Tier Progress</h2>
             <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
               <span style={{ fontSize:28 }}>{tier.emoji}</span>
               <div>
-                <p style={{ fontSize:14, fontWeight:700, color:'#fff', margin:0, textTransform:'capitalize' }}>{user?.tier || 'Bronze'} Creator</p>
-                {tier.next && <p style={{ fontSize:12, color:'rgba(255,255,255,0.35)', marginTop:2 }}>Leveling up to {tier.next}</p>}
+                <p style={{ fontSize:14, fontWeight:700, color: 'var(--text)', margin:0, textTransform:'capitalize' }}>{user?.tier || 'Bronze'} Creator</p>
+                {tier.next && <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.35)', marginTop:2 }}>Leveling up to {tier.next}</p>}
               </div>
             </div>
-            <div style={{ width:'100%', height:6, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden' }}>
+            <div style={{ width:'100%', height:6, borderRadius:3, background:'rgba(var(--ink-rgb),0.06)', overflow:'hidden' }}>
               <div style={{ height:'100%', borderRadius:3, background:'linear-gradient(90deg,#7c3aed,#06b6d4)', width:`${Math.min(100,tier.progress)}%`, transition:'width 1s ease' }} />
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', marginTop:8 }}>
-              <span style={{ fontSize:11, color:'rgba(255,255,255,0.3)', textTransform:'capitalize' }}>{user?.tier||'Bronze'}</span>
-              {tier.next && <span style={{ fontSize:11, color:'rgba(255,255,255,0.3)' }}>{tier.next}</span>}
+              <span style={{ fontSize:11, color:'rgba(var(--ink-rgb),0.3)', textTransform:'capitalize' }}>{user?.tier||'Bronze'}</span>
+              {tier.next && <span style={{ fontSize:11, color:'rgba(var(--ink-rgb),0.3)' }}>{tier.next}</span>}
             </div>
           </div>
 
           {/* Quick Actions */}
           <div style={panel}>
-            <h2 style={{ fontSize:15, fontWeight:700, color:'#fff', margin:'0 0 16px' }}>Quick Actions</h2>
+            <h2 style={{ fontSize:15, fontWeight:700, color: 'var(--text)', margin:'0 0 16px' }}>Quick Actions</h2>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
               {[
                 { to:'/creator/catalog',     label:'Shop',      icon:'🛍️' },
@@ -146,12 +146,12 @@ const CreatorDashboard = () => {
                 { to:'/creator/wallet',      label:'Wallet',    icon:'💳' },
                 { to:'/creator/leaderboard', label:'Rankings',  icon:'🏆' },
               ].map(q => (
-                <Link key={q.to} to={q.to} style={{ padding:'14px 8px', borderRadius:12, textAlign:'center', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', textDecoration:'none', transition:'all 0.2s', display:'block' }}
+                <Link key={q.to} to={q.to} style={{ padding:'14px 8px', borderRadius:12, textAlign:'center', background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.07)', textDecoration:'none', transition:'all 0.2s', display:'block' }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(124,58,237,0.3)'; e.currentTarget.style.background='rgba(124,58,237,0.06)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.07)'; e.currentTarget.style.background='rgba(255,255,255,0.03)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(var(--ink-rgb),0.07)'; e.currentTarget.style.background='rgba(var(--ink-rgb),0.03)' }}
                 >
                   <p style={{ fontSize:22, marginBottom:6 }}>{q.icon}</p>
-                  <p style={{ fontSize:10, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(255,255,255,0.4)', margin:0 }}>{q.label}</p>
+                  <p style={{ fontSize:10, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.4)', margin:0 }}>{q.label}</p>
                 </Link>
               ))}
             </div>

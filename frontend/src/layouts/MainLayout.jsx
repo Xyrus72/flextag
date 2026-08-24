@@ -8,7 +8,7 @@ const MainLayout = () => {
   const isLanding = pathname === '/'
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-x-hidden bg-[#050505]">
+    <div className="min-h-screen flex flex-col relative overflow-x-hidden" style={{ background: 'var(--bg)' }}>
       {/* Noise grain overlay */}
       <div className="noise-overlay" />
 

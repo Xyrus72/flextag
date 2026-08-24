@@ -46,7 +46,7 @@ const Portfolio = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
           padding: '12px 16px', borderRadius: 14, background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.2)', marginBottom: 24 }}>
           <div style={{ minWidth: 0 }}>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#fff' }}>🔗 Your public page — share it with brands</p>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>🔗 Your public page — share it with brands</p>
             <p style={{ margin: '2px 0 0', fontSize: 12, color: '#a78bfa', wordBreak: 'break-all' }}>{publicUrl}</p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>

@@ -72,8 +72,8 @@ const OtpInput = ({ value, onChange }) => {
           style={{
             width: 52, height: 60, borderRadius: 14, textAlign: 'center',
             fontSize: 24, fontWeight: 800, color: '#fff', caretColor: '#7c3aed',
-            background: digits[i] ? 'rgba(124,58,237,0.12)' : 'rgba(255,255,255,0.04)',
-            border: digits[i] ? '2px solid rgba(124,58,237,0.5)' : '2px solid rgba(255,255,255,0.08)',
+            background: digits[i] ? 'rgba(124,58,237,0.12)' : 'rgba(var(--ink-rgb),0.04)',
+            border: digits[i] ? '2px solid rgba(124,58,237,0.5)' : '2px solid rgba(var(--ink-rgb),0.08)',
             outline: 'none', transition: 'all 0.2s',
             boxShadow: digits[i] ? '0 0 16px rgba(124,58,237,0.2)' : 'none',
           }}
@@ -106,10 +106,10 @@ const IgPrecheckCard = ({ data }) => {
       </div>
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>@{username}</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>@{username}</span>
           {data.isVerified && <span className="badge badge-info" style={{ flexShrink: 0 }}>Verified</span>}
         </div>
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: '2px 0 0' }}>
+        <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.45)', margin: '2px 0 0' }}>
           {followers.toLocaleString()} followers · <span style={{ color: '#4ade80', fontWeight: 600 }}>Public ✓</span>
         </p>
       </div>
@@ -332,23 +332,23 @@ const Register = () => {
                 <div style={{
                   width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', fontSize: 11, fontWeight: 800, transition: 'all 0.3s',
-                  background: step > i ? 'linear-gradient(135deg,#22c55e,#16a34a)' : step === i ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(255,255,255,0.05)',
-                  color: step > i || step === i ? '#fff' : 'rgba(255,255,255,0.2)',
-                  border: step > i || step === i ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                  background: step > i ? 'linear-gradient(135deg,#22c55e,#16a34a)' : step === i ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.05)',
+                  color: step > i || step === i ? '#fff' : 'rgba(var(--ink-rgb),0.2)',
+                  border: step > i || step === i ? 'none' : '1px solid rgba(var(--ink-rgb),0.1)',
                   boxShadow: step === i ? '0 0 16px rgba(124,58,237,0.4)' : 'none',
                 }}>
                   {step > i ? '✓' : i + 1}
                 </div>
                 <span style={{
                   fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
-                  color: step === i ? '#fff' : 'rgba(255,255,255,0.2)',
+                  color: step === i ? '#fff' : 'rgba(var(--ink-rgb),0.2)',
                   display: 'none',
                 }} className="sm:block">{s}</span>
               </div>
               {i < 4 && (
                 <div style={{
                   flex: 1, height: 2, margin: '0 6px', borderRadius: 1, transition: 'all 0.4s',
-                  background: step > i ? 'linear-gradient(90deg,#22c55e,#7c3aed)' : 'rgba(255,255,255,0.06)',
+                  background: step > i ? 'linear-gradient(90deg,#22c55e,#7c3aed)' : 'rgba(var(--ink-rgb),0.06)',
                 }} />
               )}
             </Fragment>
@@ -357,9 +357,9 @@ const Register = () => {
 
         {/* Card */}
         <div style={{
-          background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24,
-          padding: 36, boxShadow: '0 24px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)',
+          background: 'rgba(var(--ink-rgb),0.04)', backdropFilter: 'blur(24px)',
+          border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 24,
+          padding: 36, boxShadow: '0 24px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(var(--ink-rgb),0.06)',
           position: 'relative', overflow: 'hidden',
         }}>
           <div style={{ position: 'absolute', top: 0, left: '20%', right: '20%', height: 1, background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.5), rgba(6,182,212,0.4), transparent)', pointerEvents: 'none' }} />
@@ -367,7 +367,7 @@ const Register = () => {
           {/* Step 0 — Account Type */}
           {step === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Choose Account Type</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>Choose Account Type</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 {[
                   { r: 'creator', icon: '🎯', title: 'Creator', desc: 'Shop products and earn cashback by sharing authentic content', color: '#7c3aed' },
@@ -375,13 +375,13 @@ const Register = () => {
                 ].map(o => (
                   <button key={o.r} id={`role-${o.r}`} onClick={() => setRole(o.r)} style={{
                     padding: 24, borderRadius: 16, textAlign: 'left', cursor: 'pointer',
-                    background: role === o.r ? `rgba(${o.r === 'creator' ? '124,58,237' : '6,182,212'},0.08)` : 'rgba(255,255,255,0.03)',
-                    border: role === o.r ? `2px solid rgba(${o.r === 'creator' ? '124,58,237' : '6,182,212'},0.4)` : '2px solid rgba(255,255,255,0.07)',
+                    background: role === o.r ? `rgba(${o.r === 'creator' ? '124,58,237' : '6,182,212'},0.08)` : 'rgba(var(--ink-rgb),0.03)',
+                    border: role === o.r ? `2px solid rgba(${o.r === 'creator' ? '124,58,237' : '6,182,212'},0.4)` : '2px solid rgba(var(--ink-rgb),0.07)',
                     transition: 'all 0.2s', boxShadow: role === o.r ? `0 0 24px rgba(${o.r === 'creator' ? '124,58,237' : '6,182,212'},0.15)` : 'none',
                   }}>
                     <span style={{ fontSize: 32, display: 'block', marginBottom: 12 }}>{o.icon}</span>
-                    <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 6 }}>{o.title}</p>
-                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, margin: 0 }}>{o.desc}</p>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>{o.title}</p>
+                    <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.4)', lineHeight: 1.6, margin: 0 }}>{o.desc}</p>
                   </button>
                 ))}
               </div>
@@ -391,7 +391,7 @@ const Register = () => {
           {/* Step 1 — Personal Info */}
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Personal Info</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>Personal Info</h2>
               {[
                 { label: 'Full Name', key: 'name', type: 'text', placeholder: 'Your full name', id: 'reg-name' },
                 { label: 'Email Address', key: 'email', type: 'email', placeholder: 'you@example.com', id: 'reg-email' },
@@ -409,7 +409,7 @@ const Register = () => {
           {/* Step 2 — Profile Details */}
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>
                 {role === 'creator' ? 'Social Profile' : 'Company Info'}
               </h2>
               {role === 'creator' ? (
@@ -427,7 +427,7 @@ const Register = () => {
                     spellCheck={false}
                     maxLength={80}
                   />
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '8px 0 0', lineHeight: 1.5 }}>
+                  <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)', margin: '8px 0 0', lineHeight: 1.5 }}>
                     Must be a public account with 1,000+ followers
                   </p>
                 </div>
@@ -445,7 +445,7 @@ const Register = () => {
                     <label className="field-label">Product Category</label>
                     <select id="reg-category" value={form.productCategory} onChange={set('productCategory')} className="field-select">
                       {['Beauty', 'Fashion', 'Tech', 'Lifestyle', 'Food & Grocery'].map(c => (
-                        <option key={c} value={c} style={{ background: '#0d0d20', color: '#fff' }}>{c}</option>
+                        <option key={c} value={c} style={{ background: 'var(--bg-2)', color: 'var(--text)' }}>{c}</option>
                       ))}
                     </select>
                   </div>
@@ -465,10 +465,10 @@ const Register = () => {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 28, boxShadow: '0 0 32px rgba(124,58,237,0.2)',
                 }}>✉️</div>
-                <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', margin: '0 0 8px' }}>
+                <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em', margin: '0 0 8px' }}>
                   Check your inbox
                 </h2>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.7 }}>
+                <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.4)', margin: 0, lineHeight: 1.7 }}>
                   We sent a 6-digit verification code to<br />
                   <strong style={{ color: 'rgba(167,139,250,0.8)' }}>{form.email}</strong>
                 </p>
@@ -485,7 +485,7 @@ const Register = () => {
               {/* Resend */}
               <div style={{ textAlign: 'center' }}>
                 {resendCooldown > 0 ? (
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                  <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.3)', margin: 0 }}>
                     Resend code in <strong style={{ color: 'rgba(167,139,250,0.6)' }}>{resendCooldown}s</strong>
                   </p>
                 ) : (
@@ -511,8 +511,8 @@ const Register = () => {
             <div style={{ textAlign: 'center', padding: '16px 0', display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(34,197,94,0.12)', border: '2px solid rgba(34,197,94,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: 36, boxShadow: '0 0 40px rgba(34,197,94,0.2)' }}>🎉</div>
               <div>
-                <h2 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: '0 0 8px' }}>You're all set!</h2>
-                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.6 }}>Your email is verified and account is ready. Let's get started!</p>
+                <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', margin: '0 0 8px' }}>You're all set!</h2>
+                <p style={{ fontSize: 14, color: 'rgba(var(--ink-rgb),0.4)', margin: 0, lineHeight: 1.6 }}>Your email is verified and account is ready. Let's get started!</p>
               </div>
             </div>
           )}
@@ -537,7 +537,7 @@ const Register = () => {
           </div>
 
           {step === 0 && (
-            <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.3)', marginTop: 20 }}>
+            <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(var(--ink-rgb),0.3)', marginTop: 20 }}>
               Already have an account?{' '}
               <Link to="/login" style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
             </p>

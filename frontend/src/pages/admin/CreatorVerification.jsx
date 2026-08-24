@@ -16,7 +16,7 @@ const QUALITY = {
   good:    { color: '#4ade80',                 badge: 'badge-success', label: 'Good' },
   fair:    { color: '#fbbf24',                 badge: 'badge-warning', label: 'Fair' },
   poor:    { color: '#f87171',                 badge: 'badge-error',   label: 'Poor' },
-  unknown: { color: 'rgba(255,255,255,0.45)', badge: 'badge-neutral', label: 'Unknown' },
+  unknown: { color: 'rgba(var(--ink-rgb),0.45)', badge: 'badge-neutral', label: 'Unknown' },
 }
 
 const TYPE_BADGE = {
@@ -36,19 +36,19 @@ const STATUS_TONES = {
   green: { bg: 'rgba(34,197,94,0.08)',     border: 'rgba(34,197,94,0.25)',     color: '#4ade80',                 dot: '#4ade80', Icon: Wifi },
   amber: { bg: 'rgba(245,158,11,0.08)',    border: 'rgba(245,158,11,0.25)',    color: '#fbbf24',                 dot: '#fbbf24', Icon: Clock },
   red:   { bg: 'rgba(239,68,68,0.08)',     border: 'rgba(239,68,68,0.25)',     color: '#f87171',                 dot: '#f87171', Icon: WifiOff },
-  grey:  { bg: 'rgba(255,255,255,0.03)',   border: 'rgba(255,255,255,0.08)',   color: 'rgba(255,255,255,0.55)', dot: 'rgba(255,255,255,0.35)', Icon: WifiOff },
+  grey:  { bg: 'rgba(var(--ink-rgb),0.03)',   border: 'rgba(var(--ink-rgb),0.08)',   color: 'rgba(var(--ink-rgb),0.55)', dot: 'rgba(var(--ink-rgb),0.35)', Icon: WifiOff },
 }
 
 const PANEL = {
-  background: 'rgba(255,255,255,0.03)',
-  border: '1px solid rgba(255,255,255,0.07)',
+  background: 'rgba(var(--ink-rgb),0.03)',
+  border: '1px solid rgba(var(--ink-rgb),0.07)',
   borderRadius: 20,
   backdropFilter: 'blur(20px)',
 }
 
-const LABEL = { fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', margin: 0 }
-const MUTED = { fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.5 }
-const CODE  = { background: 'rgba(255,255,255,0.08)', padding: '1px 6px', borderRadius: 4, fontSize: 11 }
+const LABEL = { fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.35)', margin: 0 }
+const MUTED = { fontSize: 12, color: 'rgba(var(--ink-rgb),0.4)', margin: 0, lineHeight: 1.5 }
+const CODE  = { background: 'rgba(var(--ink-rgb),0.08)', padding: '1px 6px', borderRadius: 4, fontSize: 11 }
 
 /* ── Helpers ───────────────────────────────────────────────────────────────── */
 
@@ -113,7 +113,7 @@ const scoreColor = (score) => {
 
 const SectionTitle = ({ icon: Icon, color = '#a78bfa', children, right }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-    <h3 style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 700, color: '#fff', margin: 0 }}>
+    <h3 style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
       {Icon && (
         <span style={{ width: 26, height: 26, borderRadius: 8, background: `${color}1f`, border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon size={13} style={{ color }} />
@@ -121,12 +121,12 @@ const SectionTitle = ({ icon: Icon, color = '#a78bfa', children, right }) => (
       )}
       {children}
     </h3>
-    {right && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{right}</div>}
+    {right && <div style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)' }}>{right}</div>}
   </div>
 )
 
 const MiniSpinner = () => (
-  <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff', flexShrink: 0 }} />
+  <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, borderColor: 'rgba(var(--ink-rgb),0.3)', borderTopColor: '#fff', flexShrink: 0 }} />
 )
 
 /* ── Instagram session status strip ───────────────────────────────────────── */
@@ -193,7 +193,7 @@ const StatusStrip = ({ status, loading, error, onRefresh }) => {
           <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: tone.color }}>
             {loading && !status ? 'Checking Instagram session…' : info?.title || 'Instagram status unknown'}
           </p>
-          {info?.detail && <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>{info.detail}</p>}
+          {info?.detail && <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(var(--ink-rgb),0.45)', lineHeight: 1.5 }}>{info.detail}</p>}
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -230,11 +230,11 @@ const HealthGauge = ({ score, grade }) => {
   const r = 40
   const c = 2 * Math.PI * r
   const s = clamp(isNum(score) ? Number(score) : 0, 0, 100)
-  const color = GRADE_COLOR[grade] || 'rgba(255,255,255,0.4)'
+  const color = GRADE_COLOR[grade] || 'rgba(var(--ink-rgb),0.4)'
   return (
     <div style={{ position: 'relative', width: 108, height: 108, flexShrink: 0 }} role="img" aria-label={`Health score ${Math.round(s)} out of 100, grade ${grade || 'unknown'}`}>
       <svg viewBox="0 0 100 100" width="108" height="108" style={{ transform: 'rotate(-90deg)', display: 'block' }}>
-        <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+        <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(var(--ink-rgb),0.06)" strokeWidth="8" />
         <circle
           cx="50" cy="50" r={r} fill="none" stroke={color} strokeWidth="8" strokeLinecap="round"
           strokeDasharray={c} strokeDashoffset={c * (1 - s / 100)}
@@ -242,10 +242,10 @@ const HealthGauge = ({ score, grade }) => {
         />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-        <span style={{ fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', lineHeight: 1 }}>{Math.round(s)}</span>
-        <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 3 }}>/ 100</span>
+        <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.04em', lineHeight: 1 }}>{Math.round(s)}</span>
+        <span style={{ fontSize: 9, color: 'rgba(var(--ink-rgb),0.35)', letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 3 }}>/ 100</span>
       </div>
-      <div style={{ position: 'absolute', right: 0, bottom: 0, width: 28, height: 28, borderRadius: '50%', background: '#0a0f23', border: `2px solid ${color}`, color, fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 10px ${color}66` }}>
+      <div style={{ position: 'absolute', right: 0, bottom: 0, width: 28, height: 28, borderRadius: '50%', background: 'var(--bg-2)', border: `2px solid ${color}`, color, fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 10px ${color}66` }}>
         {grade || '?'}
       </div>
     </div>
@@ -262,12 +262,12 @@ const BreakdownRow = ({ item }) => {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 4 }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>{item.label || item.key}</span>
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{item.label || item.key}</span>
         <span style={{ fontSize: 11, fontWeight: 700, color, whiteSpace: 'nowrap' }}>
-          {score}<span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}> / {max}</span>
+          {score}<span style={{ color: 'rgba(var(--ink-rgb),0.3)', fontWeight: 500 }}> / {max}</span>
         </span>
       </div>
-      <div style={{ height: 5, borderRadius: 5, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+      <div style={{ height: 5, borderRadius: 5, background: 'rgba(var(--ink-rgb),0.06)', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${ratio * 100}%`, borderRadius: 5, background: color, boxShadow: `0 0 8px ${color}66`, transition: 'width 0.8s cubic-bezier(0.22,1,0.36,1)' }} />
       </div>
       {item.detail && <p style={{ ...MUTED, fontSize: 11, marginTop: 4 }}>{item.detail}</p>}
@@ -299,7 +299,7 @@ const HealthCard = ({ health }) => {
   const breakdown = Array.isArray(health.breakdown) ? health.breakdown : []
   const flags = Array.isArray(health.flags) ? health.flags.filter(Boolean) : []
   const grade = health.grade
-  const color = GRADE_COLOR[grade] || 'rgba(255,255,255,0.4)'
+  const color = GRADE_COLOR[grade] || 'rgba(var(--ink-rgb),0.4)'
   return (
     <div style={{ ...PANEL, padding: 18 }}>
       <SectionTitle icon={Activity} color="#7c3aed" right={grade ? <span style={{ color, fontWeight: 700 }}>Grade {grade}</span> : null}>
@@ -348,12 +348,12 @@ const AudienceCard = ({ audience }) => {
           {signals.map((s, i) => {
             const active = isNum(s.weight) && Number(s.weight) > 0
             return (
-              <div key={`${s.key || 'signal'}-${i}`} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <div key={`${s.key || 'signal'}-${i}`} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 0', borderTop: '1px solid rgba(var(--ink-rgb),0.05)' }}>
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: '#fff', margin: 0 }}>{s.label || s.key}</p>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{s.label || s.key}</p>
                   {s.detail && <p style={{ ...MUTED, fontSize: 11, marginTop: 2 }}>{s.detail}</p>}
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: active ? '#fbbf24' : 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: active ? '#fbbf24' : 'rgba(var(--ink-rgb),0.5)', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   {s.value == null || s.value === '' ? '—' : String(s.value)}
                 </span>
               </div>
@@ -390,7 +390,7 @@ const buildMetrics = (profile, metrics) => {
 }
 
 const MetricTile = ({ icon: Icon, color, label, value, tone }) => (
-  <div style={{ padding: '12px 14px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+  <div style={{ padding: '12px 14px', borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)' }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
       <span style={{ width: 24, height: 24, borderRadius: 7, background: `${color}1f`, border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Icon size={12} style={{ color }} />
@@ -425,9 +425,9 @@ const ClaimedVsActual = ({ claimed, actual }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <Scale size={15} style={{ color, flexShrink: 0 }} />
         <div>
-          <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#fff' }}>Claimed vs actual followers</p>
+          <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>Claimed vs actual followers</p>
           <p style={{ ...MUTED, fontSize: 11 }}>
-            Claimed on profile: <strong style={{ color: '#fff' }}>{fmtNum(c)}</strong> · On Instagram: <strong style={{ color: '#fff' }}>{fmtNum(a)}</strong>
+            Claimed on profile: <strong style={{ color: 'var(--text)' }}>{fmtNum(c)}</strong> · On Instagram: <strong style={{ color: 'var(--text)' }}>{fmtNum(a)}</strong>
             {diff != null && diff !== 0 && <> · {diff > 0 ? '+' : ''}{fmtNum(diff)}</>}
           </p>
         </div>
@@ -474,8 +474,8 @@ const PostsTable = ({ posts }) => (
                   <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(p.takenAt)}</td>
                   <td style={TD_NUM}>
                     {p.likes == null
-                      ? <span style={{ color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>hidden</span>
-                      : <span style={{ color: '#fff', fontWeight: 600 }}>{fmtNum(p.likes)}</span>}
+                      ? <span style={{ color: 'rgba(var(--ink-rgb),0.3)', fontStyle: 'italic' }}>hidden</span>
+                      : <span style={{ color: 'var(--text)', fontWeight: 600 }}>{fmtNum(p.likes)}</span>}
                   </td>
                   <td style={TD_NUM}>{fmtNum(p.comments)}</td>
                   <td style={TD_NUM}>{p.views == null ? '—' : fmtNum(p.views)}</td>
@@ -542,7 +542,7 @@ const AuditPanel = ({ audit, creator, running, onRefresh }) => {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <p style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>{profile.fullName || handle || 'Instagram account'}</p>
+              <p style={{ margin: 0, fontSize: 15, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em' }}>{profile.fullName || handle || 'Instagram account'}</p>
               {handle && (
                 <a href={`https://www.instagram.com/${encodeURIComponent(handle)}/`} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#a78bfa', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                   @{handle} <ExternalLink size={11} />
@@ -557,7 +557,7 @@ const AuditPanel = ({ audit, creator, running, onRefresh }) => {
             {reasons.length > 0 && (
               <ul style={{ margin: '10px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {reasons.map((r, i) => (
-                  <li key={`${i}-${r}`} style={{ fontSize: 12, color: eligibility?.eligible ? 'rgba(255,255,255,0.5)' : '#f87171', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <li key={`${i}-${r}`} style={{ fontSize: 12, color: eligibility?.eligible ? 'rgba(var(--ink-rgb),0.5)' : '#f87171', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <AlertTriangle size={12} style={{ flexShrink: 0 }} /> {r}
                   </li>
                 ))}
@@ -568,7 +568,7 @@ const AuditPanel = ({ audit, creator, running, onRefresh }) => {
             )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
               <Clock size={11} /> Audited {relativeTime(audit.fetchedAt)}
             </span>
             <RunAuditButton running={running} onClick={onRefresh} />
@@ -598,7 +598,7 @@ const AuditPanel = ({ audit, creator, running, onRefresh }) => {
 const NoAuditCard = ({ handle, running, onRun, message }) => (
   <div style={{ ...PANEL, padding: '36px 28px', textAlign: 'center' }}>
     <div style={{ fontSize: 40, marginBottom: 12 }}>📸</div>
-    <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>No audit yet</p>
+    <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: 0 }}>No audit yet</p>
     <p style={{ ...MUTED, fontSize: 13, margin: '8px auto 0', maxWidth: 420 }}>
       {message || <>Pull the latest posts and a follower sample for <strong style={{ color: '#a78bfa' }}>@{handle}</strong> to score account health, estimate fake followers and confirm eligibility.</>}
     </p>
@@ -611,7 +611,7 @@ const NoAuditCard = ({ handle, running, onRun, message }) => (
 const NoHandleCard = () => (
   <div style={{ ...PANEL, padding: '36px 28px', textAlign: 'center' }}>
     <div style={{ fontSize: 40, marginBottom: 12 }}>🙈</div>
-    <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>No Instagram handle on this profile</p>
+    <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: 0 }}>No Instagram handle on this profile</p>
     <p style={{ ...MUTED, fontSize: 13, margin: '8px auto 0', maxWidth: 420 }}>Ask the creator to add their handle before running an audit.</p>
   </div>
 )
@@ -766,8 +766,8 @@ const CreatorVerification = () => {
   }
 
   const panel = {
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.07)',
+    background: 'rgba(var(--ink-rgb),0.03)',
+    border: '1px solid rgba(var(--ink-rgb),0.07)',
     borderRadius: 20,
     backdropFilter: 'blur(20px)',
   }
@@ -777,10 +777,10 @@ const CreatorVerification = () => {
       return (
         <div style={{ ...panel, padding: '60px 32px', textAlign: 'center' }}>
           <div style={{ fontSize: 52, marginBottom: 16 }}>📸</div>
-          <p style={{ fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 8px' }}>
+          <p style={{ fontSize: 16, fontWeight: 600, color: 'rgba(var(--ink-rgb),0.5)', margin: '0 0 8px' }}>
             Select a creator to review their Instagram audit
           </p>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', margin: 0, lineHeight: 1.7 }}>
+          <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.25)', margin: 0, lineHeight: 1.7 }}>
             Health score, fake-follower estimate, eligibility and recent posts<br />
             load from the cached audit — run a fresh one any time
           </p>
@@ -833,8 +833,8 @@ const CreatorVerification = () => {
               placeholder="Search creators…"
               style={{
                 width: '100%', padding: '9px 14px', borderRadius: 10, boxSizing: 'border-box',
-                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                color: '#fff', fontSize: 13, outline: 'none',
+                background: 'rgba(var(--ink-rgb),0.05)', border: '1px solid rgba(var(--ink-rgb),0.1)',
+                color: 'var(--text)', fontSize: 13, outline: 'none',
               }}
             />
             <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
@@ -842,12 +842,12 @@ const CreatorVerification = () => {
                 <button key={f} type="button" onClick={() => setFilter(f)} style={{
                   flex: 1, padding: '6px 4px', borderRadius: 8, border: 'none', cursor: 'pointer',
                   fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
-                  background: filter === f ? 'linear-gradient(135deg,#7c3aed,#a78bfa)' : 'rgba(255,255,255,0.05)',
-                  color: filter === f ? '#fff' : 'rgba(255,255,255,0.4)', transition: 'all 0.2s',
+                  background: filter === f ? 'linear-gradient(135deg,#7c3aed,#a78bfa)' : 'rgba(var(--ink-rgb),0.05)',
+                  color: filter === f ? '#fff' : 'rgba(var(--ink-rgb),0.4)', transition: 'all 0.2s',
                 }}>{f}</button>
               ))}
             </div>
-            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: '8px 0 0', fontWeight: 600 }}>
+            <p style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.25)', margin: '8px 0 0', fontWeight: 600 }}>
               {filteredCreators.length} creator{filteredCreators.length !== 1 ? 's' : ''}
             </p>
           </div>
@@ -860,7 +860,7 @@ const CreatorVerification = () => {
             ) : listError ? (
               <div style={{ textAlign: 'center', padding: '30px 16px', color: '#f87171', fontSize: 12 }}>{listError}</div>
             ) : filteredCreators.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '30px 16px', color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>
+              <div style={{ textAlign: 'center', padding: '30px 16px', color: 'rgba(var(--ink-rgb),0.3)', fontSize: 13 }}>
                 No creators found
               </div>
             ) : filteredCreators.map((c) => {
@@ -876,7 +876,7 @@ const CreatorVerification = () => {
                     border: `1px solid ${isSelected ? 'rgba(124,58,237,0.4)' : 'transparent'}`,
                     transition: 'all 0.15s',
                   }}
-                  onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
+                  onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(var(--ink-rgb),0.04)' }}
                   onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
                 >
                   <div style={{
@@ -886,8 +886,8 @@ const CreatorVerification = () => {
                     fontSize: 13, fontWeight: 800, color: '#fff',
                   }}>{(c.name || '?')[0].toUpperCase()}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
-                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '1px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
+                    <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', margin: '1px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {c.instagramHandle ? `@${normalizeHandle(c.instagramHandle)}` : '(no handle)'}
                     </p>
                     <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
@@ -930,8 +930,8 @@ const CreatorVerification = () => {
                 fontSize: 15, fontWeight: 800, color: '#fff',
               }}>{(selectedCreator.name || '?')[0].toUpperCase()}</div>
               <div style={{ flex: 1, minWidth: 160 }}>
-                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#fff' }}>{selectedCreator.name}</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{selectedCreator.name}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(var(--ink-rgb),0.4)' }}>
                   {selectedCreator.email}{handle ? ` · @${handle}` : ''}{isNum(selectedCreator.followersCount) ? ` · claims ${fmtCompact(selectedCreator.followersCount)} followers` : ''}
                 </p>
               </div>
@@ -955,8 +955,8 @@ const CreatorVerification = () => {
 
           {/* Approve / Revoke panel */}
           {selectedCreator && (
-            <div style={{ ...panel, padding: '18px 20px', background: 'rgba(255,255,255,0.02)' }}>
-              <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#fff' }}>
+            <div style={{ ...panel, padding: '18px 20px', background: 'rgba(var(--ink-rgb),0.02)' }}>
+              <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
                 Save verification for {selectedCreator.name}
               </p>
               {actionMsg && (

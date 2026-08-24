@@ -41,7 +41,7 @@ const AdminDashboard = () => {
     unverifiedBrands.length > 0 && { level:'info', text:`${unverifiedBrands.length} brand${unverifiedBrands.length>1?'s':''} awaiting verification`, link:'/admin/brand-verification' },
   ].filter(Boolean)
 
-  const panel = { background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:20, padding:24, backdropFilter:'blur(20px)' }
+  const panel = { background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:20, padding:24, backdropFilter:'blur(20px)' }
 
   return (
     <div className="page-root">
@@ -54,10 +54,10 @@ const AdminDashboard = () => {
       {/* KPIs */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:16, marginBottom:32 }}>
         {kpis.map(s => (
-          <div key={s.label} className="stat-card" style={{ background:'rgba(255,255,255,0.03)' }}>
+          <div key={s.label} className="stat-card" style={{ background:'rgba(var(--ink-rgb),0.03)' }}>
             <div style={{ width:44, height:44, borderRadius:12, background:s.color, border:`1px solid ${s.border}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, marginBottom:16 }}>{s.icon}</div>
-            <p style={{ fontSize:28, fontWeight:800, color:'#fff', letterSpacing:'-0.03em', marginBottom:4 }}>{loading ? '—' : s.value}</p>
-            <p style={{ fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(255,255,255,0.3)', marginBottom:6 }}>{s.label}</p>
+            <p style={{ fontSize:28, fontWeight:800, color: 'var(--text)', letterSpacing:'-0.03em', marginBottom:4 }}>{loading ? '—' : s.value}</p>
+            <p style={{ fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.3)', marginBottom:6 }}>{s.label}</p>
           </div>
         ))}
       </div>
@@ -65,7 +65,7 @@ const AdminDashboard = () => {
       <div style={{ display:'grid', gap:20 }} className="lg:grid-cols-2">
         {/* Alerts */}
         <div style={panel}>
-          <h2 style={{ fontSize:16, fontWeight:700, color:'#fff', margin:'0 0 20px', display:'flex', alignItems:'center', gap:8 }}>
+          <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px', display:'flex', alignItems:'center', gap:8 }}>
             <span style={{ width:8, height:8, borderRadius:'50%', background: alerts.length>0 ? '#fbbf24' : '#4ade80', display:'inline-block', boxShadow: alerts.length>0 ? '0 0 8px #fbbf24' : '0 0 8px #4ade80', animation: alerts.length>0 ? 'none' : 'none' }} />
             Active Alerts
           </h2>
@@ -89,7 +89,7 @@ const AdminDashboard = () => {
 
         {/* Quick Actions */}
         <div style={panel}>
-          <h2 style={{ fontSize:16, fontWeight:700, color:'#fff', margin:'0 0 20px' }}>Quick Actions</h2>
+          <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>Quick Actions</h2>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
             {[
               { to:'/admin/brand-verification',   label:'Verify Brands',   icon:'✅', badge:unverifiedBrands.length },
@@ -102,11 +102,11 @@ const AdminDashboard = () => {
             ].map(q => (
               <Link key={q.to} to={q.to} style={{
                 position:'relative', display:'flex', alignItems:'center', gap:10, padding:'12px 14px', borderRadius:14,
-                background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)',
-                textDecoration:'none', fontSize:13, color:'rgba(255,255,255,0.55)', fontWeight:500, transition:'all 0.2s',
+                background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.07)',
+                textDecoration:'none', fontSize:13, color:'rgba(var(--ink-rgb),0.55)', fontWeight:500, transition:'all 0.2s',
               }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(124,58,237,0.3)'; e.currentTarget.style.background='rgba(124,58,237,0.06)'; e.currentTarget.style.color='#fff' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.07)'; e.currentTarget.style.background='rgba(255,255,255,0.03)'; e.currentTarget.style.color='rgba(255,255,255,0.55)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(var(--ink-rgb),0.07)'; e.currentTarget.style.background='rgba(var(--ink-rgb),0.03)'; e.currentTarget.style.color='rgba(var(--ink-rgb),0.55)' }}
               >
                 <span style={{ fontSize:18 }}>{q.icon}</span>
                 {q.label}
@@ -120,13 +120,13 @@ const AdminDashboard = () => {
           {/* Pending posts preview */}
           {!loading && pendingPosts.length > 0 && (
             <div style={{ marginTop:20 }}>
-              <p style={{ fontSize:10, fontWeight:600, letterSpacing:'0.15em', textTransform:'uppercase', color:'rgba(255,255,255,0.25)', marginBottom:10 }}>Pending Posts</p>
+              <p style={{ fontSize:10, fontWeight:600, letterSpacing:'0.15em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.25)', marginBottom:10 }}>Pending Posts</p>
               <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
                 {pendingPosts.map(p => (
-                  <div key={p._id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', borderRadius:10, background:'rgba(255,255,255,0.02)' }}>
+                  <div key={p._id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', borderRadius:10, background:'rgba(var(--ink-rgb),0.02)' }}>
                     <div style={{ minWidth:0 }}>
-                      <p style={{ fontSize:13, color:'rgba(255,255,255,0.7)', margin:0, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{p.creatorId?.name || 'Creator'}</p>
-                      <p style={{ fontSize:11, color:'rgba(255,255,255,0.3)', marginTop:2 }}>{p.platform} · {p.campaignId?.title || 'Campaign'}</p>
+                      <p style={{ fontSize:13, color:'rgba(var(--ink-rgb),0.7)', margin:0, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{p.creatorId?.name || 'Creator'}</p>
+                      <p style={{ fontSize:11, color:'rgba(var(--ink-rgb),0.3)', marginTop:2 }}>{p.platform} · {p.campaignId?.title || 'Campaign'}</p>
                     </div>
                     <span className="badge badge-warning" style={{ marginLeft:8 }}>Pending</span>
                   </div>
