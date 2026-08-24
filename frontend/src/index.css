@@ -46,13 +46,13 @@
   --bg:           #f5f6fb;
   --bg-2:         #ffffff;
   --nav-rgb:      248, 249, 253;
-  --ink-rgb:      15, 18, 45;
-  --bg-surface:   rgba(15,18,45,0.04);
-  --bg-surface-2: rgba(15,18,45,0.07);
-  --border:       rgba(15,18,45,0.1);
-  --text:         #0f122d;
-  --text-muted:   rgba(15,18,45,0.62);
-  --text-dim:     rgba(15,18,45,0.38);
+  --ink-rgb:      0, 0, 0;
+  --bg-surface:   rgba(var(--ink-rgb),0.04);
+  --bg-surface-2: rgba(var(--ink-rgb),0.07);
+  --border:       rgba(var(--ink-rgb),0.1);
+  --text:         #000000;
+  --text-muted:   rgba(var(--ink-rgb),0.62);
+  --text-dim:     rgba(var(--ink-rgb),0.38);
   --violet-ink:   #6d28d9;
   --green-ink:    #15803d;
   --cyan-ink:     #0e7490;
@@ -63,13 +63,13 @@
 
 /* Footer's Tailwind grays were tuned for dark — deepen them on light.
    Attribute selectors avoid escaping the "/" in utility class names. */
-:root[data-theme='light'] footer [class*="text-zinc-500"] { color: rgba(15,18,45,0.55); }
-:root[data-theme='light'] footer [class*="text-zinc-400"] { color: rgba(15,18,45,0.65); }
-:root[data-theme='light'] footer [class*="text-zinc-600"] { color: rgba(15,18,45,0.45); }
-:root[data-theme='light'] footer [class*="text-white"] { color: #0f122d; }
+:root[data-theme='light'] footer [class*="text-zinc-500"] { color: rgba(var(--ink-rgb),0.55); }
+:root[data-theme='light'] footer [class*="text-zinc-400"] { color: rgba(var(--ink-rgb),0.65); }
+:root[data-theme='light'] footer [class*="text-zinc-600"] { color: rgba(var(--ink-rgb),0.45); }
+:root[data-theme='light'] footer [class*="text-white"] { color: var(--text); }
 :root[data-theme='light'] footer [class*="border-white/5"],
-:root[data-theme='light'] footer [class*="border-white/10"] { border-color: rgba(15,18,45,0.1); }
-:root[data-theme='light'] footer [class*="bg-white/5"] { background-color: rgba(15,18,45,0.05); }
+:root[data-theme='light'] footer [class*="border-white/10"] { border-color: rgba(var(--ink-rgb),0.1); }
+:root[data-theme='light'] footer [class*="bg-white/5"] { background-color: rgba(var(--ink-rgb),0.05); }
 
 /* ── Dashboard pages: same Tailwind-gray problem as the footer, app-wide ──
    ~20 dashboard pages style text/panels with Tailwind's text-white / bg-white/N /
@@ -79,28 +79,28 @@
    `:not([class*="hover:…"])` on the base rules keeps a plain "text-white" match
    from firing on elements that only carry the hover: variant. */
 :root[data-theme='light'] main [class~="text-white"] { color: var(--text); }
-:root[data-theme='light'] main [class*="text-zinc-200"] { color: rgba(15,18,45,0.82); }
-:root[data-theme='light'] main [class*="text-zinc-300"] { color: rgba(15,18,45,0.72); }
-:root[data-theme='light'] main [class*="text-zinc-400"] { color: rgba(15,18,45,0.65); }
-:root[data-theme='light'] main [class*="text-zinc-500"] { color: rgba(15,18,45,0.55); }
-:root[data-theme='light'] main [class*="text-zinc-600"] { color: rgba(15,18,45,0.45); }
-:root[data-theme='light'] main [class*="text-zinc-700"] { color: rgba(15,18,45,0.38); }
+:root[data-theme='light'] main [class*="text-zinc-200"] { color: rgba(var(--ink-rgb),0.82); }
+:root[data-theme='light'] main [class*="text-zinc-300"] { color: rgba(var(--ink-rgb),0.72); }
+:root[data-theme='light'] main [class*="text-zinc-400"] { color: rgba(var(--ink-rgb),0.65); }
+:root[data-theme='light'] main [class*="text-zinc-500"] { color: rgba(var(--ink-rgb),0.55); }
+:root[data-theme='light'] main [class*="text-zinc-600"] { color: rgba(var(--ink-rgb),0.45); }
+:root[data-theme='light'] main [class*="text-zinc-700"] { color: rgba(var(--ink-rgb),0.38); }
 :root[data-theme='light'] main [class~="hover:text-white"]:hover { color: var(--text); }
-:root[data-theme='light'] main [class*="hover:text-zinc-300"]:hover { color: rgba(15,18,45,0.72); }
+:root[data-theme='light'] main [class*="hover:text-zinc-300"]:hover { color: rgba(var(--ink-rgb),0.72); }
 
-:root[data-theme='light'] main [class*="bg-white/[0.01]"] { background-color: rgba(15,18,45,0.02); }
-:root[data-theme='light'] main [class*="bg-white/[0.02]"] { background-color: rgba(15,18,45,0.03); }
-:root[data-theme='light'] main [class*="bg-white/[0.03]"] { background-color: rgba(15,18,45,0.04); }
-:root[data-theme='light'] main [class~="bg-white/5"] { background-color: rgba(15,18,45,0.05); }
-:root[data-theme='light'] main [class~="bg-white/10"] { background-color: rgba(15,18,45,0.08); }
-:root[data-theme='light'] main [class*="hover:bg-white/5"]:hover { background-color: rgba(15,18,45,0.05); }
-:root[data-theme='light'] main [class*="hover:bg-white/10"]:hover { background-color: rgba(15,18,45,0.08); }
+:root[data-theme='light'] main [class*="bg-white/[0.01]"] { background-color: rgba(var(--ink-rgb),0.02); }
+:root[data-theme='light'] main [class*="bg-white/[0.02]"] { background-color: rgba(var(--ink-rgb),0.03); }
+:root[data-theme='light'] main [class*="bg-white/[0.03]"] { background-color: rgba(var(--ink-rgb),0.04); }
+:root[data-theme='light'] main [class~="bg-white/5"] { background-color: rgba(var(--ink-rgb),0.05); }
+:root[data-theme='light'] main [class~="bg-white/10"] { background-color: rgba(var(--ink-rgb),0.08); }
+:root[data-theme='light'] main [class*="hover:bg-white/5"]:hover { background-color: rgba(var(--ink-rgb),0.05); }
+:root[data-theme='light'] main [class*="hover:bg-white/10"]:hover { background-color: rgba(var(--ink-rgb),0.08); }
 
-:root[data-theme='light'] main [class*="border-white/[0.03]"] { border-color: rgba(15,18,45,0.06); }
-:root[data-theme='light'] main [class*="border-white/[0.05]"] { border-color: rgba(15,18,45,0.08); }
-:root[data-theme='light'] main [class~="border-white/5"] { border-color: rgba(15,18,45,0.1); }
-:root[data-theme='light'] main [class~="border-white/10"] { border-color: rgba(15,18,45,0.14); }
-:root[data-theme='light'] main [class*="hover:border-white/10"]:hover { border-color: rgba(15,18,45,0.16); }
+:root[data-theme='light'] main [class*="border-white/[0.03]"] { border-color: rgba(var(--ink-rgb),0.06); }
+:root[data-theme='light'] main [class*="border-white/[0.05]"] { border-color: rgba(var(--ink-rgb),0.08); }
+:root[data-theme='light'] main [class~="border-white/5"] { border-color: rgba(var(--ink-rgb),0.1); }
+:root[data-theme='light'] main [class~="border-white/10"] { border-color: rgba(var(--ink-rgb),0.14); }
+:root[data-theme='light'] main [class*="hover:border-white/10"]:hover { border-color: rgba(var(--ink-rgb),0.16); }
 
 /* Theme switch feels smooth, not jarring */
 body, nav, section, footer {
