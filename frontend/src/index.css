@@ -5,8 +5,15 @@
 
 
 /* ── Design Tokens ────────────────────────────────────────────────────────── */
+/* Dark is the default theme; <html data-theme="light"> flips the tokens.
+   --ink-rgb is the "foreground channel": rgba(var(--ink-rgb), a) replaces
+   every hardcoded rgba(255,255,255, a) so text/panels/borders theme together. */
 :root {
+  color-scheme: dark;
   --bg:           #050816;
+  --bg-2:         #0b0f24;
+  --nav-rgb:      5, 8, 22;
+  --ink-rgb:      255, 255, 255;
   --bg-surface:   rgba(255,255,255,0.04);
   --bg-surface-2: rgba(255,255,255,0.07);
   --border:       rgba(255,255,255,0.08);
@@ -19,11 +26,53 @@
   --text:         #ffffff;
   --text-muted:   rgba(255,255,255,0.5);
   --text-dim:     rgba(255,255,255,0.25);
+  /* accent shades used as TEXT — need darker versions on a light page */
+  --violet-ink:   #a78bfa;
+  --green-ink:    #4ade80;
+  --cyan-ink:     #67e8f9;
   --success:      #22c55e;
   --warning:      #f59e0b;
   --error:        #ef4444;
+  --footer-bg:    #030614;
   --grad:         linear-gradient(135deg, #7c3aed, #06b6d4);
 }
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg:           #f5f6fb;
+  --bg-2:         #ffffff;
+  --nav-rgb:      248, 249, 253;
+  --ink-rgb:      15, 18, 45;
+  --bg-surface:   rgba(15,18,45,0.04);
+  --bg-surface-2: rgba(15,18,45,0.07);
+  --border:       rgba(15,18,45,0.1);
+  --text:         #0f122d;
+  --text-muted:   rgba(15,18,45,0.62);
+  --text-dim:     rgba(15,18,45,0.38);
+  --violet-ink:   #6d28d9;
+  --green-ink:    #15803d;
+  --cyan-ink:     #0e7490;
+  --footer-bg:    #eceef6;
+}
+
+/* Footer's Tailwind grays were tuned for dark — deepen them on light.
+   Attribute selectors avoid escaping the "/" in utility class names. */
+:root[data-theme='light'] footer [class*="text-zinc-500"] { color: rgba(15,18,45,0.55); }
+:root[data-theme='light'] footer [class*="text-zinc-400"] { color: rgba(15,18,45,0.65); }
+:root[data-theme='light'] footer [class*="text-zinc-600"] { color: rgba(15,18,45,0.45); }
+:root[data-theme='light'] footer [class*="text-white"] { color: #0f122d; }
+:root[data-theme='light'] footer [class*="border-white/5"],
+:root[data-theme='light'] footer [class*="border-white/10"] { border-color: rgba(15,18,45,0.1); }
+:root[data-theme='light'] footer [class*="bg-white/5"] { background-color: rgba(15,18,45,0.05); }
+
+/* Theme switch feels smooth, not jarring */
+body, nav, section, footer {
+  transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease;
+}
+
+/* The hero's cinematic dark layers don't belong on a light page */
+:root[data-theme='light'] .hero-video { display: none; }
+:root[data-theme='light'] .hero-fx { opacity: 0.5; }
 
 /* ── Base ─────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
@@ -43,7 +92,7 @@ body {
 
 /* ── Scrollbar ────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: #050816; }
+::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: #1a1040; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
 
