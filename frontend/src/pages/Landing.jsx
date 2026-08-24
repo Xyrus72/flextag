@@ -227,81 +227,6 @@ const PhoneMockup = ({ children, style = {}, className = '' }) => (
   </div>
 )
 
-/* ─── FLOATING PRODUCT ITEM ────────────────────────────────────────────────── */
-const PRODUCT_COLORS = {
-  Sneakers: { glow: '#f97316', border: 'rgba(249,115,22,0.5)', bg: 'rgba(249,115,22,0.08)' },
-  Hoodie:   { glow: '#7c3aed', border: 'rgba(124,58,237,0.5)', bg: 'rgba(124,58,237,0.08)' },
-  Makeup:   { glow: '#ec4899', border: 'rgba(236,72,153,0.5)', bg: 'rgba(236,72,153,0.08)' },
-  Watch:    { glow: '#06b6d4', border: 'rgba(6,182,212,0.5)',  bg: 'rgba(6,182,212,0.08)'  },
-  Bag:      { glow: '#a78bfa', border: 'rgba(167,139,250,0.5)', bg: 'rgba(167,139,250,0.08)' },
-}
-
-const OrbitItem = ({ img, label, angle, radius, duration, delay = 0 }) => {
-  const rad = (angle * Math.PI) / 180
-  const clr = PRODUCT_COLORS[label] || PRODUCT_COLORS.Sneakers
-  return (
-    <motion.div
-      style={{ position: 'absolute', left: '50%', top: '50%', marginLeft: -52, marginTop: -60 }}
-      animate={{
-        x: [
-          Math.cos(rad) * radius, Math.cos(rad + Math.PI / 2) * radius,
-          Math.cos(rad + Math.PI) * radius, Math.cos(rad + (3 * Math.PI) / 2) * radius,
-          Math.cos(rad + 2 * Math.PI) * radius,
-        ],
-        y: [
-          Math.sin(rad) * radius, Math.sin(rad + Math.PI / 2) * radius,
-          Math.sin(rad + Math.PI) * radius, Math.sin(rad + (3 * Math.PI) / 2) * radius,
-          Math.sin(rad + 2 * Math.PI) * radius,
-        ],
-      }}
-      transition={{ duration, delay, repeat: Infinity, ease: 'linear' }}
-    >
-      <motion.div
-        animate={{ y: [0, -10, 0], rotate: [-1, 1, -1] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: delay * 0.4 }}
-        style={{ position: 'relative' }}
-      >
-        {/* Outer glow halo */}
-        <div style={{
-          position: 'absolute', inset: -12, borderRadius: 28,
-          background: `radial-gradient(circle at 50% 80%, ${clr.glow}30 0%, transparent 70%)`,
-          filter: 'blur(8px)', pointerEvents: 'none',
-        }} />
-        {/* Card */}
-        <div style={{
-          width: 104, height: 120,
-          borderRadius: 22,
-          background: `linear-gradient(145deg, ${clr.bg} 0%, rgba(5,8,22,0.9) 100%)`,
-          backdropFilter: 'blur(20px)',
-          border: `1px solid ${clr.border}`,
-          boxShadow: `0 20px 60px rgba(0,0,0,0.6), 0 0 30px ${clr.glow}22, inset 0 1px 0 rgba(255,255,255,0.1)`,
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-          gap: 6, overflow: 'hidden', position: 'relative', padding: '10px 8px 8px',
-        }}>
-          {/* Shine streak */}
-          <div style={{
-            position: 'absolute', top: 0, left: '-40%', width: '30%', height: '100%',
-            background: 'linear-gradient(105deg, transparent, rgba(255,255,255,0.06), transparent)',
-            transform: 'skewX(-20deg)', pointerEvents: 'none',
-          }} />
-          <img
-            src={img} alt={label}
-            style={{ width: 72, height: 72, objectFit: 'contain', filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.5))' }}
-          />
-          <div style={{
-            background: `${clr.glow}22`,
-            border: `1px solid ${clr.border}`,
-            borderRadius: 8, padding: '2px 8px',
-          }}>
-            <span style={{ fontSize: 8, color: clr.glow, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{label}</span>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  )
-}
-
 /* ─── GLASS CARD ───────────────────────────────────────────────────────────── */
 const GlassCard = ({ children, style = {}, glow = 'purple' }) => {
   const glowColor = glow === 'purple' ? '124,58,237' : glow === 'cyan' ? '6,182,212' : '236,72,153'
@@ -633,6 +558,7 @@ export default function Landing() {
               marginBottom: 28, backdropFilter: 'blur(12px)',
             }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e', display: 'inline-block', animation: 'pulseRing 2s ease-in-out infinite' }} />
+              {/* Hero type scale is golden-ratio (φ≈1.618): 11 → 18 → 47–123, each step ×φ */}
               <span style={{ fontSize: 11, color: '#a78bfa', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Bangladesh's creator-commerce platform</span>
             </div>
           </motion.div>
@@ -642,7 +568,7 @@ export default function Landing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.85, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
             style={{
-              fontSize: 'clamp(52px, 9vw, 118px)',
+              fontSize: 'clamp(47px, 9vw, 123px)',
               fontWeight: 900, lineHeight: 0.94, letterSpacing: '-0.045em',
               textTransform: 'uppercase', fontStyle: 'italic',
               color: '#fff', margin: '0 0 24px',
@@ -656,7 +582,7 @@ export default function Landing() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.5 }}
-            style={{ fontSize: 'clamp(15px, 1.6vw, 19px)', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, maxWidth: 560, margin: '0 auto 36px' }}
+            style={{ fontSize: 'clamp(16px, 1.4vw, 18px)', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, maxWidth: 560, margin: '0 auto 36px' }}
           >
             FlexTag pays nano & micro-influencers{' '}
             <span style={{ color: '#a78bfa', fontWeight: 700 }}>30–70% cashback</span>{' '}
@@ -745,34 +671,6 @@ export default function Landing() {
             opacity: heroOpacity,
           }}
         >
-          {/* Glow ring stack */}
-          <div style={{
-            position: 'absolute', width: 420, height: 420, top: 10,
-            borderRadius: '50%',
-            border: '1px solid rgba(124,58,237,0.2)',
-            boxShadow: '0 0 80px rgba(124,58,237,0.18), inset 0 0 80px rgba(6,182,212,0.05)',
-            animation: 'pulseRing 4s ease-in-out infinite',
-          }} />
-          <div style={{
-            position: 'absolute', width: 330, height: 330, top: 55,
-            borderRadius: '50%',
-            border: '1px solid rgba(6,182,212,0.15)',
-            animation: 'rotateSlow 20s linear infinite',
-          }}>
-            <div style={{ position: 'absolute', top: -4, left: '50%', marginLeft: -4, width: 8, height: 8, borderRadius: '50%', background: '#06b6d4', boxShadow: '0 0 12px #06b6d4' }} />
-          </div>
-
-          {/* Orbiting products */}
-          {[
-            { img: '/products/nike-shoe.png', label: 'Sneakers', angle: 0,   radius: 205, duration: 16 },
-            { img: '/products/hoodie.png',    label: 'Hoodie',   angle: 72,  radius: 205, duration: 18 },
-            { img: '/products/serum.png',     label: 'Makeup',   angle: 144, radius: 205, duration: 14 },
-            { img: '/products/watch.png',     label: 'Watch',    angle: 216, radius: 205, duration: 20 },
-            { img: '/products/bag.png',       label: 'Bag',      angle: 288, radius: 205, duration: 17 },
-          ].map((item, i) => (
-            <OrbitItem key={i} {...item} delay={i * 0.8} />
-          ))}
-
           {/* Floating stat chips — SVG icons */}
           <StatChip icon="heart"  label="+2.4K Likes"     color="#ec4899" style={{ top: 30,  right: '16%' }} delay={1.0} />
           <StatChip icon="chat"   label="847 Comments"    color="#06b6d4" style={{ bottom: 120, left: '13%' }} delay={1.15} />
