@@ -51,8 +51,15 @@ const Cart = () => {
   const updateQty  = (id, delta) => save(items.map(i => i._id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i))
   const removeItem = (id) => save(items.filter(i => i._id !== id))
 
+  // Mirrors backend utils/reward.js: reward = price×rate%, split into an instant
+  // discount off the bill and a bonus released after the post verifies.
+  const rewardOf  = (i) => Math.round(i.price * i.qty * (i.cashbackRate || 0) / 100)
+  const instantOf = (i) => Math.min(rewardOf(i), Math.round(rewardOf(i) * (i.instantSplitPct || 0) / 100))
   const subtotal      = items.reduce((sum, i) => sum + (i.price * i.qty), 0)
-  const totalCashback = items.reduce((sum, i) => sum + Math.round(i.price * i.qty * (i.cashbackRate || 0) / 100), 0)
+  const totalCashback = items.reduce((sum, i) => sum + rewardOf(i), 0)
+  const totalInstant  = items.reduce((sum, i) => sum + instantOf(i), 0)
+  const totalBonus    = totalCashback - totalInstant
+  const payNow        = subtotal - totalInstant
   const netCost       = subtotal - totalCashback
 
   const handleCheckout = async () => {
@@ -69,9 +76,14 @@ const Cart = () => {
         window.location.href = url
         return
       }
-      // Cash / mobile-banking on delivery → create orders directly
+      // Cash / mobile-banking on delivery → create orders directly. Each placed
+      // item leaves the cart immediately, so a mid-cart rejection (e.g. the
+      // unverified reward cap) keeps only the items that were NOT ordered.
+      let remaining = items
       for (const item of items) {
         await placeOrder({ campaignId: item.campaignId || item._id, qty: item.qty, address: address.trim(), paymentMethod })
+        remaining = remaining.filter(i => i._id !== item._id)
+        save(remaining)
       }
       localStorage.removeItem(CART_KEY)
       navigate('/creator/orders')
@@ -109,7 +121,11 @@ const Cart = () => {
                   <p style={{ fontSize:14, fontWeight:600, color:'#fff', margin:'0 0 4px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{item.name}</p>
                   <p style={{ fontSize:12, color:'rgba(255,255,255,0.3)', margin:0 }}>{item.brand}</p>
                   {item.cashbackRate > 0 && (
-                    <p style={{ fontSize:12, color:'#4ade80', marginTop:4 }}>{item.cashbackRate}% cashback · Save ৳{Math.round(item.price * item.qty * item.cashbackRate / 100).toLocaleString()}</p>
+                    <p style={{ fontSize:12, color:'#4ade80', marginTop:4 }}>
+                      {instantOf(item) > 0
+                        ? `৳${instantOf(item).toLocaleString()} off now + ৳${(rewardOf(item) - instantOf(item)).toLocaleString()} after your post`
+                        : `${item.cashbackRate}% cashback · Save ৳${rewardOf(item).toLocaleString()}`}
+                    </p>
                   )}
                 </div>
                 {/* Qty */}
@@ -137,10 +153,16 @@ const Cart = () => {
                 <span style={{ color:'rgba(255,255,255,0.4)' }}>Subtotal ({items.reduce((s, i) => s + i.qty, 0)} items)</span>
                 <span style={{ color:'#fff', fontWeight:600 }}>৳{subtotal.toLocaleString()}</span>
               </div>
-              {totalCashback > 0 && (
+              {totalInstant > 0 && (
                 <div style={{ display:'flex', justifyContent:'space-between' }}>
-                  <span style={{ color:'rgba(255,255,255,0.4)' }}>Total Cashback</span>
-                  <span style={{ color:'#4ade80', fontWeight:600 }}>-৳{totalCashback.toLocaleString()}</span>
+                  <span style={{ color:'rgba(255,255,255,0.4)' }}>Instant Discount</span>
+                  <span style={{ color:'#4ade80', fontWeight:600 }}>-৳{totalInstant.toLocaleString()}</span>
+                </div>
+              )}
+              {totalBonus > 0 && (
+                <div style={{ display:'flex', justifyContent:'space-between' }}>
+                  <span style={{ color:'rgba(255,255,255,0.4)' }}>{totalInstant > 0 ? 'Bonus After Verified Post' : 'Total Cashback'}</span>
+                  <span style={{ color:'#4ade80', fontWeight:600 }}>-৳{totalBonus.toLocaleString()}</span>
                 </div>
               )}
               <div style={{ display:'flex', justifyContent:'space-between' }}>
@@ -156,7 +178,8 @@ const Cart = () => {
             {totalCashback > 0 && (
               <div style={{ padding:'12px 14px', borderRadius:12, background:'rgba(124,58,237,0.06)', border:'1px solid rgba(124,58,237,0.18)', marginBottom:16 }}>
                 <p style={{ fontSize:12, color:'rgba(255,255,255,0.5)', margin:0 }}>
-                  💡 You pay <strong style={{ color:'#fff' }}>৳{subtotal.toLocaleString()}</strong> now. Cashback of <strong style={{ color:'#4ade80' }}>৳{totalCashback.toLocaleString()}</strong> releases after post verification.
+                  💡 You pay <strong style={{ color:'#fff' }}>৳{payNow.toLocaleString()}</strong> today{totalInstant > 0 && <> (৳{totalInstant.toLocaleString()} discount applied)</>}.{' '}
+                  {totalBonus > 0 && <>A <strong style={{ color:'#4ade80' }}>৳{totalBonus.toLocaleString()}</strong> bonus lands in your wallet after post verification.</>}
                 </p>
               </div>
             )}
@@ -218,7 +241,7 @@ const Cart = () => {
                   </div>
                 </div>
                 <button onClick={handleCheckout} disabled={placing || !address.trim()} className="btn-primary" style={{ width:'100%', padding:14, fontSize:14 }}>
-                  {placing ? 'Placing Order…' : `Pay ৳${subtotal.toLocaleString()} →`}
+                  {placing ? 'Placing Order…' : `Pay ৳${payNow.toLocaleString()} →`}
                 </button>
                 <button onClick={() => setShowCheckout(false)} className="btn-ghost" style={{ width:'100%', padding:'10px' }}>← Back</button>
               </div>

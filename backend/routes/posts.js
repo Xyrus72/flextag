@@ -50,7 +50,7 @@ router.get('/showcase', requireAuth, async (req, res) => {
     const posts = await Post.find(filter)
       .populate('creatorId', 'name instagramHandle avatar')
       .populate('campaignId', 'title brand product')
-      .populate('orderId', 'cashbackAmount')
+      .populate('orderId', 'cashbackAmount rewardTotal instantDiscount')
       .sort({ approvedAt: -1, createdAt: -1 })
       .limit(60)
 
@@ -60,7 +60,8 @@ router.get('/showcase', requireAuth, async (req, res) => {
       const s = (p.verification && p.verification.snapshot) || {}
       reach += Number(s.views) || 0
       engagement += (Number(s.likes) || 0) + (Number(s.comments) || 0)
-      if (p.cashbackReleased) cashbackSpent += Number(p.orderId?.cashbackAmount) || 0
+      // Brand's true spend = full reward (instant discount + released bonus); legacy orders have no rewardTotal.
+      if (p.cashbackReleased) cashbackSpent += Number(p.orderId?.rewardTotal || p.orderId?.cashbackAmount) || 0
       creators.add(String(p.creatorId?._id || p.creatorId))
       return {
         _id: p._id, postUrl: p.postUrl, autoApproved: !!p.autoApproved, createdAt: p.approvedAt || p.createdAt,

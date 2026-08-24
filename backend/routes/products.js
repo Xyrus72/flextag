@@ -70,7 +70,7 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', requireAuth, requireRole('brand', 'admin'), async (req, res) => {
   try {
-    const { name, price, cashbackRate, category, image, description, stock, campaignBudget, creatorCriteria, postingRules } = req.body
+    const { name, price, cashbackRate, instantSplitPct, category, image, description, stock, campaignBudget, creatorCriteria, postingRules } = req.body
     if (!name || !price || !cashbackRate || !category) {
       return res.status(400).json({ message: 'name, price, cashbackRate and category are required.' })
     }
@@ -78,6 +78,7 @@ router.post('/', requireAuth, requireRole('brand', 'admin'), async (req, res) =>
       name,
       price: Number(price),
       cashbackRate: Number(cashbackRate),
+      instantSplitPct: Math.min(100, Math.max(0, Number(instantSplitPct) || 0)),
       category,
       image: image || '',
       description: description || '',
@@ -104,8 +105,11 @@ router.put('/:id', requireAuth, requireRole('brand', 'admin'), async (req, res) 
     if (req.user.role === 'brand' && product.brandId?.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Access denied.' })
     }
-    const allowed = ['name', 'price', 'cashbackRate', 'category', 'image', 'description', 'stock', 'campaignBudget', 'totalCashbackSpent', 'isActive', 'inStock', 'creatorCriteria', 'postingRules']
-    allowed.forEach(k => { if (req.body[k] !== undefined) product[k] = req.body[k] })
+    const allowed = ['name', 'price', 'cashbackRate', 'instantSplitPct', 'category', 'image', 'description', 'stock', 'campaignBudget', 'totalCashbackSpent', 'isActive', 'inStock', 'creatorCriteria', 'postingRules']
+    allowed.forEach(k => {
+      if (req.body[k] === undefined) return
+      product[k] = k === 'instantSplitPct' ? Math.min(100, Math.max(0, Number(req.body[k]) || 0)) : req.body[k]
+    })
     await product.save()
     res.json({ product })
   } catch (err) {
