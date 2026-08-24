@@ -60,9 +60,9 @@ const ProductApproval = () => {
         {['pending', 'approved', 'rejected', 'all'].map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: '8px 18px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', textTransform: 'capitalize',
-            background: filter === f ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(255,255,255,0.04)',
-            color: filter === f ? '#fff' : 'rgba(255,255,255,0.4)',
-            border: filter === f ? 'none' : '1px solid rgba(255,255,255,0.07)',
+            background: filter === f ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
+            color: filter === f ? '#fff' : 'rgba(var(--ink-rgb),0.4)',
+            border: filter === f ? 'none' : '1px solid rgba(var(--ink-rgb),0.07)',
           }}>
             {f} {f !== 'all' ? `(${counts[f]})` : `(${products.length})`}
           </button>
@@ -87,15 +87,15 @@ const ProductApproval = () => {
             const brandEmail = p.brandId?.email || ''
 
             return (
-              <div key={p._id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, overflow: 'hidden', transition: 'border-color 0.2s' }}
+              <div key={p._id} style={{ background: 'rgba(var(--ink-rgb),0.02)', border: '1px solid rgba(var(--ink-rgb),0.06)', borderRadius: 18, overflow: 'hidden', transition: 'border-color 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(124,58,237,0.2)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}>
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(var(--ink-rgb),0.06)'}>
 
                 {/* Header row — clickable to expand */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '18px 20px', cursor: 'pointer' }}
                   onClick={() => setExpandedId(expanded ? null : p._id)}>
                   {/* Product image */}
-                  <div style={{ width: 60, height: 60, borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+                  <div style={{ width: 60, height: 60, borderRadius: 10, background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.07)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
                     {p.image ? (
                       <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={e => { e.target.style.display = 'none'; e.target.parentNode.textContent = '📦' }} />
@@ -104,7 +104,7 @@ const ProductApproval = () => {
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{p.name}</p>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{p.name}</p>
                       <span style={{ padding: '2px 9px', borderRadius: 100, fontSize: 10, fontWeight: 700, background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
                         {s.label}
                       </span>
@@ -112,15 +112,15 @@ const ProductApproval = () => {
                         {p.cashbackRate}% cashback
                       </span>
                     </div>
-                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
-                      by <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{brandName}</span>
+                    <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)' }}>
+                      by <span style={{ color: 'rgba(var(--ink-rgb),0.6)', fontWeight: 600 }}>{brandName}</span>
                       &nbsp;·&nbsp;{p.category}
                       &nbsp;·&nbsp;৳{Number(p.price).toLocaleString()}
                       &nbsp;·&nbsp;{new Date(p.createdAt).toLocaleDateString()}
                     </p>
                   </div>
 
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2"
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(var(--ink-rgb),0.3)" strokeWidth="2"
                     style={{ flexShrink: 0, transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
@@ -128,38 +128,38 @@ const ProductApproval = () => {
 
                 {/* Expanded detail */}
                 {expanded && (
-                  <div style={{ padding: '0 20px 20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ padding: '0 20px 20px', borderTop: '1px solid rgba(var(--ink-rgb),0.05)' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14, paddingTop: 16, marginBottom: 16 }}>
                       <div>
-                        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Brand</p>
-                        <p style={{ fontSize: 13, color: '#fff', fontWeight: 600 }}>{brandName}</p>
-                        {brandEmail && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{brandEmail}</p>}
+                        <p style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Brand</p>
+                        <p style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600 }}>{brandName}</p>
+                        {brandEmail && <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)' }}>{brandEmail}</p>}
                       </div>
                       <div>
-                        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Price</p>
-                        <p style={{ fontSize: 13, color: '#fff', fontWeight: 700 }}>৳{Number(p.price).toLocaleString()}</p>
+                        <p style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Price</p>
+                        <p style={{ fontSize: 13, color: 'var(--text)', fontWeight: 700 }}>৳{Number(p.price).toLocaleString()}</p>
                       </div>
                       <div>
-                        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Stock</p>
-                        <p style={{ fontSize: 13, color: '#fff' }}>{p.stock} units</p>
+                        <p style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Stock</p>
+                        <p style={{ fontSize: 13, color: 'var(--text)' }}>{p.stock} units</p>
                       </div>
                       <div>
-                        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Category</p>
-                        <p style={{ fontSize: 13, color: '#fff' }}>{p.category}</p>
+                        <p style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Category</p>
+                        <p style={{ fontSize: 13, color: 'var(--text)' }}>{p.category}</p>
                       </div>
                     </div>
 
                     {p.description && (
-                      <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', marginBottom: 16 }}>
-                        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Description</p>
-                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>{p.description}</p>
+                      <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(var(--ink-rgb),0.02)', border: '1px solid rgba(var(--ink-rgb),0.05)', marginBottom: 16 }}>
+                        <p style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Description</p>
+                        <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.55)', lineHeight: 1.6 }}>{p.description}</p>
                       </div>
                     )}
 
                     {p.image && (
                       <div style={{ marginBottom: 16 }}>
-                        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Product Image</p>
-                        <img src={p.image} alt={p.name} style={{ maxHeight: 200, maxWidth: 200, borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)', objectFit: 'cover' }}
+                        <p style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Product Image</p>
+                        <img src={p.image} alt={p.name} style={{ maxHeight: 200, maxWidth: 200, borderRadius: 12, border: '1px solid rgba(var(--ink-rgb),0.07)', objectFit: 'cover' }}
                           onError={e => e.target.style.display = 'none'} />
                       </div>
                     )}
@@ -175,12 +175,12 @@ const ProductApproval = () => {
                     {p.status === 'pending' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <div>
-                          <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', display: 'block', marginBottom: 6 }}>Rejection reason (if rejecting)</label>
+                          <label style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', display: 'block', marginBottom: 6 }}>Rejection reason (if rejecting)</label>
                           <input value={reasons[p._id] || ''} onChange={e => setReasons(r => ({ ...r, [p._id]: e.target.value }))}
                             placeholder="e.g. Image quality too low, missing product details..."
-                            style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                            style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(var(--ink-rgb),0.08)', background: 'rgba(var(--ink-rgb),0.04)', color: 'var(--text)', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
                             onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.4)'}
-                            onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'} />
+                            onBlur={e => e.target.style.borderColor = 'rgba(var(--ink-rgb),0.08)'} />
                         </div>
                         <div style={{ display: 'flex', gap: 10 }}>
                           <button onClick={() => handleApprove(p._id)} disabled={!!actioning[p._id]}

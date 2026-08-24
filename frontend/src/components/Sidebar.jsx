@@ -26,9 +26,9 @@ const Sidebar = ({ links = [], mobile = false, open = false, onClose }) => {
       <aside style={{
         position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: mobile ? 50 : 40,
         width: 256,
-        background: 'rgba(5,8,22,0.98)',
+        background: 'rgba(var(--nav-rgb),0.98)',
         backdropFilter: 'blur(24px)',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
+        borderRight: '1px solid rgba(var(--ink-rgb),0.06)',
         display: 'flex', flexDirection: 'column',
         transform: mobile ? (open ? 'translateX(0)' : 'translateX(-110%)') : 'none',
         transition: 'transform 0.28s cubic-bezier(0.22,1,0.36,1)',
@@ -42,7 +42,7 @@ const Sidebar = ({ links = [], mobile = false, open = false, onClose }) => {
         <div style={{
           height: 72, display: 'flex', alignItems: 'center',
           padding: '0 20px',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          borderBottom: '1px solid rgba(var(--ink-rgb),0.05)',
           flexShrink: 0,
         }}>
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -58,7 +58,7 @@ const Sidebar = ({ links = [], mobile = false, open = false, onClose }) => {
                 {user.name?.[0]?.toUpperCase() || '?'}
               </div>
               <div style={{ minWidth: 0 }}>
-                <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</p>
+                <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</p>
                 <p style={{ fontSize: 9, color: 'rgba(167,139,250,0.7)', letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 2 }}>{roleLabel}</p>
               </div>
             </div>
@@ -83,7 +83,7 @@ const Sidebar = ({ links = [], mobile = false, open = false, onClose }) => {
                 textDecoration: 'none',
                 fontSize: 13,
                 fontWeight: isActive ? 600 : 400,
-                color: isActive ? '#fff' : 'rgba(255,255,255,0.45)',
+                color: isActive ? 'var(--text)' : 'rgba(var(--ink-rgb),0.45)',
                 background: isActive ? 'rgba(124,58,237,0.12)' : 'transparent',
                 border: isActive ? '1px solid rgba(124,58,237,0.25)' : '1px solid transparent',
                 boxShadow: isActive ? '0 0 20px rgba(124,58,237,0.15), inset 0 0 20px rgba(124,58,237,0.05)' : 'none',
@@ -92,14 +92,14 @@ const Sidebar = ({ links = [], mobile = false, open = false, onClose }) => {
               })}
               onMouseEnter={e => {
                 if (!e.currentTarget.style.background.includes('rgba(124')) {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
-                  e.currentTarget.style.color = 'rgba(255,255,255,0.75)'
+                  e.currentTarget.style.background = 'rgba(var(--ink-rgb),0.04)'
+                  e.currentTarget.style.color = 'var(--text-muted)'
                 }
               }}
               onMouseLeave={e => {
                 if (!e.currentTarget.style.background.includes('rgba(124')) {
                   e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'rgba(255,255,255,0.45)'
+                  e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.45)'
                 }
               }}
             >
@@ -123,7 +123,7 @@ const Sidebar = ({ links = [], mobile = false, open = false, onClose }) => {
         </nav>
 
         {/* Bottom actions */}
-        <div style={{ padding: '12px 10px', borderTop: '1px solid rgba(255,255,255,0.05)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div style={{ padding: '12px 10px', borderTop: '1px solid rgba(var(--ink-rgb),0.05)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <button onClick={handleLogout} style={{
             display: 'flex', alignItems: 'center', gap: 10,
             padding: '10px 12px',

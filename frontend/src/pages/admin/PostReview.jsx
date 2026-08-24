@@ -116,7 +116,7 @@ const SnapshotThumb = ({ src, href }) => {
       alt=""
       referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
-      style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', display: 'block', flexShrink: 0, border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', display: 'block', flexShrink: 0, border: '1px solid rgba(var(--ink-rgb),0.08)' }}
     />
   )
   return href

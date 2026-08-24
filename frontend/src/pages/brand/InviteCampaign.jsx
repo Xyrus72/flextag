@@ -14,7 +14,7 @@ const compact = (n) => {
 const normHandle = (h) => String(h || '').replace(/^@/, '').trim()
 
 const gradeColor = (s) => (s >= 85 ? '#22c55e' : s >= 70 ? '#4ade80' : s >= 55 ? '#f59e0b' : '#ef4444')
-const qualityOf = (pct) => (pct == null ? { label: '—', color: 'rgba(255,255,255,0.4)' }
+const qualityOf = (pct) => (pct == null ? { label: '—', color: 'rgba(var(--ink-rgb),0.4)' }
   : pct < 15 ? { label: 'Clean', color: '#22c55e' } : pct < 30 ? { label: 'Fair', color: '#f59e0b' } : { label: 'Risky', color: '#ef4444' })
 
 const HealthDot = ({ score }) => {
@@ -75,9 +75,9 @@ const InviteCampaign = () => {
       {/* Filters */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 20 }}>
         <div style={{ position: 'relative', flex: '1 1 220px', minWidth: 200 }}>
-          <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.35)' }} />
+          <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(var(--ink-rgb),0.35)' }} />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or @handle…"
-            style={{ width: '100%', padding: '10px 12px 10px 34px', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+            style={{ width: '100%', padding: '10px 12px 10px 34px', borderRadius: 12, background: 'rgba(var(--ink-rgb),0.05)', border: '1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
         </div>
         <select value={minFollowers} onChange={e => setMinFollowers(Number(e.target.value))} className="disc-select">
           <option value={0}>Any followers</option><option value={1000}>1k+</option><option value={5000}>5k+</option><option value={10000}>10k+</option><option value={50000}>50k+</option>
@@ -90,14 +90,14 @@ const InviteCampaign = () => {
         </select>
         <button type="button" onClick={() => setVerifiedOnly(v => !v)} style={{
           padding: '9px 14px', borderRadius: 12, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-          border: `1px solid ${verifiedOnly ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.1)'}`,
-          background: verifiedOnly ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.04)', color: verifiedOnly ? '#4ade80' : 'rgba(255,255,255,0.5)',
+          border: `1px solid ${verifiedOnly ? 'rgba(34,197,94,0.4)' : 'rgba(var(--ink-rgb),0.1)'}`,
+          background: verifiedOnly ? 'rgba(34,197,94,0.12)' : 'rgba(var(--ink-rgb),0.04)', color: verifiedOnly ? '#4ade80' : 'rgba(var(--ink-rgb),0.5)',
           display: 'inline-flex', alignItems: 'center', gap: 6,
         }}><ShieldCheck size={13} /> Verified only</button>
       </div>
-      <style>{`.disc-select{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;font-size:13px;outline:none;cursor:pointer}`}</style>
+      <style>{`.disc-select{padding:10px 12px;border-radius:12px;background:rgba(var(--ink-rgb),0.05);border:1px solid rgba(var(--ink-rgb),0.1);color:#fff;font-size:13px;outline:none;cursor:pointer}`}</style>
 
-      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 14 }}>
+      <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)', marginBottom: 14 }}>
         {filtered.length} creator{filtered.length !== 1 ? 's' : ''}{invitedCount > 0 ? ` · ${invitedCount} invited` : ''}
       </p>
 
@@ -118,7 +118,7 @@ const InviteCampaign = () => {
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
+                      <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
                       {c.igVerified && <ShieldCheck size={14} style={{ color: '#22c55e', flexShrink: 0 }} />}
                     </div>
                     {handle && <a href={`https://instagram.com/${handle}`} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#a78bfa', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}><AtSign size={11} /> @{handle}</a>}
@@ -126,8 +126,8 @@ const InviteCampaign = () => {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, margin: '14px 0' }}>
-                  <div><p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}><Users size={10} style={{ display: 'inline', marginRight: 3 }} />Followers</p><p style={{ margin: '2px 0 0', fontSize: 16, fontWeight: 800, color: '#fff' }}>{compact(c.followersCount)}</p></div>
-                  <div><p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}><TrendingUp size={10} style={{ display: 'inline', marginRight: 3 }} />Engagement</p><p style={{ margin: '2px 0 0', fontSize: 16, fontWeight: 800, color: '#fff' }}>{isNum(c.engagementRate) ? c.engagementRate + '%' : '—'}</p></div>
+                  <div><p style={{ margin: 0, fontSize: 10, color: 'rgba(var(--ink-rgb),0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}><Users size={10} style={{ display: 'inline', marginRight: 3 }} />Followers</p><p style={{ margin: '2px 0 0', fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{compact(c.followersCount)}</p></div>
+                  <div><p style={{ margin: 0, fontSize: 10, color: 'rgba(var(--ink-rgb),0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}><TrendingUp size={10} style={{ display: 'inline', marginRight: 3 }} />Engagement</p><p style={{ margin: '2px 0 0', fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{isNum(c.engagementRate) ? c.engagementRate + '%' : '—'}</p></div>
                 </div>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>

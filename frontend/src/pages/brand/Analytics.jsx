@@ -139,7 +139,7 @@ const Analytics = () => {
             {showcase.posts.map(p => (
               <a key={p._id} href={p.snapshot.permalink} target="_blank" rel="noreferrer"
                 className="group rounded-xl overflow-hidden border border-white/5 bg-white/[0.02] hover:border-violet-500/30 transition-all">
-                <div className="relative" style={{ aspectRatio: '1 / 1', background: '#0a0f23' }}>
+                <div className="relative" style={{ aspectRatio: '1 / 1', background: 'var(--bg-2)' }}>
                   {p.snapshot.thumbnail
                     ? <img src={p.snapshot.thumbnail} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = 'none' }} />
                     : <div className="w-full h-full flex items-center justify-center text-3xl opacity-40">📸</div>}

@@ -33,12 +33,12 @@ const Login = () => {
     <AuthShell tagline="Sign in to your account">
         {/* Card */}
         <div style={{
-          background: 'rgba(255,255,255,0.04)',
+          background: 'rgba(var(--ink-rgb),0.04)',
           backdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid rgba(var(--ink-rgb),0.08)',
           borderRadius: 24,
           padding: 36,
-          boxShadow: '0 24px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(var(--ink-rgb),0.06)',
           position: 'relative', overflow: 'hidden',
         }}>
           {/* Card top glow */}
@@ -70,7 +70,7 @@ const Login = () => {
                 />
                 <button type="button" onClick={() => setShowPass(!showPass)} style={{
                   position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', padding: 0,
+                  background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(var(--ink-rgb),0.3)', padding: 0,
                 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     {showPass
@@ -95,8 +95,8 @@ const Login = () => {
             </button>
           </form>
 
-          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
+          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(var(--ink-rgb),0.06)', textAlign: 'center' }}>
+            <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.3)' }}>
               Don't have an account?{' '}
               <Link to="/register" style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: 600 }}
                 onMouseEnter={e => e.target.style.color = '#7c3aed'}

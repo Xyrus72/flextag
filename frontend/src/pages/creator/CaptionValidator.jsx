@@ -20,13 +20,13 @@ const ScoreRing = ({ score }) => {
   return (
     <div style={{ position: 'relative', width: 88, height: 88, flexShrink: 0 }}>
       <svg viewBox="0 0 80 80" width="88" height="88" style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx="40" cy="40" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="7" />
+        <circle cx="40" cy="40" r={r} fill="none" stroke="rgba(var(--ink-rgb),0.08)" strokeWidth="7" />
         <circle cx="40" cy="40" r={r} fill="none" stroke={color} strokeWidth="7" strokeLinecap="round"
           strokeDasharray={c} strokeDashoffset={c * (1 - s / 100)} style={{ transition: 'stroke-dashoffset 0.8s ease' }} />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>{Math.round(s)}</span>
-        <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>/ 100</span>
+        <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)' }}>{Math.round(s)}</span>
+        <span style={{ fontSize: 9, color: 'rgba(var(--ink-rgb),0.4)' }}>/ 100</span>
       </div>
     </div>
   )
