@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import {
   motion, useScroll, useTransform, useMotionValue,
-  useSpring, AnimatePresence, useInView, animate
+  useSpring, AnimatePresence, useInView,
 } from 'framer-motion'
 import { API_URL } from '../config'
 
@@ -30,18 +30,6 @@ const GLOBAL_CSS = `
   html { scroll-behavior: smooth; }
   body { background: var(--bg); font-family: 'Inter', sans-serif; overflow-x: hidden; }
 
-  @keyframes floatY {
-    0%,100% { transform: translateY(0px); }
-    50%      { transform: translateY(-12px); }
-  }
-  @keyframes floatYSlow {
-    0%,100% { transform: translateY(0px); }
-    50%      { transform: translateY(-6px); }
-  }
-  @keyframes orbitCW {
-    from { transform: rotate(var(--start-angle)) translateX(var(--orbit-r)) rotate(calc(-1 * var(--start-angle))); }
-    to   { transform: rotate(calc(var(--start-angle) + 360deg)) translateX(var(--orbit-r)) rotate(calc(-1 * (var(--start-angle) + 360deg))); }
-  }
   @keyframes pulseRing {
     0%   { transform: scale(1); opacity: 0.5; }
     50%  { transform: scale(1.05); opacity: 0.8; }
@@ -67,42 +55,9 @@ const GLOBAL_CSS = `
     0%,100% { background-position: 0% 50%; }
     50%      { background-position: 100% 50%; }
   }
-  @keyframes coinBurst {
-    0%   { transform: translateY(0) scale(1); opacity: 1; }
-    100% { transform: translateY(-120px) scale(0.5); opacity: 0; }
-  }
-  @keyframes scanLine {
-    0%   { top: 0%; }
-    100% { top: 100%; }
-  }
-  @keyframes heartFloat {
-    0%   { transform: translateY(0) scale(1); opacity: 0.9; }
-    100% { transform: translateY(-200px) scale(0.5) rotate(15deg); opacity: 0; }
-  }
-  @keyframes connectionPulse {
-    0%,100% { opacity: 0.2; }
-    50%      { opacity: 0.6; }
-  }
-  @keyframes rotateSlow {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-  }
   @keyframes glowPulse {
     0%,100% { box-shadow: 0 0 40px rgba(124,58,237,0.3), 0 0 80px rgba(6,182,212,0.15); }
     50%      { box-shadow: 0 0 80px rgba(124,58,237,0.6), 0 0 160px rgba(6,182,212,0.3); }
-  }
-  @keyframes borderGlow {
-    0%,100% { border-color: rgba(124,58,237,0.3); }
-    50%      { border-color: rgba(6,182,212,0.5); }
-  }
-  @keyframes networkLine {
-    0%   { stroke-dashoffset: 1000; opacity: 0; }
-    50%  { opacity: 0.6; }
-    100% { stroke-dashoffset: 0; opacity: 0; }
-  }
-  @keyframes countUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
   }
 
   .shimmer-text {
@@ -254,7 +209,6 @@ const GlassCard = ({ children, style = {}, glow = 'purple' }) => {
 /* ─── ANIMATED COUNTER ─────────────────────────────────────────────────────── */
 const AnimCounter = ({ values, interval = 1200, prefix = '', suffix = '' }) => {
   const [idx, setIdx] = useState(0)
-  const [display, setDisplay] = useState(values[0])
   useEffect(() => {
     const t = setInterval(() => setIdx(i => (i + 1) % values.length), interval)
     return () => clearInterval(t)
@@ -404,8 +358,6 @@ export default function Landing() {
   const smoothX = useSpring(mouseX, { stiffness: 50, damping: 20 })
   const smoothY = useSpring(mouseY, { stiffness: 50, damping: 20 })
 
-  const containerRef = useRef(null)
-
   // Scroll progress for the whole page
   const { scrollYProgress } = useScroll()
 
@@ -450,9 +402,7 @@ export default function Landing() {
 
   // Hero scroll progress
   const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
-  const heroScale  = useTransform(heroScroll, [0, 1], [1, 1.3])
   const heroOpacity= useTransform(heroScroll, [0, 0.7], [1, 0])
-  const camZ       = useTransform(heroScroll, [0, 1], ['perspective(1200px) scale(1)', 'perspective(1200px) scale(1.4)'])
 
   // Parallax for hero content
   const heroTitleY = useTransform(heroScroll, [0, 1], [0, -120])
@@ -1143,7 +1093,7 @@ export default function Landing() {
                       { label: 'Tagged brand',    delay: 1.0 },
                       { label: 'Public post',     delay: 1.5 },
                       { label: 'Retention active', delay: 2.0 },
-                    ].map((check, i) => (
+                    ].map((check) => (
                       <motion.div
                         key={check.label}
                         initial={{ opacity: 0, x: -10 }}
@@ -1567,7 +1517,7 @@ export default function Landing() {
                       <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.4)' }}>Join the earning ecosystem</p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      {['Browse campaigns', 'Earn cashback', 'Build your portfolio', 'Track analytics'].map((item, i) => (
+                      {['Browse campaigns', 'Earn cashback', 'Build your portfolio', 'Track analytics'].map((item) => (
                         <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <div style={{ width: 20, height: 20, borderRadius: 6, background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>✓</div>
                           <span style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.6)' }}>{item}</span>
@@ -1606,7 +1556,7 @@ export default function Landing() {
                       <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.4)' }}>Scale with authentic creators</p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      {['Launch campaigns', 'Track ROI', 'Discover creators', 'Pay on results only'].map((item, i) => (
+                      {['Launch campaigns', 'Track ROI', 'Discover creators', 'Pay on results only'].map((item) => (
                         <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <div style={{ width: 20, height: 20, borderRadius: 6, background: 'rgba(6,182,212,0.2)', border: '1px solid rgba(6,182,212,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>✓</div>
                           <span style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.6)' }}>{item}</span>
