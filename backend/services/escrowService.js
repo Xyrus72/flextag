@@ -1,3 +1,5 @@
+const { sendEmail } = require("./emailService");
+
 const Post = require('../models/Post')
 const Transaction = require('../models/Transaction')
 const Order = require('../models/Order')
@@ -16,6 +18,7 @@ const User = require('../models/User')
 // 2. Order cashbackReleased becomes true
 // 3. Post cashbackReleased becomes true
 // 4. Creator earnings increase
+// 5. Creator receives email notification
 // ============================================================
 
 async function releaseExpiredEscrows() {
@@ -24,14 +27,6 @@ async function releaseExpiredEscrows() {
 
     const now = new Date()
 
-
-    // ----------------------------------------------------------
-    // Find posts where:
-    //
-    // status = approved
-    // cashback has NOT been released
-    // retention deadline has already passed
-    // ----------------------------------------------------------
 
     const expiredPosts = await Post.find({
 
@@ -47,7 +42,6 @@ async function releaseExpiredEscrows() {
     })
 
 
-    // Nothing needs to be released
     if (expiredPosts.length === 0) {
 
       return {
@@ -60,18 +54,10 @@ async function releaseExpiredEscrows() {
     let releasedCount = 0
 
 
-    // ----------------------------------------------------------
-    // Process every expired post
-    // ----------------------------------------------------------
-
     for (const post of expiredPosts) {
 
       try {
 
-        // ------------------------------------------------------
-        // Find the pending cashback transaction
-        // created when the post was approved
-        // ------------------------------------------------------
 
         const transaction = await Transaction.findOne({
 
@@ -86,8 +72,6 @@ async function releaseExpiredEscrows() {
         })
 
 
-        // If transaction does not exist,
-        // skip this post instead of crashing the server.
         if (!transaction) {
 
           console.warn(
@@ -98,9 +82,6 @@ async function releaseExpiredEscrows() {
         }
 
 
-        // ------------------------------------------------------
-        // Mark cashback transaction as COMPLETED
-        // ------------------------------------------------------
 
         transaction.status = 'completed'
 
@@ -113,9 +94,6 @@ async function releaseExpiredEscrows() {
         await transaction.save()
 
 
-        // ------------------------------------------------------
-        // Update Order
-        // ------------------------------------------------------
 
         if (post.orderId) {
 
@@ -129,18 +107,19 @@ async function releaseExpiredEscrows() {
         }
 
 
-        // ------------------------------------------------------
-        // Update Post
-        // ------------------------------------------------------
 
         post.cashbackReleased = true
 
         await post.save()
 
 
-        // ------------------------------------------------------
-        // Add money to creator earnings
-        // ------------------------------------------------------
+
+        // Get creator information for email
+        const creator = await User.findById(
+          post.creatorId
+        )
+
+
 
         await User.findByIdAndUpdate(
           post.creatorId,
@@ -156,12 +135,67 @@ async function releaseExpiredEscrows() {
         )
 
 
+
+        // ====================================================
+        // SEND PAYOUT EMAIL
+        // ====================================================
+
+        if (creator && creator.email) {
+
+          try {
+
+            await sendEmail(
+
+              creator.email,
+
+              "FlexTag Cashback Released",
+
+              `
+Hello ${creator.name},
+
+Your cashback payment has been released successfully.
+
+Amount:
+BDT ${transaction.amount}
+
+Campaign Status:
+Completed ✅
+
+Your earnings have been updated in your FlexTag wallet.
+
+Thank you for using FlexTag.
+
+FlexTag Team
+              `
+
+            )
+
+
+            console.log(
+              `📧 Cashback email sent to ${creator.email}`
+            )
+
+
+          } catch(emailError) {
+
+            console.error(
+              "📧 Email notification failed:",
+              emailError.message
+            )
+
+          }
+
+        }
+
+
+
         releasedCount++
 
 
         console.log(
           `[Escrow] Released BDT ${transaction.amount} for post ${post._id}`
         )
+
 
 
       } catch (postError) {
@@ -183,6 +217,7 @@ async function releaseExpiredEscrows() {
       released: releasedCount
 
     }
+
 
 
   } catch (error) {
