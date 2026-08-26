@@ -1,0 +1,68 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# In the Render dashboard: New -> Blueprint -> select this repo. Render reads
+# this file and creates the service below; anything marked `sync: false` is a
+# secret Render will prompt you to fill in (never committed here).
+services:
+  - type: web
+    name: flextag-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      # ── Required to boot ──────────────────────────────────────────────────
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true   # Render generates a strong random value
+      # Comma-separated deployed frontend origin(s), e.g. https://flextag.vercel.app
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: BACKEND_URL
+        sync: false           # this service's own Render URL, once known
+
+      # ── Email (OTP) — required for signup to send verification codes ───────
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+
+      # ── Admin provisioning (`npm run seed`) ─────────────────────────────────
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+
+      # ── Instagram intelligence — optional, features degrade without it ─────
+      - key: IG_PROVIDER
+        value: auto
+      - key: HIKERAPI_KEY
+        sync: false
+      - key: IG_SESSIONID
+        sync: false
+      - key: IG_CSRFTOKEN
+        sync: false
+      - key: IG_DS_USER_ID
+        sync: false
+      - key: IG_GRAPH_TOKEN
+        sync: false
+      - key: IG_GRAPH_USER_ID
+        sync: false
+
+      # ── SSLCommerz payments — optional, checkout 503s without it ────────────
+      - key: SSLCZ_STORE_ID
+        sync: false
+      - key: SSLCZ_STORE_PASSWORD
+        sync: false
+      - key: SSLCZ_IS_LIVE
+        value: false
+
+      # ── AI captions — optional, falls back to templates without it ─────────
+      - key: ANTHROPIC_API_KEY
+        sync: false

@@ -26,15 +26,26 @@ const messageRoutes      = require('./routes/messages')
 const app    = express()
 const server = http.createServer(app)
 const PORT   = process.env.PORT || 1643
+const IS_PROD = process.env.NODE_ENV === 'production'
+
+// Render/Railway/etc terminate TLS at a proxy in front of the app, so Express
+// sees a plain HTTP connection unless told to trust the proxy's X-Forwarded-*
+// headers — without this, secure cookies (below) silently never get set.
+if (IS_PROD) app.set('trust proxy', 1)
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
+// Deployed frontend origins (Vercel, etc) come from ALLOWED_ORIGINS — a
+// comma-separated list in .env. Localhost is always allowed for local dev.
+const allowedOrigins = new Set(
+  (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean),
+)
+const isAllowedOrigin = (origin) =>
+  !origin || /^http:\/\/localhost(:\d+)?$/.test(origin) || allowedOrigins.has(origin)
+
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin)) {
-      callback(null, true)
-    } else {
-      callback(new Error('Not allowed by CORS'))
-    }
+    if (isAllowedOrigin(origin)) callback(null, true)
+    else callback(new Error('Not allowed by CORS'))
   },
   credentials: true,
 }
@@ -103,10 +114,13 @@ const sessionMiddleware = session({
     },
   }),
   cookie: {
-    secure: false,
+    // Cross-domain deploy (frontend on vercel.app, API on onrender.com) needs
+    // SameSite=None + Secure for the browser to send the cookie at all; local
+    // dev (same-site, plain http) needs the opposite or the cookie is rejected.
+    secure: IS_PROD,
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    sameSite: 'lax',
+    sameSite: IS_PROD ? 'none' : 'lax',
   },
 })
 app.use(sessionMiddleware)
@@ -115,11 +129,8 @@ app.use(sessionMiddleware)
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
-      if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin)) {
-        callback(null, true)
-      } else {
-        callback(new Error('Not allowed by CORS'))
-      }
+      if (isAllowedOrigin(origin)) callback(null, true)
+      else callback(new Error('Not allowed by CORS'))
     },
     credentials: true,
   },
