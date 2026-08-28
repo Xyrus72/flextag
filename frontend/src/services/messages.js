@@ -17,3 +17,6 @@ export const getMessages = (conversationId) =>
 
 export const sendMessage = (data) =>
   api.post('/api/messages', data).then(r => r.data)
+
+export const markConversationAsRead = (conversationId) =>
+  api.put(`/api/messages/conversations/${conversationId}/read`).then(r => r.data)

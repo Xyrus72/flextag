@@ -6,6 +6,7 @@ import {
   getMessages,
   startConversation,
   getContacts,
+  markConversationAsRead,
 } from '../../services/messages'
 import api from '../../services/api'
 
@@ -17,13 +18,14 @@ const Icon = ({ d, size = 18, cls = '' }) => (
     <path d={d} />
   </svg>
 )
-const SendIcon    = () => <Icon d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-const SearchIcon  = () => <Icon d="M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
-const MessageIcon = () => <Icon d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 0 2-2h14a2 2 0 0 1 2 2z" />
-const ShieldIcon  = () => <Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-const BuildingIcon= () => <Icon d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18M6 12h12M6 17h12M9 6h6" />
-const UserIcon    = () => <Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
-const XIcon       = () => <Icon d="M18 6L6 18M6 6l12 12" />
+const SendIcon     = () => <Icon d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+const SearchIcon   = () => <Icon d="M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
+const MessageIcon  = () => <Icon d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 0 2-2h14a2 2 0 0 1 2 2z" />
+const ShieldIcon   = () => <Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+const BuildingIcon = () => <Icon d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18M6 12h12M6 17h12M9 6h6" />
+const UserIcon     = () => <Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
+const XIcon        = () => <Icon d="M18 6L6 18M6 6l12 12" />
+const AlertIcon    = () => <Icon d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01" />
 
 const ROLE_BADGE = {
   admin:   { label: 'Admin Support', bg: 'rgba(239,68,68,0.15)',   text: '#f87171', border: 'rgba(239,68,68,0.3)' },
@@ -40,14 +42,14 @@ const Avatar = ({ user, size = 40 }) => {
     : 'linear-gradient(135deg,#7c3aed,#06b6d4)'
   return (
     <div style={{ width: size, height: size, borderRadius: Math.round(size * 0.3), background: gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.4, fontWeight: 800, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
-      {src ? <img src={src} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : name[0].toUpperCase()}
+      {src ? <img src={src} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : name[0]?.toUpperCase()}
     </div>
   )
 }
 
 export default function Chat() {
-  const { user }   = useAuth()
-  const { socket } = useSocket()
+  const { user } = useAuth()
+  const { socket, isConnected, isConnecting, connectionError } = useSocket()
 
   const [conversations, setConversations] = useState([])
   const [activeConv,    setActiveConv]    = useState(null)
@@ -56,6 +58,7 @@ export default function Chat() {
   const [loadingMsgs,   setLoadingMsgs]   = useState(false)
   const [sending,       setSending]       = useState(false)
   const [typingUser,    setTypingUser]    = useState(null)
+  const [errorMessage,  setErrorMessage]  = useState(null)
 
   // Contacts modal
   const [showContacts,  setShowContacts]  = useState(false)
@@ -69,7 +72,6 @@ export default function Chat() {
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
 
-  // Decide which contact types to show based on current user's role
   const isCreator = user?.role === 'creator'
   const isBrand   = user?.role === 'brand'
 
@@ -79,32 +81,51 @@ export default function Chat() {
       const data = await getConversations()
       const list = data.conversations || []
       setConversations(list)
-      if (autoSelect && list.length > 0 && !activeConv) setActiveConv(list[0])
+      if (autoSelect && list.length > 0 && !activeConv) {
+        setActiveConv(list[0])
+      }
     } catch (err) {
       console.error('Failed to load conversations:', err)
     }
   }, [activeConv])
 
-  useEffect(() => { loadConversations(true) }, [loadConversations])
+  useEffect(() => {
+    loadConversations(true)
+  }, [loadConversations])
 
-  /* ── Socket.IO events ────────────────────────────────────────────────── */
+  /* ── Socket.IO Real-Time Listeners ──────────────────────────────────── */
   useEffect(() => {
     if (!socket) return
 
     const handleNewMessage = ({ message }) => {
-      const msgConvId = message.conversationId?.toString?.() || message.conversationId
-      if (msgConvId === activeConv?._id?.toString()) {
+      const msgConvId = message.conversationId?._id?.toString?.() || message.conversationId?.toString?.() || message.conversationId
+      const activeId = activeConv?._id?.toString()
+
+      if (msgConvId === activeId) {
         setMessages(prev => {
           const exists = prev.some(m => m._id === message._id)
           return exists ? prev : [...prev, message]
         })
         setTimeout(scrollToBottom, 80)
+
+        // Mark as read in real-time if active
+        if (socket.connected) {
+          socket.emit('mark_read', { conversationId: activeId })
+        }
       }
-      setConversations(prev => prev.map(c =>
-        c._id?.toString() === msgConvId
-          ? { ...c, lastMessage: message.text, lastMessageAt: message.createdAt, unreadCount: activeConv?._id?.toString() === msgConvId ? 0 : (c.unreadCount || 0) + 1 }
-          : c
-      ))
+
+      setConversations(prev => prev.map(c => {
+        const cId = c._id?.toString()
+        if (cId === msgConvId) {
+          return {
+            ...c,
+            lastMessage: message.text,
+            lastMessageAt: message.createdAt,
+            unreadCount: activeId === msgConvId ? 0 : (c.unreadCount || 0) + 1,
+          }
+        }
+        return c
+      }))
     }
 
     const handleConvUpdated = ({ conversationId, lastMessage, lastMessageAt }) => {
@@ -116,20 +137,48 @@ export default function Chat() {
     }
 
     const handleTyping = ({ conversationId, userName }) => {
-      if (conversationId === activeConv?._id?.toString()) setTypingUser(userName)
+      if (conversationId === activeConv?._id?.toString()) {
+        setTypingUser(userName)
+      }
     }
-    const handleStopTyping = () => setTypingUser(null)
+
+    const handleStopTyping = () => {
+      setTypingUser(null)
+    }
+
+    const handleSocketError = ({ message }) => {
+      setErrorMessage(message || 'A chat error occurred.')
+      setTimeout(() => setErrorMessage(null), 5000)
+    }
+
+    const handleMessagesRead = ({ conversationId }) => {
+      if (conversationId === activeConv?._id?.toString()) {
+        setMessages(prev => prev.map(m => ({ ...m, read: true })))
+      }
+    }
 
     socket.on('new_message',          handleNewMessage)
+    socket.on('support:message',      handleNewMessage)
     socket.on('conversation_updated', handleConvUpdated)
     socket.on('user_typing',          handleTyping)
+    socket.on('support:typing',       handleTyping)
     socket.on('user_stop_typing',     handleStopTyping)
+    socket.on('support:stopTyping',    handleStopTyping)
+    socket.on('support:error',        handleSocketError)
+    socket.on('messages_read',        handleMessagesRead)
+    socket.on('support:read',         handleMessagesRead)
 
     return () => {
       socket.off('new_message',          handleNewMessage)
+      socket.off('support:message',      handleNewMessage)
       socket.off('conversation_updated', handleConvUpdated)
       socket.off('user_typing',          handleTyping)
+      socket.off('support:typing',       handleTyping)
       socket.off('user_stop_typing',     handleStopTyping)
+      socket.off('support:stopTyping',    handleStopTyping)
+      socket.off('support:error',        handleSocketError)
+      socket.off('messages_read',        handleMessagesRead)
+      socket.off('support:read',         handleMessagesRead)
     }
   }, [socket, activeConv?._id])
 
@@ -137,6 +186,7 @@ export default function Chat() {
   useEffect(() => {
     if (!socket || !activeConv?._id) return
     socket.emit('join_room', { conversationId: activeConv._id })
+    socket.emit('mark_read', { conversationId: activeConv._id })
     setTypingUser(null)
   }, [socket, activeConv?._id])
 
@@ -144,20 +194,27 @@ export default function Chat() {
   const fetchMessages = useCallback(async () => {
     if (!activeConv?._id) return
     setLoadingMsgs(true)
+    setErrorMessage(null)
     try {
       const data = await getMessages(activeConv._id)
       setMessages(data.messages || [])
       setConversations(prev => prev.map(c => c._id === activeConv._id ? { ...c, unreadCount: 0 } : c))
     } catch (err) {
       console.error('Failed to fetch messages:', err)
+      setErrorMessage('Failed to load messages.')
     } finally {
       setLoadingMsgs(false)
       setTimeout(scrollToBottom, 100)
     }
   }, [activeConv?._id])
 
-  useEffect(() => { fetchMessages() }, [fetchMessages])
-  useEffect(() => { scrollToBottom() }, [messages.length])
+  useEffect(() => {
+    fetchMessages()
+  }, [fetchMessages])
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages.length])
 
   /* ── Send message ────────────────────────────────────────────────────── */
   const handleSend = async () => {
@@ -165,13 +222,20 @@ export default function Chat() {
     const text = input.trim()
     setInput('')
     setSending(true)
+    setErrorMessage(null)
+
+    // Stop typing indicator immediately
+    if (socket && activeConv?._id) {
+      socket.emit('stop_typing', { conversationId: activeConv._id })
+    }
 
     const tempMsg = {
       _id: 'temp-' + Date.now(),
       conversationId: activeConv._id,
-      senderId: { _id: user._id, name: user.name, role: user.role },
+      senderId: { _id: user._id, name: user.name, role: user.role, avatar: user.avatar },
       text,
       createdAt: new Date().toISOString(),
+      read: false,
     }
     setMessages(prev => [...prev, tempMsg])
     setTimeout(scrollToBottom, 80)
@@ -179,14 +243,19 @@ export default function Chat() {
     try {
       if (socket?.connected) {
         socket.emit('send_message', { conversationId: activeConv._id, text })
-        setMessages(prev => prev.filter(m => m._id !== tempMsg._id))
+        // real message comes back via 'new_message' event
+        setTimeout(() => {
+          setMessages(prev => prev.filter(m => m._id !== tempMsg._id))
+        }, 300)
       } else {
+        // Fallback to REST API if socket is temporarily offline
         const res = await api.post('/api/messages', { conversationId: activeConv._id, text })
         setMessages(prev => prev.map(m => m._id === tempMsg._id ? res.data.message : m))
         loadConversations(false)
       }
     } catch (err) {
       console.error('Send error:', err)
+      setErrorMessage(err.response?.data?.message || 'Could not send message. Please check connection.')
       setMessages(prev => prev.filter(m => m._id !== tempMsg._id))
     } finally {
       setSending(false)
@@ -208,13 +277,14 @@ export default function Chat() {
   /* ── Start admin support ─────────────────────────────────────────────── */
   const handleStartAdminSupport = async () => {
     try {
+      setErrorMessage(null)
       const res = await startConversation({ type: 'support' })
       if (res.conversation) {
         setActiveConv(res.conversation)
         loadConversations()
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Could not start admin support chat.')
+      setErrorMessage(err.response?.data?.message || 'Could not start admin support chat.')
     }
   }
 
@@ -240,6 +310,7 @@ export default function Chat() {
 
   const handleSelectContact = async (contact) => {
     try {
+      setErrorMessage(null)
       const res = await startConversation({ targetUserId: contact._id, type: 'direct' })
       if (res.conversation) {
         setActiveConv(res.conversation)
@@ -247,7 +318,7 @@ export default function Chat() {
         loadConversations()
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Could not start conversation.')
+      setErrorMessage(err.response?.data?.message || 'Could not start conversation.')
     }
   }
 
@@ -266,7 +337,30 @@ export default function Chat() {
 
   // Header action buttons — role-aware
   const HeaderButtons = () => (
-    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* Live Socket Connection Badge */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '6px 12px',
+        borderRadius: 999,
+        background: isConnected ? 'rgba(16,185,129,0.1)' : isConnecting ? 'rgba(234,179,8,0.1)' : 'rgba(239,68,68,0.1)',
+        border: `1px solid ${isConnected ? 'rgba(16,185,129,0.3)' : isConnecting ? 'rgba(234,179,8,0.3)' : 'rgba(239,68,68,0.3)'}`,
+        fontSize: 12,
+        fontWeight: 600,
+        color: isConnected ? '#34d399' : isConnecting ? '#facc15' : '#f87171',
+      }}>
+        <div style={{
+          width: 7,
+          height: 7,
+          borderRadius: '50%',
+          background: isConnected ? '#34d399' : isConnecting ? '#facc15' : '#f87171',
+          boxShadow: isConnected ? '0 0 8px #34d399' : 'none',
+        }} />
+        <span>{isConnected ? 'Real-Time Live' : isConnecting ? 'Connecting...' : 'Offline'}</span>
+      </div>
+
       <button onClick={handleStartAdminSupport}
         style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#ef4444,#dc2626)', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(239,68,68,0.25)', fontFamily: 'inherit' }}>
         <ShieldIcon /> Admin Support
@@ -289,12 +383,35 @@ export default function Chat() {
   return (
     <div className="page-root" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 40px)', padding: '24px 24px 0 24px' }}>
 
+      {/* ── Error Toast ─────────────────────────────────────────────────── */}
+      {errorMessage && (
+        <div style={{
+          marginBottom: 12,
+          padding: '10px 16px',
+          borderRadius: 12,
+          background: 'rgba(239,68,68,0.15)',
+          border: '1px solid rgba(239,68,68,0.3)',
+          color: '#fca5a5',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          fontSize: 13,
+          fontWeight: 600,
+        }}>
+          <AlertIcon />
+          <span style={{ flex: 1 }}>{errorMessage}</span>
+          <button onClick={() => setErrorMessage(null)} style={{ background: 'none', border: 'none', color: '#fca5a5', cursor: 'pointer' }}>
+            <XIcon />
+          </button>
+        </div>
+      )}
+
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <div className="page-label"><span>Live Messaging & Assistance</span></div>
+          <div className="page-label"><span>Live Messaging & Support</span></div>
           <h1 className="page-title" style={{ fontSize: 24, margin: 0 }}>
-            {isCreator ? 'Support Desk & Brand Chat' : isBrand ? 'Creator & Admin Messaging' : 'Chat'}
+            {isCreator ? 'Support Desk & Live Chat' : isBrand ? 'Creator & Admin Support' : 'Live Chat'}
           </h1>
         </div>
         <HeaderButtons />
@@ -306,7 +423,7 @@ export default function Chat() {
         {/* Sidebar */}
         <div style={{ borderRadius: 18, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Active Conversations</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Conversations</span>
             <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'rgba(124,58,237,0.15)', color: '#a78bfa' }}>
               {conversations.length}
             </span>
@@ -317,7 +434,7 @@ export default function Chat() {
               <div style={{ textAlign: 'center', padding: '36px 16px', color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>
                 <MessageIcon />
                 <p style={{ marginTop: 10, fontWeight: 600, color: '#fff' }}>No messages yet</p>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 16 }}>Choose an option above to start chatting:</p>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 16 }}>Choose an option below to get live help:</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <button onClick={handleStartAdminSupport}
                     style={{ padding: '9px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -382,7 +499,7 @@ export default function Chat() {
         <div style={{ borderRadius: 18, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {activeConv ? (
             <>
-              {/* Header */}
+              {/* Chat Header */}
               <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.01)' }}>
                 <Avatar user={partner} size={44} />
                 <div>
@@ -402,13 +519,13 @@ export default function Chat() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }} />
                     <span style={{ fontSize: 11, color: '#34d399', fontWeight: 600 }}>
-                      {typingUser ? `${typingUser} is typing…` : 'Live Real-Time Database Connection'}
+                      {typingUser ? `${typingUser} is typing…` : isConnected ? 'Live Real-Time Socket Connection' : 'Connecting to live chat...'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Messages */}
+              {/* Messages Area */}
               <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {loadingMsgs ? (
                   <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
@@ -422,8 +539,11 @@ export default function Chat() {
                   </div>
                 ) : (
                   messages.map(msg => {
-                    const isMe = (msg.senderId?._id || msg.senderId) === user._id
-                    const senderName = msg.senderId?.name || (isMe ? 'You' : partner?.companyName || partner?.name || 'User')
+                    const senderObj = msg.senderId
+                    const senderIdStr = senderObj?._id?.toString?.() || senderObj?.toString?.()
+                    const isMe = senderIdStr === user?._id?.toString()
+                    const senderName = senderObj?.name || (isMe ? 'You' : partner?.companyName || partner?.name || 'User')
+
                     return (
                       <div key={msg._id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                         <div style={{ maxWidth: '75%' }}>
@@ -448,13 +568,13 @@ export default function Chat() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input */}
+              {/* Input Area */}
               <div style={{ padding: 16, borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)' }}>
                 <form onSubmit={e => { e.preventDefault(); handleSend() }} style={{ display: 'flex', gap: 10 }}>
                   <input
                     value={input}
                     onChange={handleInputChange}
-                    placeholder={`Write a message to ${partner?.companyName || partner?.name || 'user'}…`}
+                    placeholder={`Write a message to ${partner?.companyName || partner?.name || 'support'}…`}
                     style={{ flex: 1, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 14, outline: 'none', fontFamily: 'inherit' }}
                     onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.5)'}
                     onBlur={e  => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}

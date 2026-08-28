@@ -54,7 +54,7 @@ router.get('/conversations', requireAuth, async (req, res) => {
     const userId = req.user._id
 
     const conversations = await Conversation.find({ participants: userId })
-      .populate('participants', 'name companyName role instagramHandle avatar email isVerified')
+      .populate('participants', 'name companyName role instagramHandle avatar logoUrl email isVerified')
       .sort({ lastMessageAt: -1 })
 
     // Compute unread count for each conversation
@@ -89,9 +89,13 @@ router.post('/conversations', requireAuth, async (req, res) => {
     // If support chat is requested or no targetUserId provided
     if (type === 'support' || !targetId) {
       if (req.user.role === 'admin') {
-        // Logged-in user is already admin -> pick a creator or brand to chat with
-        const userToSupport = await User.findOne({ _id: { $ne: currentUserId } })
-        if (userToSupport) targetId = userToSupport._id
+        // Logged-in user is already admin -> pick a creator or brand to chat with if specified
+        if (targetUserId) {
+          targetId = targetUserId
+        } else {
+          const userToSupport = await User.findOne({ _id: { $ne: currentUserId } })
+          if (userToSupport) targetId = userToSupport._id
+        }
       } else {
         // Find an admin user in MongoDB
         let admin = await User.findOne({ role: 'admin' })
@@ -122,7 +126,7 @@ router.post('/conversations', requireAuth, async (req, res) => {
     // Look for existing conversation between current user and target user
     let conversation = await Conversation.findOne({
       participants: { $all: [currentUserId, targetId] },
-    }).populate('participants', 'name companyName role instagramHandle avatar email isVerified')
+    }).populate('participants', 'name companyName role instagramHandle avatar logoUrl email isVerified')
 
     if (!conversation) {
       conversation = new Conversation({
@@ -132,7 +136,7 @@ router.post('/conversations', requireAuth, async (req, res) => {
         lastMessageAt: new Date(),
       })
       await conversation.save()
-      conversation = await conversation.populate('participants', 'name companyName role instagramHandle avatar email isVerified')
+      conversation = await conversation.populate('participants', 'name companyName role instagramHandle avatar logoUrl email isVerified')
     }
 
     res.json({ conversation })
@@ -147,17 +151,23 @@ router.get('/conversations/:id', requireAuth, async (req, res) => {
   try {
     const convId = req.params.id
     const userId = req.user._id
+    const isAdmin = req.user.role === 'admin'
 
     const conversation = await Conversation.findById(convId)
-    if (!conversation || !conversation.participants.includes(userId)) {
+    if (!conversation) {
+      return res.status(404).json({ message: 'Conversation not found.' })
+    }
+
+    const isMember = conversation.participants.some(p => p.toString() === userId.toString())
+    if (!isMember && !isAdmin) {
       return res.status(403).json({ message: 'Access denied to conversation.' })
     }
 
     const messages = await Message.find({ conversationId: convId })
-      .populate('senderId', 'name companyName role avatar')
+      .populate('senderId', 'name companyName role avatar logoUrl isVerified')
       .sort({ createdAt: 1 })
 
-    // Mark messages as read
+    // Mark unread messages sent by others as read
     await Message.updateMany(
       { conversationId: convId, senderId: { $ne: userId }, read: false },
       { read: true }
@@ -175,34 +185,69 @@ router.post('/', requireAuth, async (req, res) => {
   try {
     const { conversationId, text } = req.body
     const senderId = req.user._id
+    const isAdmin = req.user.role === 'admin'
 
-    if (!conversationId || !text || !text.trim()) {
-      return res.status(400).json({ message: 'Conversation ID and text are required.' })
+    const trimmed = (text || '').trim()
+    if (!conversationId || !trimmed) {
+      return res.status(400).json({ message: 'Conversation ID and non-empty text are required.' })
+    }
+
+    if (trimmed.length > 5000) {
+      return res.status(400).json({ message: 'Message exceeds maximum length of 5000 characters.' })
     }
 
     const conversation = await Conversation.findById(conversationId)
-    if (!conversation || !conversation.participants.includes(senderId)) {
+    if (!conversation) {
+      return res.status(404).json({ message: 'Conversation not found.' })
+    }
+
+    const isMember = conversation.participants.some(p => p.toString() === senderId.toString())
+    if (!isMember && !isAdmin) {
       return res.status(403).json({ message: 'Access denied.' })
+    }
+
+    // Ensure admin is in participants list if replying
+    if (isAdmin && !isMember) {
+      conversation.participants.push(senderId)
     }
 
     const message = new Message({
       conversationId,
       senderId,
-      text: text.trim(),
+      text: trimmed,
+      read: false,
     })
     await message.save()
 
     // Update conversation summary
-    conversation.lastMessage = text.trim()
+    conversation.lastMessage = trimmed
     conversation.lastMessageAt = new Date()
     await conversation.save()
 
-    const populatedMsg = await message.populate('senderId', 'name companyName role avatar')
+    const populatedMsg = await message.populate('senderId', 'name companyName role avatar logoUrl isVerified')
 
     res.status(201).json({ message: populatedMsg })
   } catch (err) {
     console.error('[messages POST]', err)
     res.status(500).json({ message: 'Server error sending message.' })
+  }
+})
+
+// ── PUT /api/messages/conversations/:id/read — mark conversation messages as read ─
+router.put('/conversations/:id/read', requireAuth, async (req, res) => {
+  try {
+    const convId = req.params.id
+    const userId = req.user._id
+
+    await Message.updateMany(
+      { conversationId: convId, senderId: { $ne: userId }, read: false },
+      { read: true }
+    )
+
+    res.json({ success: true })
+  } catch (err) {
+    console.error('[messages/:id/read PUT]', err)
+    res.status(500).json({ message: 'Server error marking messages as read.' })
   }
 })
 
