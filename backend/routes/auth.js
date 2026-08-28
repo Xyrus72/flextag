@@ -23,7 +23,9 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Name, email, password and role are required.' })
     }
 
-    const existing = await User.findOne({ email })
+    const normalizedEmail = (email || '').trim().toLowerCase()
+
+    const existing = await User.findOne({ email: normalizedEmail })
     if (existing) {
       return res.status(409).json({ message: 'An account with this email already exists.' })
     }
@@ -31,14 +33,26 @@ router.post('/register', async (req, res) => {
     const hashed = await bcrypt.hash(password, 10)
 
     const user = await User.create({
-      name, email, password: hashed, phone, role,
-      instagramHandle, followersCount, tiktokHandle,
-      companyName, website, productCategory,
+      name: (name || '').trim(),
+      email: normalizedEmail,
+      password: hashed,
+      phone: phone || '',
+      role,
+      instagramHandle: instagramHandle || '',
+      followersCount: followersCount || 0,
+      tiktokHandle: tiktokHandle || '',
+      companyName: companyName || '',
+      website: website || '',
+      productCategory: productCategory || '',
     })
 
     // Save to session
     req.session.userId = user._id.toString()
     req.session.role   = user.role
+
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => (err ? reject(err) : resolve()))
+    })
 
     return res.status(201).json({ message: 'Account created successfully.', user: safeUser(user) })
   } catch (err) {
@@ -56,7 +70,9 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required.' })
     }
 
-    const user = await User.findOne({ email })
+    const normalizedEmail = (email || '').trim().toLowerCase()
+
+    const user = await User.findOne({ email: normalizedEmail })
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password.' })
     }
@@ -69,6 +85,10 @@ router.post('/login', async (req, res) => {
     // Save to session
     req.session.userId = user._id.toString()
     req.session.role   = user.role
+
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => (err ? reject(err) : resolve()))
+    })
 
     return res.json({ message: 'Login successful.', user: safeUser(user) })
   } catch (err) {

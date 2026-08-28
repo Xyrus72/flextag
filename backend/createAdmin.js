@@ -21,17 +21,22 @@ const ADMIN = {
   console.log('Connected to MongoDB')
 
   const existing = await User.findOne({ email: ADMIN.email })
+  const hashed = await bcrypt.hash(ADMIN.password, 10)
+
+  let admin
   if (existing) {
-    console.log('Admin already exists:', existing.email)
-    process.exit(0)
+    existing.password = hashed
+    existing.role = 'admin'
+    existing.isSuper = true
+    existing.isVerified = true
+    admin = await existing.save()
+    console.log('✅ Admin password updated successfully!')
+  } else {
+    admin = await User.create({ ...ADMIN, password: hashed, isVerified: true })
+    console.log('✅ Admin created successfully!')
   }
 
-  const hashed = await bcrypt.hash(ADMIN.password, 10)
-  const admin  = await User.create({ ...ADMIN, password: hashed })
-
-  console.log('✅ Admin created successfully!')
   console.log('   Email   :', admin.email)
-  console.log('   Password:', ADMIN.password)
   console.log('   Role    :', admin.role)
   process.exit(0)
 })().catch(err => {
