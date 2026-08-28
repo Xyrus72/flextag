@@ -41,7 +41,23 @@ const Analytics = () => {
         // Global KPIs
         const totalPosts    = posts.length
         const totalCashback = orders.filter(o => o.cashbackReleased).reduce((s, o) => s + o.cashbackAmount, 0)
-        setKpis({ posts: totalPosts, cashbackPaid: totalCashback })
+        
+        const totalLikes = posts.reduce((sum, p) => sum + (Number(p.likes) || 0), 0)
+        const totalComments = posts.reduce((sum, p) => sum + (Number(p.comments) || 0), 0)
+        const totalViews = posts.reduce((sum, p) => sum + (Number(p.views) || 0), 0)
+        const totalEstimatedReach = posts.reduce((sum, p) => sum + (Number(p.estimatedReach) || 0), 0)
+        
+        const totalEngagements = totalLikes + totalComments
+        const cpe = totalEngagements > 0 ? (totalCashback / totalEngagements) : 0
+        const totalReach = totalEstimatedReach > 0 ? totalEstimatedReach : totalViews
+        
+        setKpis({ 
+          posts: totalPosts, 
+          cashbackPaid: totalCashback,
+          engagements: totalEngagements,
+          reach: totalReach,
+          cpe: cpe
+        })
 
         // Monthly orders chart (group by month)
         const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -83,12 +99,14 @@ const Analytics = () => {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {[
           { label: 'Total Posts',        value: loading ? '...' : String(kpis.posts),                          icon: '📝' },
-          { label: 'Campaigns',          value: loading ? '...' : String(campaigns.length),                    icon: '📢' },
+          { label: 'Total Reach',        value: loading ? '...' : String(kpis.reach),                          icon: '👁️' },
+          { label: 'Total Engagements',  value: loading ? '...' : String(kpis.engagements),                    icon: '❤️' },
+          { label: 'Cashback Paid',      value: loading ? '...' : `৳${(kpis.cashbackPaid || 0).toLocaleString()}`, icon: '💸' },
+          { label: 'Cost Per Engagement',value: loading ? '...' : `৳${(kpis.cpe || 0).toFixed(2)}`,            icon: '🎯' },
           { label: 'Active Campaigns',   value: loading ? '...' : String(campaigns.filter(c => c.status === 'active').length), icon: '🟢' },
-          { label: 'Total Cashback Paid',value: loading ? '...' : `৳${(kpis.cashbackPaid || 0).toLocaleString()}`, icon: '💸' },
         ].map(k => (
           <div key={k.label} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:-translate-y-1 transition-all">
             <span className="text-xl block mb-2">{k.icon}</span>
