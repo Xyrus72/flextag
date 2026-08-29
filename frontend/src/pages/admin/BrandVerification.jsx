@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { getUsers, verifyUser } from '../../services/users'
 
 const statusConfig = {
@@ -13,8 +13,9 @@ const BrandVerification = () => {
   const [filter, setFilter]   = useState('pending')
   const [actioning, setActioning] = useState({})
 
+  // Every setState here lands in a promise callback: `loading` starts true, and
+  // a manual refresh flips it back on from the handler that asked for one.
   const load = () => {
-    setLoading(true)
     getUsers({ role: 'brand' })
       .then(d => setBrands(d.users || []))
       .catch(console.error)

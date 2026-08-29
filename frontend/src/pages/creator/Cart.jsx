@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { placeOrder } from '../../services/orders'
 import { initCheckout } from '../../services/checkout'
@@ -10,42 +10,37 @@ const CART_KEY = 'flextag_cart'
 const Cart = () => {
   const { user }  = useAuth()
   const navigate  = useNavigate()
-  const [items, setItems]                   = useState([])
+  // The cart lives in localStorage — read it once, at first render, so there is
+  // no frame where the page claims the cart is empty.
+  const [items, setItems]                   = useState(() => JSON.parse(localStorage.getItem(CART_KEY) || '[]'))
   const [paymentMethod, setPaymentMethod]   = useState('bkash')
-  const [address, setAddress]               = useState('')
-  const [savedAddresses, setSavedAddresses] = useState([])
+  const [typedAddress, setAddress]          = useState('')   // '' = still showing their default
+  const [fetchedAddresses, setFetchedAddr]  = useState([])
   const [showCheckout, setShowCheckout]     = useState(false)
   const [placing, setPlacing]               = useState(false)
   const [error, setError]                   = useState('')
 
+  // Addresses already on the user object need no round trip; the effect only
+  // fetches when the session carries none.
+  const profileAddresses = useMemo(() => user?.shippingAddresses || [], [user?.shippingAddresses])
   useEffect(() => {
-    setItems(JSON.parse(localStorage.getItem(CART_KEY) || '[]'))
-  }, [])
+    if (!user?._id || profileAddresses.length) return undefined
+    let alive = true
+    getAddresses(user._id)
+      .then(d => { if (alive) setFetchedAddr(d.addresses || []) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [user?._id, profileAddresses.length])
 
-  useEffect(() => {
-    if (!user?._id) return
-    const addrs = user.shippingAddresses || []
-    if (addrs.length > 0) {
-      setSavedAddresses(addrs)
-      const def = addrs.find(a => a.isDefault) || addrs[0]
-      if (def) {
-        const formatted = `${def.fullName || user.name} (${def.phone || user.phone})\n${def.street}, ${def.city}${def.zip ? ', ' + def.zip : ''}, ${def.country}`
-        setAddress(formatted)
-      }
-    } else {
-      getAddresses(user._id)
-        .then(d => {
-          const list = d.addresses || []
-          setSavedAddresses(list)
-          if (list.length > 0) {
-            const def = list.find(a => a.isDefault) || list[0]
-            const formatted = `${def.fullName || user.name} (${def.phone || user.phone})\n${def.street}, ${def.city}${def.zip ? ', ' + def.zip : ''}, ${def.country}`
-            setAddress(formatted)
-          }
-        })
-        .catch(() => {})
-    }
-  }, [user?._id, user?.shippingAddresses])
+  const savedAddresses = profileAddresses.length ? profileAddresses : fetchedAddresses
+
+  const formatAddress = (a) => a
+    ? `${a.fullName || user?.name || ''} (${a.phone || user?.phone || ''})
+${a.street}, ${a.city}${a.zip ? ', ' + a.zip : ''}, ${a.country}`
+    : ''
+  // Their default address fills the box until they type something else —
+  // derived rather than copied into state, so it cannot go stale behind an edit.
+  const address = typedAddress || formatAddress(savedAddresses.find(a => a.isDefault) || savedAddresses[0])
 
   const save = (updated) => { setItems(updated); localStorage.setItem(CART_KEY, JSON.stringify(updated)) }
   const updateQty  = (id, delta) => save(items.map(i => i._id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i))

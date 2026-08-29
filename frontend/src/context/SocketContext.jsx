@@ -10,7 +10,7 @@
  *   socket.emit('send_message', { conversationId, text })
  */
 
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import { useAuth } from './AuthContext'
 import { API_URL } from '../config'
@@ -49,6 +49,10 @@ export const SocketProvider = ({ children }) => {
       })
 
       socketRef.current = s
+      // Publishing the live socket to consumers is the whole job of this effect:
+      // it synchronises an external system into React, which is what the
+      // set-state-in-effect rule exists to permit but cannot detect here.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSocket(s)
 
       return () => {

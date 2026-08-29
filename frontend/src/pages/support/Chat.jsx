@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useSocket } from '../../context/SocketContext'
 import {
@@ -55,7 +55,9 @@ export default function Chat() {
   const [input,         setInput]         = useState('')
   const [loadingMsgs,   setLoadingMsgs]   = useState(false)
   const [sending,       setSending]       = useState(false)
-  const [typingUser,    setTypingUser]    = useState(null)
+  // { convId, name } — keyed by conversation so switching threads clears it by
+  // derivation instead of a setState inside an effect.
+  const [typingIn,      setTypingIn]      = useState(null)
 
   // Contacts modal
   const [showContacts,  setShowContacts]  = useState(false)
@@ -69,21 +71,25 @@ export default function Chat() {
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
 
+  // Someone typing in another thread must not show up in this one.
+  const typingUser = typingIn && String(typingIn.convId) === String(activeConv?._id) ? typingIn.name : null
+
   // Decide which contact types to show based on current user's role
   const isCreator = user?.role === 'creator'
   const isBrand   = user?.role === 'brand'
 
   /* ── Load conversations ─────────────────────────────────────────────── */
-  const loadConversations = useCallback(async (autoSelect = false) => {
-    try {
-      const data = await getConversations()
-      const list = data.conversations || []
-      setConversations(list)
-      if (autoSelect && list.length > 0 && !activeConv) setActiveConv(list[0])
-    } catch (err) {
-      console.error('Failed to load conversations:', err)
-    }
-  }, [activeConv])
+  const loadConversations = useCallback((autoSelect = false) => (
+    getConversations()
+      .then(data => {
+        const list = data.conversations || []
+        setConversations(list)
+        // Opening the newest thread on first load is a convenience, not a
+        // reset — never yank someone out of the conversation they are reading.
+        if (autoSelect && list.length > 0) setActiveConv(current => current || list[0])
+      })
+      .catch(err => console.error('Failed to load conversations:', err))
+  ), [])
 
   useEffect(() => { loadConversations(true) }, [loadConversations])
 
@@ -116,9 +122,9 @@ export default function Chat() {
     }
 
     const handleTyping = ({ conversationId, userName }) => {
-      if (conversationId === activeConv?._id?.toString()) setTypingUser(userName)
+      setTypingIn({ convId: String(conversationId), name: userName })
     }
-    const handleStopTyping = () => setTypingUser(null)
+    const handleStopTyping = () => setTypingIn(null)
 
     socket.on('new_message',          handleNewMessage)
     socket.on('conversation_updated', handleConvUpdated)
@@ -137,24 +143,23 @@ export default function Chat() {
   useEffect(() => {
     if (!socket || !activeConv?._id) return
     socket.emit('join_room', { conversationId: activeConv._id })
-    setTypingUser(null)
   }, [socket, activeConv?._id])
 
   /* ── Load messages ───────────────────────────────────────────────────── */
-  const fetchMessages = useCallback(async () => {
-    if (!activeConv?._id) return
-    setLoadingMsgs(true)
-    try {
-      const data = await getMessages(activeConv._id)
-      setMessages(data.messages || [])
-      setConversations(prev => prev.map(c => c._id === activeConv._id ? { ...c, unreadCount: 0 } : c))
-    } catch (err) {
-      console.error('Failed to fetch messages:', err)
-    } finally {
-      setLoadingMsgs(false)
-      setTimeout(scrollToBottom, 100)
-    }
-  }, [activeConv?._id])
+  const activeConvId = activeConv?._id
+  const fetchMessages = useCallback(() => {
+    if (!activeConvId) return undefined
+    return getMessages(activeConvId)
+      .then(data => {
+        setMessages(data.messages || [])
+        setConversations(prev => prev.map(c => c._id === activeConvId ? { ...c, unreadCount: 0 } : c))
+      })
+      .catch(err => console.error('Failed to fetch messages:', err))
+      .finally(() => {
+        setLoadingMsgs(false)
+        setTimeout(scrollToBottom, 100)
+      })
+  }, [activeConvId])
 
   useEffect(() => { fetchMessages() }, [fetchMessages])
   useEffect(() => { scrollToBottom() }, [messages.length])
@@ -265,26 +270,7 @@ export default function Chat() {
   })
 
   // Header action buttons — role-aware
-  const HeaderButtons = () => (
-    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-      <button onClick={handleStartAdminSupport}
-        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#ef4444,#dc2626)', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(239,68,68,0.25)', fontFamily: 'inherit' }}>
-        <ShieldIcon /> Admin Support
-      </button>
-      {isCreator && (
-        <button onClick={() => openContacts('brand')}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#10b981,#0d9488)', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(16,185,129,0.25)', fontFamily: 'inherit' }}>
-          <BuildingIcon /> Chat with Brands
-        </button>
-      )}
-      {isBrand && (
-        <button onClick={() => openContacts('creator')}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(124,58,237,0.25)', fontFamily: 'inherit' }}>
-          <UserIcon /> Chat with Creators
-        </button>
-      )}
-    </div>
-  )
+
 
   return (
     <div className="page-root" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 40px)', padding: '24px 24px 0 24px' }}>
@@ -297,7 +283,24 @@ export default function Chat() {
             {isCreator ? 'Support Desk & Brand Chat' : isBrand ? 'Creator & Admin Messaging' : 'Chat'}
           </h1>
         </div>
-        <HeaderButtons />
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button onClick={handleStartAdminSupport}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#ef4444,#dc2626)', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(239,68,68,0.25)', fontFamily: 'inherit' }}>
+            <ShieldIcon /> Admin Support
+          </button>
+          {isCreator && (
+            <button onClick={() => openContacts('brand')}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#10b981,#0d9488)', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(16,185,129,0.25)', fontFamily: 'inherit' }}>
+              <BuildingIcon /> Chat with Brands
+            </button>
+          )}
+          {isBrand && (
+            <button onClick={() => openContacts('creator')}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(124,58,237,0.25)', fontFamily: 'inherit' }}>
+              <UserIcon /> Chat with Creators
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Chat Layout ──────────────────────────────────────────────────── */}
@@ -344,7 +347,7 @@ export default function Chat() {
                 const badge = ROLE_BADGE[other?.role] || ROLE_BADGE.creator
 
                 return (
-                  <div key={conv._id} onClick={() => setActiveConv(conv)}
+                  <div key={conv._id} onClick={() => { setLoadingMsgs(true); setActiveConv(conv) }}
                     style={{
                       padding: '12px 14px', borderRadius: 14, cursor: 'pointer', transition: 'all 0.2s',
                       background: isSelected ? 'rgba(124,58,237,0.12)' : 'rgba(var(--ink-rgb),0.02)',

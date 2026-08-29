@@ -20,8 +20,9 @@ const Wallet = () => {
   
   const minThreshold = walletData.minWithdrawal || 500
 
+  // `loading` starts true, so the first load needs no setState in the effect;
+  // reloads after a withdrawal/top-up simply refresh the numbers in place.
   const load = () => {
-    setLoading(true)
     getWallet().then(d => setWalletData(d)).catch(console.error).finally(() => setLoading(false))
   }
   useEffect(() => { load() }, [])

@@ -5,6 +5,7 @@ import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { SocketProvider } from './context/SocketContext'
 import PageLoader from './components/PageLoader'
+import ErrorBoundary from './components/ErrorBoundary'
 
 // Layouts + public pages stay eager — they're the entry surface every visitor hits.
 import MainLayout from './layouts/MainLayout'
@@ -81,6 +82,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 }
 
 const AppRoutes = () => (
+  <ErrorBoundary>
   <Suspense fallback={<RouteFallback />}>
     <Routes>
       {/* ── Public Routes ───────────────────────── */}
@@ -152,6 +154,7 @@ const AppRoutes = () => (
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   </Suspense>
+  </ErrorBoundary>
 )
 
 const App = () => {

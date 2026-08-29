@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 
 const faqData = [
   { q: 'How do I earn cashback on Flextag?', a: 'Purchase a product from our catalog, post authentic content on Instagram featuring the product, submit the post URL, and once verified (including a 7-day retention period), cashback is deposited into your wallet.' },

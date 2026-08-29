@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { getAdminAnalytics } from '../../services/admin'
 
 const COLORS = ['bg-pink-500','bg-violet-500','bg-blue-500','bg-emerald-500','bg-yellow-500','bg-orange-500']

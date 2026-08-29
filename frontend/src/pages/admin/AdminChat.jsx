@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useSocket } from '../../context/SocketContext'
 import {
   getAllConversations,
   getMessages,
-  startConversation,
 } from '../../services/messages'
 import api from '../../services/api'
 
@@ -56,8 +55,9 @@ export default function AdminChat() {
   const [sending,       setSending]       = useState(false)
   const [search,        setSearch]        = useState('')
   const [filterRole,    setFilterRole]    = useState('all')
-  const [typing,        setTyping]        = useState(false)
-  const [typingUser,    setTypingUser]    = useState(null)
+  // { convId, name } — keyed by conversation, so switching threads clears the
+  // indicator by derivation instead of a setState inside an effect.
+  const [typingIn,      setTypingIn]      = useState(null)
   const [totalUnread,   setTotalUnread]   = useState(0)
 
   const messagesEndRef  = useRef(null)
@@ -67,17 +67,21 @@ export default function AdminChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  // Someone typing in another thread must not show up in this one.
+  const typingUser = typingIn && String(typingIn.convId) === String(activeConv?._id) ? typingIn.name : null
+
   /* ── Load ALL conversations (admin-only) ─────────────────────────────── */
-  const loadConversations = useCallback(async () => {
-    try {
-      const data = await getAllConversations()
-      const list = data.conversations || []
-      setConversations(list)
-      setTotalUnread(list.reduce((sum, c) => sum + (c.unreadCount || 0), 0))
-    } catch (err) {
-      console.error('Failed to load all conversations:', err)
-    }
-  }, [])
+  // Promise chain rather than async/await so every setState lands in a callback
+  // instead of running during the effect that kicked it off.
+  const loadConversations = useCallback(() => (
+    getAllConversations()
+      .then(data => {
+        const list = data.conversations || []
+        setConversations(list)
+        setTotalUnread(list.reduce((sum, c) => sum + (c.unreadCount || 0), 0))
+      })
+      .catch(err => console.error('Failed to load all conversations:', err))
+  ), [])
 
   useEffect(() => {
     loadConversations()
@@ -114,9 +118,9 @@ export default function AdminChat() {
     }
 
     const handleTyping = ({ conversationId, userName }) => {
-      if (conversationId === activeConv?._id?.toString()) setTypingUser(userName)
+      setTypingIn({ convId: String(conversationId), name: userName })
     }
-    const handleStopTyping = () => setTypingUser(null)
+    const handleStopTyping = () => setTypingIn(null)
 
     socket.on('new_message',         handleNewMessage)
     socket.on('conversation_updated', handleConvUpdated)
@@ -135,28 +139,26 @@ export default function AdminChat() {
   useEffect(() => {
     if (!socket || !activeConv?._id) return
     socket.emit('join_room', { conversationId: activeConv._id })
-    setTypingUser(null)
   }, [socket, activeConv?._id])
 
   /* ── Load messages for selected conversation ─────────────────────────── */
-  const fetchMessages = useCallback(async () => {
-    if (!activeConv?._id) return
-    try {
-      setLoadingMsgs(true)
-      const data = await getMessages(activeConv._id)
-      setMessages(data.messages || [])
-      // Reset unread for this conv in sidebar
-      setConversations(prev => prev.map(c =>
-        c._id === activeConv._id ? { ...c, unreadCount: 0 } : c
-      ))
-      setTotalUnread(prev => Math.max(0, prev - (activeConv.unreadCount || 0)))
-    } catch (err) {
-      console.error('Failed to fetch messages:', err)
-    } finally {
-      setLoadingMsgs(false)
-      setTimeout(scrollToBottom, 120)
-    }
-  }, [activeConv?._id, activeConv?.unreadCount])
+  const activeConvId = activeConv?._id
+  const activeConvUnread = activeConv?.unreadCount || 0
+  const fetchMessages = useCallback(() => {
+    if (!activeConvId) return undefined
+    return getMessages(activeConvId)
+      .then(data => {
+        setMessages(data.messages || [])
+        // Reset unread for this conv in sidebar
+        setConversations(prev => prev.map(c => (c._id === activeConvId ? { ...c, unreadCount: 0 } : c)))
+        setTotalUnread(prev => Math.max(0, prev - activeConvUnread))
+      })
+      .catch(err => console.error('Failed to fetch messages:', err))
+      .finally(() => {
+        setLoadingMsgs(false)
+        setTimeout(scrollToBottom, 120)
+      })
+  }, [activeConvId, activeConvUnread])
 
   useEffect(() => {
     fetchMessages()
@@ -208,19 +210,6 @@ export default function AdminChat() {
       typingTimerRef.current = setTimeout(() => {
         socket.emit('stop_typing', { conversationId: activeConv._id })
       }, 1500)
-    }
-  }
-
-  /* ── Start conversation with a user if admin wants to initiate ───────── */
-  const handleStartChat = async (targetUserId) => {
-    try {
-      const res = await startConversation({ targetUserId, type: 'support' })
-      if (res.conversation) {
-        setActiveConv(res.conversation)
-        loadConversations()
-      }
-    } catch (err) {
-      console.error('Failed to start conversation:', err)
     }
   }
 
@@ -334,7 +323,7 @@ export default function AdminChat() {
                   : ''
 
                 return (
-                  <div key={conv._id} onClick={() => setActiveConv(conv)} style={{
+                  <div key={conv._id} onClick={() => { setLoadingMsgs(true); setActiveConv(conv) }} style={{
                     padding: '11px 13px', borderRadius: 14, cursor: 'pointer', transition: 'all 0.2s',
                     background: isSelected ? 'rgba(124,58,237,0.12)' : 'rgba(var(--ink-rgb),0.02)',
                     border: isSelected ? '1px solid rgba(124,58,237,0.35)' : '1px solid rgba(var(--ink-rgb),0.04)',

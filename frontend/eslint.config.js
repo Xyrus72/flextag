@@ -18,4 +18,11 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    // Context modules deliberately export their hook (useAuth, useTheme, …)
+    // beside the provider — the app-wide convention here. The only cost is that
+    // editing one of these four files reloads the page instead of hot-swapping.
+    files: ['src/context/*.jsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 ])

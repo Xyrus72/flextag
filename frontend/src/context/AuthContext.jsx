@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { createContext, useContext, useState, useEffect } from 'react'
 import api from '../services/api'
 
 const AuthContext = createContext(null)
@@ -47,7 +46,8 @@ export const AuthProvider = ({ children }) => {
 
   // ── Logout ──────────────────────────────────────────────────────────────────
   const logout = async (navigateFn) => {
-    try { await api.post('/api/auth/logout') } catch (_) {}
+    // A failed logout call still clears the client — the cookie is gone either way.
+    try { await api.post('/api/auth/logout') } catch { /* ignore */ }
     setUser(null)
     // Navigate to home immediately — works even if ProtectedRoute re-renders first.
     // Guard on typeof: callers sometimes wire this as onClick={logout}, which would

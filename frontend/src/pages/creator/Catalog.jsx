@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { getProducts } from '../../services/products'
 import StarRating from '../../components/StarRating'
@@ -28,13 +28,9 @@ const Catalog = () => {
     return () => { alive = false }
   }, [])
 
-  useEffect(() => {
-    const timer = setTimeout(() => fetchProducts(), search ? 350 : 0)
-    return () => clearTimeout(timer)
-  }, [search, category, minCashback, maxPrice, brand, sortBy])
-
-  const fetchProducts = async () => {
-    setLoading(true)
+  // Declared before the effect that debounces it, and memoised on the filters —
+  // the old version closed over stale filter values on every other keystroke.
+  const fetchProducts = useCallback(async () => {
     try {
       const params = { sort: sortBy }
       if (category !== 'All') params.category = category
@@ -54,7 +50,16 @@ const Catalog = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [search, category, minCashback, maxPrice, brand, sortBy])
+
+  useEffect(() => {
+    const timer = setTimeout(() => fetchProducts(), search ? 350 : 0)
+    return () => clearTimeout(timer)
+  }, [fetchProducts, search])
+
+  // Filter controls flip the spinner on themselves — the fetch effect only ever
+  // sets state from inside a promise callback.
+  const withSpinner = (setter) => (value) => { setLoading(true); setter(value) }
 
   const resetFilters = () => {
     setSearch('')
@@ -88,7 +93,7 @@ const Catalog = () => {
 
           <div>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.6)', marginBottom: 6 }}>Brand Partner</label>
-            <select value={brand} onChange={e => setBrand(e.target.value)} className="field-select">
+            <select value={brand} onChange={e => withSpinner(setBrand)(e.target.value)} className="field-select">
               {brands.map(b => (
                 <option key={b} value={b} style={{ background: 'var(--bg-2)' }}>{b}</option>
               ))}
@@ -97,7 +102,7 @@ const Catalog = () => {
 
           <div>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.6)', marginBottom: 6 }}>Sort By</label>
-            <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="field-select">
+            <select value={sortBy} onChange={e => withSpinner(setSortBy)(e.target.value)} className="field-select">
               <option value="cashback" style={{ background: 'var(--bg-2)' }}>Highest Cashback</option>
               <option value="price_low" style={{ background: 'var(--bg-2)' }}>Price: Low → High</option>
               <option value="price_high" style={{ background: 'var(--bg-2)' }}>Price: High → Low</option>
@@ -121,7 +126,7 @@ const Catalog = () => {
             <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.6)', marginBottom: 6 }}>Min Cashback %</label>
             <div style={{ display: 'flex', gap: 6 }}>
               {[0, 40, 50, 60].map(val => (
-                <button key={val} onClick={() => setMinCashback(val)} style={{
+                <button key={val} onClick={() => withSpinner(setMinCashback)(val)} style={{
                   flex: 1, padding: '6px 0', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
                   background: minCashback === val ? 'rgba(124,58,237,0.25)' : 'rgba(var(--ink-rgb),0.04)',
                   color: minCashback === val ? '#a78bfa' : 'rgba(var(--ink-rgb),0.5)',
@@ -143,7 +148,7 @@ const Catalog = () => {
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
         {categories.map(c => (
-          <button key={c} onClick={() => setCategory(c)} style={{
+          <button key={c} onClick={() => withSpinner(setCategory)(c)} style={{
             padding: '8px 18px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
             background: category === c ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
             color: category === c ? '#fff' : 'rgba(var(--ink-rgb),0.45)',

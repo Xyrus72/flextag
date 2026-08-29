@@ -1,16 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { getOrders } from '../../services/orders'
 import { getPosts } from '../../services/posts'
 
 const CampaignTracker = () => {
   const [campaigns, setCampaigns] = useState([])
   const [loading, setLoading]     = useState(true)
-  const [now, setNow]             = useState(Date.now())
-
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 60000)
-    return () => clearInterval(timer)
-  }, [])
 
   useEffect(() => {
     const load = async () => {

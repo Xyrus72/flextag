@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 
 const existingTickets = [
   { id: 'T-201', subject: 'Payment not received', category: 'Payout', status: 'open', date: '2026-06-30', message: 'My cashback for GlowUp campaign was verified 5 days ago but not credited.' },

@@ -23,6 +23,10 @@ const disputeRoutes      = require('./routes/disputes')
 const categoryRoutes     = require('./routes/categories')
 const messageRoutes      = require('./routes/messages')
 
+// Error tracking first, so a crash during boot is still reported (no-op without SENTRY_DSN).
+const errors = require('./utils/errorReporting')
+errors.init()
+
 const app    = express()
 const server = http.createServer(app)
 const PORT   = process.env.PORT || 1643
@@ -171,10 +175,15 @@ app.use('/share', require('./routes/share'))
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))
 
 // ─── Global Error Handler ─────────────────────────────────────────────────────
+app.use(errors.errorHandler())
 app.use((err, req, res, _next) => {
-  console.error('[global error]', err)
   res.status(500).json({ message: err.message || 'Internal server error.' })
 })
+
+// Nothing else catches these: an unhandled rejection in a background job used to
+// vanish into the log (or take the process down on newer Node).
+process.on('unhandledRejection', (reason) => errors.captureError(reason, { tag: 'unhandledRejection' }))
+process.on('uncaughtException', (err) => { errors.captureError(err, { tag: 'uncaughtException' }); })
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 server.listen(PORT, () => console.log(`🚀  FlexTag API running on http://localhost:${PORT}`))

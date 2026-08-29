@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { getCategories, createCategory, updateCategory, deleteCategory } from '../../services/admin'
 
 const Categories = () => {
@@ -9,8 +9,8 @@ const Categories = () => {
   const [adding, setAdding]     = useState(false)
   const [toggling, setToggling] = useState({})
 
+  // `loading` starts true — no setState during the effect itself.
   const load = () => {
-    setLoading(true)
     getCategories()
       .then(d => setCategories(d.categories || []))
       .catch(console.error)

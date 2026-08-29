@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getMyStats } from '../../services/users'
@@ -9,7 +9,6 @@ const CreatorDashboard = () => {
   const { user } = useAuth()
   const [stats, setStats] = useState({ totalEarned: 0, activeCampaigns: 0, completedPosts: 0, engagementRate: null })
   const [recentOrders, setRecentOrders]   = useState([])
-  const [recentActivity, setRecentActivity] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -24,12 +23,6 @@ const CreatorDashboard = () => {
         })
         const orders = ordersData.orders || []
         setRecentOrders(orders.slice(0, 3))
-        setRecentActivity(orders.slice(0, 5).map(o => ({
-          id: o._id,
-          icon: o.status === 'delivered' ? '✅' : o.status === 'shipped' ? '🚚' : '📦',
-          text: `${o.product} — ${o.status}`,
-          sub:  new Date(o.createdAt).toLocaleDateString(),
-        })))
       } catch (err) { console.error(err) }
       finally { setLoading(false) }
     }
