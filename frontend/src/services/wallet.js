@@ -11,3 +11,19 @@ export const completeTransaction = (id) =>
 
 export const topUpWallet = (data) =>
   api.post('/api/transactions/topup', data).then(r => r.data)
+
+// ── Payout queue (admin) ─────────────────────────────────────────────────────
+export const getPayouts = (params = {}) =>
+  api.get('/api/transactions/payouts', { params }).then(r => r.data)
+
+export const sendPayout = (id) =>
+  api.post(`/api/transactions/payouts/${id}/send`).then(r => r.data)
+
+export const rejectPayout = (id, reason) =>
+  api.post(`/api/transactions/payouts/${id}/reject`, { reason }).then(r => r.data)
+
+export const reconcilePayout = (id, reference) =>
+  api.post(`/api/transactions/payouts/${id}/reconcile`, { reference }).then(r => r.data)
+
+export const runPayoutQueue = (data = {}) =>
+  api.post('/api/transactions/payouts/run', data).then(r => r.data)

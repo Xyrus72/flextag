@@ -178,3 +178,5 @@ server.listen(PORT, () => console.log(`🚀  FlexTag API running on http://local
 
 // Background Instagram jobs (retention re-checks, stale re-audits). No-op without a session.
 require('./jobs/instagramJobs').start()
+// Automatic creator payouts. No-op unless PAYOUT_AUTO=1 with an automatic provider.
+require('./jobs/payoutJobs').start()

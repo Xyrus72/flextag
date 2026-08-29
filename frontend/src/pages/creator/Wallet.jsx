@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { getWallet, requestWithdrawal, topUpWallet } from '../../services/wallet'
 
 const Wallet = () => {
@@ -6,6 +6,7 @@ const Wallet = () => {
   const [loading, setLoading]                 = useState(true)
   const [withdrawAmount, setWithdrawAmount]   = useState('')
   const [bkashNum, setBkashNum]               = useState('')
+  const [payoutMethod, setPayoutMethod]       = useState('bkash')
   const [withdrawing, setWithdrawing]         = useState(false)
   const [withdrawError, setWithdrawError]     = useState('')
   const [withdrawSuccess, setWithdrawSuccess] = useState('')
@@ -15,7 +16,7 @@ const Wallet = () => {
   const [topUpError, setTopUpError]           = useState('')
   const [topUpSuccess, setTopUpSuccess]       = useState('')
   
-  const minThreshold = 500
+  const minThreshold = walletData.minWithdrawal || 500
 
   const load = () => {
     setLoading(true)
@@ -27,8 +28,8 @@ const Wallet = () => {
     if (!withdrawAmount || !bkashNum) return
     setWithdrawing(true); setWithdrawError(''); setWithdrawSuccess('')
     try {
-      await requestWithdrawal({ amount: Number(withdrawAmount), bkashNumber: bkashNum })
-      setWithdrawSuccess('Withdrawal request submitted! Pending admin approval.')
+      const d = await requestWithdrawal({ amount: Number(withdrawAmount), account: bkashNum, method: payoutMethod })
+      setWithdrawSuccess(d.message || 'Payout requested.')
       setWithdrawAmount(''); setBkashNum('')
       load()
     } catch (err) {
@@ -50,11 +51,20 @@ const Wallet = () => {
   }
 
   const { transactions, totalEarnings, pendingEscrow, available } = walletData
+  const reserved = walletData.reserved || 0
+
+  const PAYOUT_STATUS = {
+    queued:     { label: 'Queued for payout',  cls: 'badge-warning' },
+    processing: { label: 'Sending',            cls: 'badge-cyan' },
+    paid:       { label: 'Paid',               cls: 'badge-success' },
+    failed:     { label: 'Held',               cls: 'badge-error' },
+    rejected:   { label: 'Returned to wallet', cls: 'badge-neutral' },
+  }
 
   const balCards = [
     { label:'Total Earnings',    value:`৳${totalEarnings.toLocaleString()}`, sub:'Lifetime cashback earned',    grad:'linear-gradient(135deg,#7c3aed44,#06b6d444)', border:'rgba(124,58,237,0.3)',  text:'#a78bfa' },
     { label:'Pending Escrow',    value:`৳${pendingEscrow.toLocaleString()}`,  sub:'Awaiting post verification',  grad:'linear-gradient(135deg,#f59e0b22,#fbbf2422)', border:'rgba(245,158,11,0.3)', text:'#fbbf24' },
-    { label:'Available Balance', value:`৳${available.toLocaleString()}`,      sub:'Ready for withdrawal',        grad:'linear-gradient(135deg,#22c55e22,#4ade8022)', border:'rgba(34,197,94,0.3)', text:'#4ade80' },
+    { label:'Available Balance', value:`৳${available.toLocaleString()}`,      sub: reserved > 0 ? `৳${reserved.toLocaleString()} reserved for a payout in the queue` : 'Ready to withdraw — usually paid same day', grad:'linear-gradient(135deg,#22c55e22,#4ade8022)', border:'rgba(34,197,94,0.3)', text:'#4ade80' },
   ]
 
   const txIcon = type => type === 'cashback' || type === 'top_up'
@@ -106,7 +116,14 @@ const Wallet = () => {
                     <p style={{ fontSize:14, fontWeight:700, color: (t.type==='cashback'||t.type==='top_up') ? '#4ade80' : '#f87171', margin:0 }}>
                       {(t.type==='cashback'||t.type==='top_up') ? '+' : '-'}৳{t.amount?.toLocaleString()}
                     </p>
-                    <span className={`badge ${t.status==='pending' ? 'badge-warning' : t.status==='completed' ? 'badge-success' : 'badge-neutral'}`} style={{ marginTop:4, fontSize:9 }}>{t.status}</span>
+                    <span className={`badge ${t.type === 'withdrawal' && PAYOUT_STATUS[t.payoutStatus]
+                      ? PAYOUT_STATUS[t.payoutStatus].cls
+                      : t.status==='pending' ? 'badge-warning' : t.status==='completed' ? 'badge-success' : 'badge-neutral'}`} style={{ marginTop:4, fontSize:9 }}>
+                      {t.type === 'withdrawal' && PAYOUT_STATUS[t.payoutStatus] ? PAYOUT_STATUS[t.payoutStatus].label : t.status}
+                    </span>
+                    {t.type === 'withdrawal' && t.payoutRef && t.payoutStatus === 'paid' && (
+                      <p style={{ fontSize:10, color:'rgba(var(--ink-rgb),0.3)', marginTop:3, fontFamily:'monospace' }}>{t.payoutRef}</p>
+                    )}
                   </div>
                 </div>
               ))}
@@ -162,9 +179,25 @@ const Wallet = () => {
                     placeholder={`Min ৳${minThreshold}`} max={available} className="field-input" />
                 </div>
                 <div>
-                  <label className="field-label">bKash Number</label>
+                  <label className="field-label">Payout Method</label>
+                  <div style={{ display:'flex', gap:6 }}>
+                    {[['bkash','bKash'], ['nagad','Nagad'], ['rocket','Rocket']].map(([value, label]) => (
+                      <button key={value} onClick={() => setPayoutMethod(value)} style={{
+                        flex:1, padding:'8px 0', borderRadius:10, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit',
+                        background: payoutMethod === value ? 'rgba(124,58,237,0.25)' : 'rgba(var(--ink-rgb),0.04)',
+                        color: payoutMethod === value ? '#a78bfa' : 'rgba(var(--ink-rgb),0.5)',
+                        border: payoutMethod === value ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(var(--ink-rgb),0.08)',
+                      }}>{label}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="field-label">{payoutMethod === 'bkash' ? 'bKash' : payoutMethod === 'nagad' ? 'Nagad' : 'Rocket'} Number</label>
                   <input type="tel" value={bkashNum} onChange={e => setBkashNum(e.target.value)}
-                    placeholder="+880 1XXX-XXXXXX" className="field-input" />
+                    placeholder="01XXXXXXXXX" className="field-input" />
+                  <p style={{ fontSize:11, color:'rgba(var(--ink-rgb),0.3)', marginTop:6 }}>
+                    Double-check the number — payouts go straight to it.
+                  </p>
                 </div>
                 <button onClick={handleWithdraw} className="btn-primary"
                   disabled={!withdrawAmount || Number(withdrawAmount)<minThreshold || Number(withdrawAmount)>available || !bkashNum || withdrawing}

@@ -50,6 +50,7 @@ const Categories        = lazy(() => import('./pages/admin/Categories'))
 const DisputePortal     = lazy(() => import('./pages/admin/DisputePortal'))
 const CommissionSettings = lazy(() => import('./pages/admin/CommissionSettings'))
 const FinancialDashboard = lazy(() => import('./pages/admin/FinancialDashboard'))
+const Payouts           = lazy(() => import('./pages/admin/Payouts'))
 const PlatformAnalytics = lazy(() => import('./pages/admin/PlatformAnalytics'))
 const PostReview        = lazy(() => import('./pages/admin/PostReview'))
 const ProductApproval   = lazy(() => import('./pages/admin/ProductApproval'))
@@ -134,6 +135,7 @@ const AppRoutes = () => (
         <Route path="/admin/disputes" element={<DisputePortal />} />
         <Route path="/admin/commission" element={<CommissionSettings />} />
         <Route path="/admin/financial" element={<FinancialDashboard />} />
+        <Route path="/admin/payouts" element={<Payouts />} />
         <Route path="/admin/analytics" element={<PlatformAnalytics />} />
         <Route path="/admin/chat" element={<AdminChat />} />
       </Route>

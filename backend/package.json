@@ -7,7 +7,7 @@
     "start": "node --openssl-legacy-provider index.js",
     "dev": "set NODE_OPTIONS=--openssl-legacy-provider && nodemon index.js",
     "seed": "node --openssl-legacy-provider seed.js",
-    "test": "node --test tests/instagram.test.js tests/reward.test.js"
+    "test": "node --test tests/*.test.js"
   },
   "keywords": [],
   "author": "",
