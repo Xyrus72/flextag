@@ -14,6 +14,51 @@ const transporter = nodemailer.createTransport({
 })
 
 /**
+ * Without credentials every send throws — callers (notifications, digests)
+ * check this first so a missing app password degrades to "no email" instead of
+ * breaking the action that triggered it.
+ */
+const isMailConfigured = () => !!(process.env.EMAIL_USER && process.env.EMAIL_PASS)
+
+const FROM = () => `"FlexTag" <${process.env.EMAIL_USER}>`
+
+/** One send path, so nothing bypasses the configured-check or the From name. */
+async function sendMail({ to, subject, html, text }) {
+  if (!isMailConfigured()) throw new Error('Email is not configured (EMAIL_USER / EMAIL_PASS).')
+  return transporter.sendMail({ from: FROM(), to, subject, html, text })
+}
+
+/**
+ * The FlexTag shell every non-OTP email uses: dark card, gradient header,
+ * optional CTA, and a footer note that carries the unsubscribe link.
+ */
+function brandedEmail({ heading, body = '', rawHtml = '', ctaLabel = '', ctaUrl = '', footerNote = '' }) {
+  return `<!DOCTYPE html>
+  <html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0"/></head>
+  <body style="margin:0;padding:0;background:#050816;font-family:'Inter',Arial,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#050816;padding:40px 16px;">
+      <tr><td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:24px;overflow:hidden;max-width:520px;width:100%;">
+          <tr><td style="background:linear-gradient(135deg,#7c3aed,#06b6d4);padding:24px 32px;">
+            <span style="font-size:22px;font-weight:900;font-style:italic;color:#fff;letter-spacing:-0.03em;">FlexTag</span>
+          </td></tr>
+          <tr><td style="padding:32px 36px;">
+            <h1 style="font-size:20px;font-weight:800;color:#fff;margin:0 0 12px;letter-spacing:-0.02em;">${heading}</h1>
+            ${body ? `<p style="font-size:14px;color:rgba(255,255,255,0.55);margin:0 0 20px;line-height:1.7;">${body}</p>` : ''}
+            ${rawHtml}
+            ${ctaLabel && ctaUrl ? `<a href="${ctaUrl}" style="display:inline-block;margin-top:22px;padding:13px 26px;border-radius:100px;background:linear-gradient(135deg,#7c3aed,#06b6d4);color:#fff;font-weight:800;font-size:13px;text-decoration:none;">${ctaLabel}</a>` : ''}
+          </td></tr>
+          <tr><td style="border-top:1px solid rgba(255,255,255,0.06);padding:18px 36px;">
+            <p style="font-size:11px;color:rgba(255,255,255,0.3);margin:0;line-height:1.6;">${footerNote}</p>
+            <p style="font-size:11px;color:rgba(255,255,255,0.2);margin:8px 0 0;">© ${new Date().getFullYear()} FlexTag</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body></html>`
+}
+
+/**
  * Send a stylised OTP verification email.
  * @param {string} toEmail   Recipient email address
  * @param {string} otpCode   6-digit OTP string
@@ -91,4 +136,4 @@ async function sendOtpEmail(toEmail, otpCode) {
   })
 }
 
-module.exports = { sendOtpEmail }
+module.exports = { sendOtpEmail, sendMail, isMailConfigured, brandedEmail }

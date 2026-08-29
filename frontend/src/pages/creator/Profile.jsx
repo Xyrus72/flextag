@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import {
   updateUser,
@@ -8,6 +8,7 @@ import {
   deleteAddress,
   setDefaultAddress,
 } from '../../services/users'
+import { getNotificationPrefs, updateNotificationPrefs } from '../../services/notifications'
 
 /* ── tiny icon helpers ─────────────────────────────────────────── */
 const Icon = ({ d, size = 16, cls = '' }) => (
@@ -172,6 +173,33 @@ export default function Profile() {
       />
     </div>
   )
+
+  // ── Email preferences ─────────────────────────────────────────
+  // Money and dispute emails are opt-out; the daily digest is everything else.
+  const [emailPrefs, setEmailPrefs] = useState({ transactional: true, digest: true })
+  const [prefsMsg, setPrefsMsg] = useState('')
+
+  useEffect(() => {
+    let alive = true
+    getNotificationPrefs()
+      .then(d => { if (alive && d.prefs) setEmailPrefs(d.prefs) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [])
+
+  const togglePref = async (key) => {
+    const next = { ...emailPrefs, [key]: !emailPrefs[key] }
+    setEmailPrefs(next)
+    setPrefsMsg('')
+    try {
+      const d = await updateNotificationPrefs({ [key]: next[key] })
+      setEmailPrefs(d.prefs || next)
+      setPrefsMsg(d.message || 'Saved.')
+    } catch {
+      setEmailPrefs(emailPrefs)   // server refused — put the switch back
+      setPrefsMsg('Could not save that.')
+    }
+  }
 
   return (
     <div className="page-root">
@@ -401,6 +429,37 @@ export default function Profile() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── Email notifications ───────────────────────────────── */}
+      <div style={{ borderRadius:20, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28, marginTop:24 }}>
+        <h2 style={{ fontSize:17, fontWeight:700, color:'var(--text)', margin:'0 0 6px' }}>Email notifications</h2>
+        <p style={{ fontSize:13, color:'rgba(var(--ink-rgb),0.4)', margin:'0 0 18px' }}>
+          The bell only reaches you while you are on the site. These reach you when it matters.
+        </p>
+        {[
+          { key:'transactional', title:'Money & disputes', desc:'Cashback released, payout sent, dispute replies.' },
+          { key:'digest',        title:'Daily digest',     desc:'One evening email with everything else you missed.' },
+        ].map(row => (
+          <div key={row.key} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, padding:'14px 0', borderTop:'1px solid rgba(var(--ink-rgb),0.05)' }}>
+            <div>
+              <p style={{ fontSize:14, fontWeight:600, color:'var(--text)', margin:0 }}>{row.title}</p>
+              <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.4)', margin:'3px 0 0' }}>{row.desc}</p>
+            </div>
+            <button onClick={() => togglePref(row.key)} role="switch" aria-checked={emailPrefs[row.key]} aria-label={row.title}
+              style={{
+                width:46, height:26, borderRadius:100, flexShrink:0, cursor:'pointer', position:'relative',
+                background: emailPrefs[row.key] ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.12)',
+                border:'none', transition:'background 0.2s',
+              }}>
+              <span style={{
+                position:'absolute', top:3, left: emailPrefs[row.key] ? 23 : 3, width:20, height:20, borderRadius:'50%',
+                background:'#fff', transition:'left 0.2s', boxShadow:'0 1px 3px rgba(0,0,0,0.3)',
+              }} />
+            </button>
+          </div>
+        ))}
+        {prefsMsg && <p style={{ fontSize:12, color:'#4ade80', margin:'12px 0 0' }}>{prefsMsg}</p>}
       </div>
 
       <style>{`
