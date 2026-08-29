@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getOrders } from '../../services/orders'
 
@@ -85,6 +85,12 @@ const MyOrders = () => {
                     )}
                     {o.cashbackReleased && (
                       <div style={{ marginTop:12 }}><span className="badge badge-success">✓ Cashback Released</span></div>
+                    )}
+                    {o.status !== 'cancelled' && (
+                      <button onClick={() => navigate('/creator/disputes', { state: { orderId: o._id } })} style={{
+                        marginTop:12, background:'none', border:'none', padding:0, cursor:'pointer', fontFamily:'inherit',
+                        fontSize:12, fontWeight:600, color:'rgba(var(--ink-rgb),0.35)',
+                      }}>Something wrong? Report a problem →</button>
                     )}
                   </div>
                 </div>
