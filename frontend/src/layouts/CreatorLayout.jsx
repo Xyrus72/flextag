@@ -4,7 +4,7 @@ import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, ShoppingBag, ShoppingCart, Package,
   Upload, Wand2, Clock4, Wallet, TrendingUp,
-  Briefcase, UserCircle2, HelpCircle, Ticket, MessageSquare,
+  Briefcase, UserCircle2, HelpCircle, Ticket, MessageSquare, ShieldAlert,
 } from 'lucide-react'
 
 /**
@@ -38,6 +38,7 @@ const icons = {
   faq:         <NavIcon icon={HelpCircle}       color="#64748b" />,
   ticket:      <NavIcon icon={Ticket}           color="#64748b" />,
   chat:        <NavIcon icon={MessageSquare}    color="#06b6d4" />,
+  disputes:    <NavIcon icon={ShieldAlert}      color="#ef4444" />,
   instagram:   <NavIcon icon={InstagramGlyph}   color="#fd1d1d" />,
 }
 
@@ -54,6 +55,7 @@ const creatorLinks = [
   { path: '/creator/portfolio',        label: 'Portfolio',        icon: icons.portfolio },
   { path: '/creator/profile',          label: 'Profile & Shipping',icon: icons.profile },
   { path: '/creator/instagram-analyzer',  label: 'Account Audit',      icon: icons.instagram, badge: 'IG' },
+  { path: '/creator/disputes',        label: 'Disputes',         icon: icons.disputes },
   { path: '/support/chat',            label: 'Live Chat',        icon: icons.chat, badge: '●' },
 ]
 

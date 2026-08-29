@@ -32,6 +32,7 @@ const Portfolio         = lazy(() => import('./pages/creator/Portfolio'))
 const InstagramAnalyzer = lazy(() => import('./pages/creator/InstagramAnalyzer'))
 const CheckoutSuccess   = lazy(() => import('./pages/creator/CheckoutSuccess'))
 const CheckoutFail      = lazy(() => import('./pages/creator/CheckoutFail'))
+const Disputes          = lazy(() => import('./pages/shared/Disputes'))
 
 const BrandDashboard    = lazy(() => import('./pages/brand/BrandDashboard'))
 const BrandProfile      = lazy(() => import('./pages/brand/BrandProfile'))
@@ -105,6 +106,7 @@ const AppRoutes = () => (
         <Route path="/creator/instagram-analyzer" element={<InstagramAnalyzer />} />
         <Route path="/creator/checkout/success" element={<CheckoutSuccess />} />
         <Route path="/creator/checkout/fail" element={<CheckoutFail />} />
+        <Route path="/creator/disputes" element={<Disputes />} />
         <Route path="/support/faq" element={<FAQ />} />
         <Route path="/support/tickets" element={<Tickets />} />
         <Route path="/support/chat" element={<Chat />} />
@@ -121,6 +123,7 @@ const AppRoutes = () => (
         <Route path="/brand/invite" element={<InviteCampaign />} />
         <Route path="/brand/creator-audit" element={<CreatorAudit />} />
         <Route path="/brand/ratings" element={<BrandRatings />} />
+        <Route path="/brand/disputes" element={<Disputes />} />
         <Route path="/brand/profile" element={<BrandProfile />} />
         <Route path="/brand/chat" element={<Chat />} />
       </Route>
