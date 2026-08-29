@@ -59,6 +59,17 @@ const WEIGHTS = {
 
 const LEVEL = (score) => (score >= 70 ? 'high' : score >= 40 ? 'medium' : score > 0 ? 'low' : 'clear')
 
+/**
+ * Is this an actual user document, or just an id?
+ *
+ * A Mongoose ObjectId answers to `._id` — it returns itself — so "has an _id"
+ * is NOT a test for "is a user". Getting this wrong made assess(user._id) score
+ * an object with no email, IP or phone: every shared-identity signal silently
+ * came back clean.
+ */
+const isUserDoc = (value) =>
+  !!value && typeof value === 'object' && value.email !== undefined && value.role !== undefined
+
 /** score = capped sum of signal weights. Pure — this is what the tests pin down. */
 function scoreSignals(signals = []) {
   const score = Math.min(100, signals.reduce((sum, s) => sum + (Number(s?.weight) || 0), 0))
@@ -82,7 +93,7 @@ async function fraudSettings() {
  * @returns {Promise<{ score:number, level:string, flags:string[], signals:Array<{code:string,label:string,weight:number,detail:string,related?:string[]}> }>}
  */
 async function assess(userOrId, { persist = true } = {}) {
-  const user = typeof userOrId === 'object' && userOrId?._id ? userOrId : await User.findById(userOrId)
+  const user = isUserDoc(userOrId) ? userOrId : await User.findById(userOrId)
   if (!user) return { score: 0, level: 'clear', flags: [], signals: [] }
 
   const uid = user._id
@@ -230,5 +241,5 @@ function assessInBackground(userId) {
 
 module.exports = {
   assess, assessInBackground, guard, shouldAutoApprove, scoreSignals,
-  canonicalEmail, fraudSettings, WEIGHTS, LEVEL,
+  canonicalEmail, fraudSettings, isUserDoc, WEIGHTS, LEVEL,
 }
