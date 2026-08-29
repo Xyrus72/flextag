@@ -10,6 +10,8 @@ const statusConfig = {
   shipped: { label: 'Shipped', bg: 'bg-violet-500/10', text: 'text-violet-400', dot: 'bg-violet-400' },
   delivered: { label: 'Delivered', bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400' },
   cancelled: { label: 'Cancelled', bg: 'bg-red-500/10', text: 'text-red-400', dot: 'bg-red-400' },
+  return_requested: { label: 'Return requested', bg: 'bg-yellow-500/10', text: 'text-yellow-400', dot: 'bg-yellow-400' },
+  returned: { label: 'Returned', bg: 'bg-red-500/10', text: 'text-red-400', dot: 'bg-red-400' },
 }
 
 const MOCK_ORDERS = [
@@ -105,7 +107,7 @@ const MyOrders = () => {
       )}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
-        {['all', 'processing', 'packed', 'shipped', 'delivered'].map(f => (
+        {['all', 'processing', 'packed', 'shipped', 'delivered', 'returned', 'cancelled'].map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: '8px 18px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
             textTransform: 'capitalize', transition: 'all 0.2s', border: 'none',

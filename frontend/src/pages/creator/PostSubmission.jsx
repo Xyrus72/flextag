@@ -1,272 +1,419 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { useLocation, Link } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import { getOrders } from '../../services/orders'
-import { submitPost } from '../../services/posts'
+import { getPosts, submitPost } from '../../services/posts'
+import { generateCaptions } from '../../services/ai'
+import { verifyInstagramPost } from '../../services/instagram'
 
-const MOCK_DELIVERED = [
-  { _id: 'ord-demo-1', orderId: 'ORD-8821', product: 'Matte Lipstick Collection', brand: 'AuraGlow Beauty', cashbackAmount: 600 },
-  { _id: 'ord-demo-2', orderId: 'ORD-8822', product: 'Vitamin C Glow Serum', brand: 'Lumina Skincare', cashbackAmount: 950 },
-  { _id: 'ord-demo-3', orderId: 'ORD-8823', product: 'Wireless Noise-Canceling Earbuds', brand: 'SoundPulse Tech', cashbackAmount: 1400 },
-  { _id: 'ord-demo-4', orderId: 'ORD-8824', product: 'Organic Rosewater Toner', brand: 'PureBotanika', cashbackAmount: 450 },
-  { _id: 'ord-demo-5', orderId: 'ORD-8825', product: 'Hydrating Night Repair Cream', brand: 'AuraGlow Beauty', cashbackAmount: 800 },
-]
+// instagram.com/p/…, /reel/…, /reels/…, /tv/… — optionally prefixed by a username segment
+const IG_POST_RE = /instagram\.com\/(?:[a-z0-9._]+\/)?(?:p|reel|reels|tv)\/[A-Za-z0-9_-]{5,}/i
+const IG_URL_HINT = 'Paste the link of the Instagram post or reel (instagram.com/p/… or /reel/…)'
+
+const TONES = {
+  success: { text: '#4ade80', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)' },
+  warning: { text: '#fbbf24', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
+  error:   { text: '#f87171', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)' },
+  info:    { text: '#a78bfa', bg: 'rgba(124,58,237,0.12)', border: 'rgba(124,58,237,0.3)' },
+}
+
+const STATUS_LABELS = {
+  approved: { label: 'Approved',  cls: 'badge-success' },
+  pending:  { label: 'In Review', cls: 'badge-warning' },
+  rejected: { label: 'Rejected',  cls: 'badge-error' },
+  flagged:  { label: 'Flagged',   cls: 'badge-error' },
+}
+
+const capitalize = (s = '') => s.charAt(0).toUpperCase() + s.slice(1)
+
+// How an order reads in the searchable picker (module-3 autocomplete, Habib)
+const orderLabel = (o) => `${o.product} — ${o.brand} (${o.orderId})`
+
+const statusOf = (post) =>
+  STATUS_LABELS[post?.status] || (post?.status ? { label: capitalize(post.status), cls: 'badge-neutral' } : STATUS_LABELS.pending)
+
+const fmtNum = (n) => (n === null || n === undefined ? null : Number(n).toLocaleString())
+
+const fmtDate = (d) => {
+  if (!d) return null
+  const t = new Date(d)
+  return Number.isNaN(t.getTime()) ? null : t.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+/** Translate submission + verification state into the headline/tone of the result card. */
+const describeOutcome = ({ platform, verifying, verifyFailed, verification, autoApproved, released, pendingReason }) => {
+  if (verifying) {
+    return { tone: 'info', icon: 'spinner', title: 'Verifying your post on Instagram…', body: 'This usually takes about 10 seconds — hang tight.' }
+  }
+  if (platform !== 'instagram' || (!verification && !verifyFailed)) {
+    return { tone: 'success', icon: 'check', title: 'Post Submitted!', body: 'Your post is now under review. Keep it live for the full retention period to earn your cashback.' }
+  }
+  if (verifyFailed) {
+    return { tone: 'warning', icon: 'clock', title: 'Submitted for review', body: "Automatic verification isn't available right now; an admin will review it." }
+  }
+  switch (verification.status) {
+    case 'passed':
+      if (autoApproved) {
+        // Approval and payment are separate facts: the order may be undelivered / returned / already paid.
+        return released
+          ? { tone: 'success', icon: 'check', title: 'Verified — cashback released 🎉', body: 'Every campaign check passed. Keep the post live for the full retention period.' }
+          : { tone: 'warning', icon: 'check', title: 'Approved — cashback on hold', body: 'Every check passed and the post is approved, but the cashback is held because the order is not delivered, is being returned, or was already paid out.' }
+      }
+      return pendingReason === 'identity'
+        ? { tone: 'warning', icon: 'check', title: 'Verified — awaiting final approval', body: 'Every campaign check passed; an admin will release this cashback. Verify ownership of your Instagram account on the Account Audit page to get instant cashback next time.' }
+        : { tone: 'warning', icon: 'check', title: 'Verified — awaiting final approval', body: 'Every campaign check passed. An admin will release your cashback after a final look.' }
+    case 'failed':
+      return { tone: 'error', icon: 'cross', title: "We couldn't verify this post", body: "Some campaign requirements weren't met. Edit your post to add the missing hashtags or mention — an admin can still review it manually." }
+    default:
+      // Nothing retries automatically — be honest that a human will look at it.
+      return { tone: 'warning', icon: 'clock', title: 'Submitted — pending manual review', body: "We couldn't check this post automatically; an admin will review it." }
+  }
+}
+
+const OutcomeIcon = ({ kind, color }) => {
+  if (kind === 'spinner') return <span className="spinner" style={{ width: 28, height: 28, borderWidth: 3 }} />
+  if (kind === 'check') {
+    return <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+  }
+  if (kind === 'cross') {
+    return <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+  }
+  return <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+}
+
+// pass → ✓ · required failure → ✗ · optional failure → – · could not evaluate (null) → ?
+const checkState = (c) => (c.passed === true ? 'pass' : c.passed === false ? (c.required ? 'fail' : 'soft') : 'unknown')
+const CHECK_GLYPH = {
+  pass:    { mark: '✓', color: '#4ade80' },
+  fail:    { mark: '✗', color: '#f87171' },
+  soft:    { mark: '–', color: '#fbbf24' },
+  unknown: { mark: '?', color: '#fbbf24' },
+}
+
+const ChecksList = ({ checks }) => (
+  <ul className="text-left space-y-1.5 mb-4 list-none p-0 m-0">
+    {checks.map(c => {
+      const state = checkState(c)
+      const glyph = CHECK_GLYPH[state]
+      return (
+        <li key={c.key} className="flex items-start gap-2 text-sm">
+          <span style={{ color: glyph.color, fontWeight: 700, flexShrink: 0, width: 14, textAlign: 'center' }}>{glyph.mark}</span>
+          <span className="min-w-0">
+            <span className={state === 'fail' ? 'text-white font-semibold' : 'text-zinc-300'}>{c.label}</span>
+            {state !== 'pass' && c.detail && <span className="block text-xs text-zinc-500">{c.detail}</span>}
+          </span>
+        </li>
+      )
+    })}
+  </ul>
+)
+
+const SnapshotStats = ({ snapshot, source }) => {
+  const stats = [
+    // null likes mean "hidden by the owner" only when we read the post through a session;
+    // the anonymous embed page simply may not expose the count.
+    { label: 'Likes',    value: snapshot.likes === null ? (source && source !== 'embed' ? 'Hidden' : null) : fmtNum(snapshot.likes) },
+    { label: 'Comments', value: fmtNum(snapshot.comments) },
+    { label: 'Views',    value: fmtNum(snapshot.views) },
+    { label: 'Posted',   value: fmtDate(snapshot.takenAt) },
+    { label: 'Type',     value: snapshot.mediaType ? capitalize(snapshot.mediaType) : null },
+  ].filter(s => s.value)
+  if (!stats.length) return null
+  return (
+    <div className="grid grid-cols-3 gap-2 mb-4">
+      {stats.map(s => (
+        <div key={s.label} className="p-2.5 rounded-lg bg-white/5 border border-white/5 text-center">
+          <p className="text-[10px] uppercase tracking-wider text-zinc-500 m-0">{s.label}</p>
+          <p className="text-sm font-semibold text-white m-0">{s.value}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+const Row = ({ label, last, children }) => (
+  <div className={`flex justify-between items-center gap-3 text-sm ${last ? '' : 'mb-2'}`}>
+    <span className="text-zinc-500 shrink-0">{label}</span>
+    {children}
+  </div>
+)
+
+const ResultCard = ({ platform, postUrl, post, verification, autoApproved, released, pendingReason, verifying, verifyFailed, onReset }) => {
+  const outcome    = describeOutcome({ platform, verifying, verifyFailed, verification, autoApproved, released, pendingReason })
+  const tone       = TONES[outcome.tone]
+  const status     = statusOf(post)
+  const checks     = verification?.checks || []
+  const snapshot   = verification?.snapshot
+  const showChecks = !verifying && checks.length > 0 && (verification.status === 'passed' || verification.status === 'failed')
+
+  return (
+    <div className="p-4 lg:p-8 min-h-screen flex items-center justify-center">
+      <div className="text-center max-w-md w-full">
+        <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+          style={{ background: tone.bg, border: `2px solid ${tone.border}`, boxShadow: `0 0 40px ${tone.bg}` }}>
+          <OutcomeIcon kind={outcome.icon} color={tone.text} />
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">{outcome.title}</h2>
+        <p className="text-zinc-400 mb-6">{outcome.body}</p>
+
+        {showChecks && <ChecksList checks={checks} />}
+        {!verifying && snapshot && <SnapshotStats snapshot={snapshot} source={verification?.source} />}
+
+        <div className="p-4 rounded-xl bg-white/5 border border-white/5 text-left mb-6">
+          <Row label="Status"><span className={`badge ${status.cls}`}>{status.label}</span></Row>
+          <Row label="Platform"><span className="text-white capitalize">{platform}</span></Row>
+          <Row label="Post URL" last>
+            <a href={postUrl} target="_blank" rel="noreferrer" className="text-blue-400 text-xs truncate max-w-[200px]">{postUrl}</a>
+          </Row>
+        </div>
+        {/* never disabled: a slow verification must not trap the creator on this screen */}
+        <button onClick={onReset}
+          className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-zinc-300 font-semibold hover:bg-white/10 transition-all">
+          Submit Another
+        </button>
+      </div>
+    </div>
+  )
+}
 
 const PostSubmission = () => {
   const location = useLocation()
   const preState = location.state || {}
 
-  const [postUrl, setPostUrl] = useState('')
-  const [selectedOrderId, setSelectedOrderId] = useState(preState.orderId || '')
-  const [orderQuery, setOrderQuery] = useState('')
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [platform, setPlatform] = useState('instagram')
-  const [orders, setOrders] = useState([])
-  const [loadingOrders, setLoadingOrders] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-  const [error, setError] = useState('')
+  const preOrderId = preState.orderId || ''
 
-  const [aiPrompt, setAiPrompt] = useState('')
-  const [aiResponse, setAiResponse] = useState('')
-  const [aiLoading, setAiLoading] = useState(false)
-
+  const [postUrl, setPostUrl]               = useState('')
+  const [selectedOrderId, setSelectedOrderId] = useState(preOrderId)
+  const [orderQuery, setOrderQuery]         = useState('')       // searchable picker text
+  const [dropdownOpen, setDropdownOpen]     = useState(false)
+  const [platform, setPlatform]             = useState('instagram')
   const dropdownRef = useRef(null)
+  const submissionRef = useRef(0)   // bumps per submission/reset so a late verify result can't land on the next one
+  const [orders, setOrders]                 = useState([])
+  const [loadingOrders, setLoadingOrders]   = useState(true)
+  const [submitting, setSubmitting]         = useState(false)
+  const [submitted, setSubmitted]           = useState(false)
+  const [error, setError]                   = useState('')
+
+  // Verification state — { post, verification, autoApproved, verifyFailed }
+  const [result, setResult]       = useState(null)
+  const [verifying, setVerifying] = useState(false)
+
+  // AI caption state
+  const [aiPrompt, setAiPrompt]     = useState('')
+  const [aiResponse, setAiResponse] = useState('')
+  const [aiLoading, setAiLoading]   = useState(false)
 
   useEffect(() => {
-    getOrders()
-      .then(d => {
-        const fetched = d.orders || []
-        const delivered = fetched.filter(o => o.status === 'delivered')
-        if (delivered.length > 0) {
-          setOrders(delivered)
-          const first = delivered[0]
-          if (!selectedOrderId) {
-            setSelectedOrderId(first._id)
-            setOrderQuery(`${first.product} — ${first.brand} (${first.orderId})`)
-          }
-        } else if (fetched.length > 0) {
-          setOrders(fetched)
-          const first = fetched[0]
-          if (!selectedOrderId) {
-            setSelectedOrderId(first._id)
-            setOrderQuery(`${first.product} — ${first.brand} (${first.orderId})`)
-          }
-        } else {
-          setOrders(MOCK_DELIVERED)
-          const first = MOCK_DELIVERED[0]
-          if (!selectedOrderId) {
-            setSelectedOrderId(first._id)
-            setOrderQuery(`${first.product} — ${first.brand} (${first.orderId})`)
-          }
-        }
+    // Only delivered, unpaid orders without a live submission can be picked (the backend enforces all of it too)
+    Promise.all([
+      getOrders({ status: 'delivered' }),
+      getPosts().catch(() => ({ posts: [] })),
+    ])
+      .then(([o, p]) => {
+        const taken = new Set((p.posts || []).filter(x => x.status !== 'rejected').map(x => String(x.orderId?._id || x.orderId)))
+        const list = (o.orders || []).filter(x => !x.cashbackReleased && x.campaignId && !taken.has(String(x._id)))
+        setOrders(list)
+        // Arrived from "My Orders" with an order preselected → show its label, or drop a stale/unusable preselection
+        const pre = preOrderId && list.find(x => x._id === preOrderId)
+        if (pre) setOrderQuery(orderLabel(pre))
+        else if (preOrderId) setSelectedOrderId('')
       })
-      .catch(() => {
-        setOrders(MOCK_DELIVERED)
-        const first = MOCK_DELIVERED[0]
-        if (!selectedOrderId) {
-          setSelectedOrderId(first._id)
-          setOrderQuery(`${first.product} — ${first.brand} (${first.orderId})`)
-        }
-      })
+      .catch(console.error)
       .finally(() => setLoadingOrders(false))
-  }, [])
+  }, [preOrderId])
 
+  // Close the picker when clicking anywhere else
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setDropdownOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    const onDown = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
   }, [])
 
-  const selectedOrder = orders.find(o => o._id === selectedOrderId) || MOCK_DELIVERED[0]
+  const selectedOrder = orders.find(o => o._id === selectedOrderId)
 
   const filteredOrders = orders.filter(o => {
-    if (!orderQuery) return true
-    const q = orderQuery.toLowerCase()
-    return (
-      (o.product && o.product.toLowerCase().includes(q)) ||
-      (o.brand && o.brand.toLowerCase().includes(q)) ||
-      (o.orderId && o.orderId.toLowerCase().includes(q))
-    )
+    const q = orderQuery.trim().toLowerCase()
+    if (!q || (selectedOrder && orderQuery === orderLabel(selectedOrder))) return true
+    return [o.product, o.brand, o.orderId].some(v => v && String(v).toLowerCase().includes(q))
   })
 
+  const pickOrder = (o) => {
+    setSelectedOrderId(o._id)
+    setOrderQuery(orderLabel(o))
+    setDropdownOpen(false)
+  }
+
+  // Gate on a RESOLVED order (not just an id): a preselected id is useless until the list has loaded
+  const canSubmit = !!selectedOrder && !!postUrl.trim() && !submitting && !loadingOrders
+
+  // Real AI caption via /api/ai/caption — the order lets the backend inject the
+  // campaign's required hashtags/mention verbatim. Falls back server-side to a
+  // template when no Anthropic key is set, so this always returns something.
   const generateCaption = async () => {
+    if (!aiPrompt) return
     setAiLoading(true)
-    await new Promise(r => setTimeout(r, 1000))
-    const product = selectedOrder?.product || 'this product'
-    const brand = selectedOrder?.brand || 'our partner brand'
-    const captions = {
-      bangla: `✨ ${product} দিয়ে আজকের লুক! ${brand} থেকে পারফেক্ট প্রোডাক্ট পেলাম 🔥\n\n#FlexTag #BrandPartner #${brand.replace(/\s+/g, '')} @flextag.official`,
-      english: `✨ Obsessed with ${product} from @${brand.replace(/\s+/g, '').toLowerCase()}! Absolutely loving it. 🔥\n\n#FlexTag #BrandPartner @flextag.official`,
-      banglish: `✨ Guys! ${product} ta literally AMAZING 🤩 ${brand} er ei product try korte hobe! Full recommend!\n\n#FlexTag #BrandPartner @flextag.official`,
+    try {
+      const data = await generateCaptions({
+        orderId: selectedOrder?._id,
+        campaignId: selectedOrder?.campaignId?._id || selectedOrder?.campaignId,
+        product: selectedOrder?.product,
+        brand: selectedOrder?.brand,
+        language: aiPrompt,
+        count: 1,
+      })
+      setAiResponse(data?.captions?.[0]?.text || '')
+    } catch {
+      const product = selectedOrder?.product || 'this product'
+      const brand   = selectedOrder?.brand   || 'our partner brand'
+      setAiResponse(`✨ Loving ${product} from ${brand}! Honestly worth it. 🔥\n\n#FlextagCreator`)
+    } finally {
+      setAiLoading(false)
     }
-    setAiResponse(captions[aiPrompt] || captions.english)
-    setAiLoading(false)
   }
 
   const handleSubmit = async () => {
-    if (!postUrl) return
+    if (!canSubmit) return
+    const url = postUrl.trim()
+    if (platform === 'instagram' && !IG_POST_RE.test(url)) { setError(IG_URL_HINT); return }
+
     setSubmitting(true)
     setError('')
+    let created
     try {
-      const isDemo = String(selectedOrderId).startsWith('ord-demo')
-      const payload = {
-        orderId: isDemo ? undefined : selectedOrderId,
-        campaignId: selectedOrder?.campaignId?._id || selectedOrder?.campaignId || undefined,
-        postUrl,
+      const data = await submitPost({
+        orderId:    selectedOrder._id,
+        campaignId: selectedOrder.campaignId?._id || selectedOrder.campaignId,
+        postUrl:    url,
         platform,
-      }
-      await submitPost(payload)
-      setSubmitted(true)
+      })
+      created = data?.post || null
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit. Please check post URL and try again.')
-    } finally {
+      setError(err.response?.data?.message || 'Failed to submit. Please try again.')
       setSubmitting(false)
+      return
     }
+    setSubmitting(false)
+    // This order now has a live submission — drop it from the picker so "Submit Another" can't re-pick it (409).
+    setOrders(os => os.filter(o => o._id !== selectedOrder._id))
+    setResult({ post: created, verification: null, autoApproved: false, released: false, pendingReason: null, verifyFailed: false })
+    setSubmitted(true)
+
+    // Instagram only: verify right away. A verifier outage must never read as a failed submission.
+    if (platform !== 'instagram' || !created?._id) return
+    const token = ++submissionRef.current
+    setVerifying(true)
+    try {
+      const v = await verifyInstagramPost(created._id)
+      if (token !== submissionRef.current) return   // user already moved on to another submission
+      setResult({
+        post: v?.post || created,
+        verification: v?.verification || null,
+        autoApproved: !!v?.autoApproved,
+        released: !!v?.released,
+        pendingReason: v?.pendingReason || null,
+        verifyFailed: false,
+      })
+    } catch {
+      if (token === submissionRef.current) setResult(r => ({ ...r, verifyFailed: true }))
+    } finally {
+      if (token === submissionRef.current) setVerifying(false)
+    }
+  }
+
+  const reset = () => {
+    submissionRef.current++   // orphan any in-flight verification of the previous submission
+    setSubmitted(false)
+    setResult(null)
+    setVerifying(false)
+    setPostUrl('')
+    setSelectedOrderId('')
+    setOrderQuery('')
+    setDropdownOpen(false)
+    setError('')
   }
 
   if (submitted) {
     return (
-      <div className="page-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '70vh' }}>
-        <div style={{ maxWidth: 520, width: '100%', textAlign: 'center' }}>
-          <div style={{
-            width: 80, height: 80, borderRadius: '50%', background: 'rgba(34,197,94,0.15)',
-            border: '2px solid rgba(34,197,94,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 20px', fontSize: 36
-          }}>
-            ✅
-          </div>
-          <h2 style={{ fontSize: 26, fontWeight: 800, color: '#fff', marginBottom: 8 }}>Automated Meta Audit Passed!</h2>
-          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
-            Meta Instagram Graph API inspected your URL and verified all campaign requirements. Your post is now in the 7-day retention monitoring queue.
-          </p>
-
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 18, padding: 20, textAlign: 'left', marginBottom: 24 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>Meta Audit Verification Log</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#4ade80' }}>
-                <span>✓ Public Access Verified</span>
-                <span style={{ fontSize: 11, background: 'rgba(74,222,128,0.1)', padding: '2px 8px', borderRadius: 6 }}>Public</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#4ade80' }}>
-                <span>✓ Brand Tag Handles Detected</span>
-                <span style={{ fontSize: 11, background: 'rgba(74,222,128,0.1)', padding: '2px 8px', borderRadius: 6 }}>@flextag.official</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#4ade80' }}>
-                <span>✓ Required Hashtags Present</span>
-                <span style={{ fontSize: 11, background: 'rgba(74,222,128,0.1)', padding: '2px 8px', borderRadius: 6 }}>#FlexTag #BrandPartner</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#67e8f9', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10 }}>
-                <span>⏳ 7-Day Retention Period</span>
-                <span style={{ fontSize: 11, fontWeight: 700 }}>7 Days Remaining</span>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-            <button onClick={() => { setSubmitted(false); setPostUrl(''); setSelectedOrderId('') }}
-              style={{ padding: '12px 24px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-              Submit Another Post
-            </button>
-            <Link to="/creator/orders" style={{ textDecoration: 'none' }}>
-              <button style={{ padding: '12px 24px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                View My Orders →
-              </button>
-            </Link>
-          </div>
-        </div>
-      </div>
+      <ResultCard
+        platform={platform}
+        postUrl={postUrl.trim()}
+        post={result?.post}
+        verification={result?.verification}
+        autoApproved={!!result?.autoApproved}
+        released={!!result?.released}
+        pendingReason={result?.pendingReason || null}
+        verifying={verifying}
+        verifyFailed={!!result?.verifyFailed}
+        onReset={reset}
+      />
     )
   }
 
   return (
     <div className="page-root">
-      <div className="page-header">
-        <div className="page-label"><span>Module 3 — Meta Post Auditor</span></div>
-        <h1 className="page-title">Submit Post for Automated Verification</h1>
-        <p className="page-subtitle">Submit your Instagram post URL for automated Meta Graph API auditing and 7-day retention tracking</p>
-      </div>
+      <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Submit Post</h1>
+      <p className="text-zinc-500 mb-8">Submit your post URL for cashback verification</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: 24 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 20 }}>Post Information</h2>
-
-          {error && (
-            <div style={{ padding: '12px 16px', borderRadius: 12, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', fontSize: 13, marginBottom: 16 }}>
-              ⚠️ {error}
-            </div>
-          )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div ref={dropdownRef} style={{ position: 'relative' }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
-                Search Order / Product
-              </label>
-              
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  value={orderQuery}
-                  onFocus={() => setDropdownOpen(true)}
-                  onChange={e => { setOrderQuery(e.target.value); setDropdownOpen(true) }}
-                  placeholder="Type product name, brand, or order ID..."
-                  className="field-input"
-                  style={{ paddingRight: 36 }}
-                />
-                <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
-                  🔍
-                </span>
-              </div>
-
-              {dropdownOpen && (
-                <div style={{
-                  position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 6,
-                  maxHeight: 220, overflowY: 'auto', background: '#0d0d20',
-                  border: '1px solid rgba(124,58,237,0.3)', borderRadius: 14, zIndex: 50,
-                  boxShadow: '0 12px 36px rgba(0,0,0,0.5)', padding: 6
-                }}>
-                  {filteredOrders.length === 0 ? (
-                    <div style={{ padding: '12px 16px', fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
-                      No matching products found
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Submission form */}
+        <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
+          <h2 className="text-lg font-bold text-white mb-5">Post Details</h2>
+          {error && <p className="text-xs text-red-400 mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20">{error}</p>}
+          <div className="space-y-4">
+            <div ref={dropdownRef} className="relative">
+              <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Search Order / Product</label>
+              {loadingOrders ? (
+                <div className="flex items-center gap-2 text-zinc-500 text-sm"><div className="w-4 h-4 rounded-full border border-zinc-500 border-t-transparent animate-spin" /><span>Loading orders...</span></div>
+              ) : (
+                <>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={orderQuery}
+                      onFocus={() => setDropdownOpen(true)}
+                      onChange={e => { setOrderQuery(e.target.value); setDropdownOpen(true); setSelectedOrderId('') }}
+                      placeholder="Type product name, brand, or order ID…"
+                      className="w-full px-4 py-3 pr-10 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none"
+                      autoComplete="off"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-zinc-500 pointer-events-none">🔍</span>
+                  </div>
+                  {dropdownOpen && (
+                    <div className="absolute left-0 right-0 mt-1.5 max-h-56 overflow-y-auto rounded-xl border border-violet-500/30 bg-[var(--bg-2)] shadow-2xl p-1.5 z-50">
+                      {filteredOrders.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-zinc-500 text-center">
+                          {orders.length ? 'No matching orders' : 'No delivered orders yet'}
+                        </div>
+                      ) : filteredOrders.map(o => (
+                        <button
+                          type="button"
+                          key={o._id}
+                          onClick={() => pickOrder(o)}
+                          className={`w-full text-left px-3.5 py-2.5 rounded-lg transition-colors ${selectedOrderId === o._id ? 'bg-violet-500/20' : 'hover:bg-white/5'}`}
+                        >
+                          <p className="text-sm font-semibold text-white m-0">{o.product}</p>
+                          <p className="text-[11px] text-zinc-500 m-0 mt-0.5">{o.brand} · <span className="text-violet-400">{o.orderId}</span></p>
+                        </button>
+                      ))}
                     </div>
-                  ) : (
-                    filteredOrders.map(o => (
-                      <div
-                        key={o._id}
-                        onClick={() => {
-                          setSelectedOrderId(o._id)
-                          setOrderQuery(`${o.product} — ${o.brand} (${o.orderId})`)
-                          setDropdownOpen(false)
-                        }}
-                        style={{
-                          padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
-                          background: selectedOrderId === o._id ? 'rgba(124,58,237,0.2)' : 'transparent',
-                          transition: 'background 0.15s', marginBottom: 2
-                        }}
-                        onMouseEnter={e => { if (selectedOrderId !== o._id) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
-                        onMouseLeave={e => { if (selectedOrderId !== o._id) e.currentTarget.style.background = 'transparent' }}
-                      >
-                        <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', margin: 0 }}>{o.product}</p>
-                        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }}>{o.brand} · <span style={{ color: '#a78bfa' }}>{o.orderId}</span></p>
-                      </div>
-                    ))
                   )}
-                </div>
+                </>
+              )}
+              {orders.length === 0 && !loadingOrders && (
+                <p className="text-xs text-zinc-600 mt-1">No delivered orders found. Orders must be delivered before you can submit.</p>
               )}
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Platform</label>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Platform</label>
+              <div className="flex gap-2">
                 {['instagram', 'tiktok', 'facebook'].map(p => (
-                  <button key={p} onClick={() => setPlatform(p)} style={{
-                    flex: 1, padding: '10px', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textTransform: 'capitalize',
-                    background: platform === p ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(255,255,255,0.04)',
-                    color: platform === p ? '#fff' : 'rgba(255,255,255,0.4)',
-                    border: platform === p ? 'none' : '1px solid rgba(255,255,255,0.08)'
+                  <button key={p} onClick={() => { setPlatform(p); setError('') }} style={{
+                    flex:1, padding:'10px', borderRadius:12, fontSize:13, fontWeight:600, cursor:'pointer',
+                    fontFamily:'inherit', textTransform:'capitalize', transition:'all 0.2s', border:'none',
+                    background: platform === p ? 'rgba(124,58,237,0.12)' : 'rgba(var(--ink-rgb),0.04)',
+                    color: platform === p ? '#a78bfa' : 'rgba(var(--ink-rgb),0.4)',
+                    outline: platform === p ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(var(--ink-rgb),0.08)',
                   }}>
                     {p}
                   </button>
@@ -275,55 +422,52 @@ const PostSubmission = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Instagram Post URL</label>
-              <input value={postUrl} onChange={e => setPostUrl(e.target.value)} placeholder="https://www.instagram.com/p/sample123" className="field-input" />
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 6 }}>Automated Meta API will verify hashtags, handles, and public accessibility.</p>
+              <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Post URL</label>
+              <input value={postUrl} onChange={e => { setPostUrl(e.target.value); if (error === IG_URL_HINT) setError('') }}
+                placeholder={platform === 'instagram' ? 'https://www.instagram.com/p/… or /reel/…' : 'https://www.instagram.com/p/...'}
+                className="field-input" />
+              <p className="text-xs text-zinc-600 mt-1">
+                {platform === 'instagram'
+                  ? 'Instagram posts are verified automatically — make sure the post is public and includes the campaign hashtags/mention.'
+                  : 'Your post must be public and meet campaign requirements'}
+              </p>
             </div>
 
-            <button onClick={handleSubmit} disabled={!postUrl || submitting} className="btn-primary" style={{ width: '100%', padding: '14px', marginTop: 8 }}>
-              {submitting ? '🤖 Running Meta API Audit...' : '⚡ Audit & Submit Post'}
+            <button onClick={handleSubmit} disabled={!canSubmit}
+              className="btn-primary" style={{ width:'100%', padding:14 }}>
+              {submitting ? 'Submitting…' : 'Submit for Verification'}
             </button>
           </div>
         </div>
 
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>AI Creative Assistant</h2>
-            <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 100, background: 'rgba(124,58,237,0.15)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.3)' }}>AI Powered</span>
-          </div>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 20 }}>Generate captions that pass Meta Graph API auditing</p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* AI Caption Assistant */}
+        <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
+          <h2 className="text-lg font-bold text-white mb-1">AI Creative Assistant</h2>
+          <p className="text-xs text-zinc-500 mb-5">Generate captions & hashtag ideas</p>
+          <div className="space-y-4">
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Select Language</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Language</label>
+              <div className="grid grid-cols-3 gap-2">
                 {[{ id: 'bangla', label: 'বাংলা' }, { id: 'english', label: 'English' }, { id: 'banglish', label: 'Banglish' }].map(l => (
-                  <button key={l.id} onClick={() => setAiPrompt(l.id)} style={{
-                    padding: '10px', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-                    background: aiPrompt === l.id ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.04)',
-                    color: aiPrompt === l.id ? '#a78bfa' : 'rgba(255,255,255,0.4)',
-                    border: aiPrompt === l.id ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(255,255,255,0.08)'
-                  }}>
+                  <button key={l.id} onClick={() => setAiPrompt(l.id)}
+                    className={`py-2.5 rounded-xl text-sm font-semibold transition-all ${aiPrompt === l.id ? 'bg-violet-500/15 border border-violet-500/30 text-violet-400' : 'bg-white/5 border border-white/5 text-zinc-500 hover:bg-white/10'}`}>
                     {l.label}
                   </button>
                 ))}
               </div>
             </div>
-
-            <button onClick={generateCaption} disabled={!aiPrompt || aiLoading} style={{
-              padding: '12px', borderRadius: 12, border: '1px solid rgba(124,58,237,0.3)', background: 'rgba(124,58,237,0.12)',
-              color: '#a78bfa', fontSize: 13, fontWeight: 700, cursor: !aiPrompt || aiLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit'
-            }}>
-              {aiLoading ? '✨ Generating...' : '✨ Generate Verified Caption'}
+            <button onClick={generateCaption} disabled={!aiPrompt || aiLoading || !selectedOrderId}
+              className="w-full py-3 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-400 font-semibold hover:bg-violet-500/25 transition-all disabled:opacity-30">
+              {aiLoading ? '✨ Generating...' : '✨ Generate Caption'}
             </button>
-
+            {!selectedOrderId && <p className="text-xs text-zinc-600">Select an order first to generate a relevant caption.</p>}
             {aiResponse && (
-              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>Generated Caption</span>
-                  <button onClick={() => navigator.clipboard?.writeText(aiResponse)} style={{ background: 'none', border: 'none', color: '#67e8f9', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>Copy</button>
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-zinc-500 font-medium uppercase tracking-wider">Generated Caption</span>
+                  <button onClick={() => navigator.clipboard?.writeText(aiResponse)} className="text-xs text-violet-400 hover:text-violet-300">Copy</button>
                 </div>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{aiResponse}</p>
+                <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">{aiResponse}</p>
               </div>
             )}
           </div>

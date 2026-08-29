@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import ThemeToggle from './ThemeToggle'
 
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth()
@@ -35,13 +36,13 @@ const Navbar = () => {
       zIndex: 9000,
       transition: 'all 0.4s ease',
       background: scrolled
-        ? 'rgba(5, 8, 22, 0.92)'
-        : 'rgba(5, 8, 22, 0.75)',
+        ? 'rgba(var(--nav-rgb), 0.92)'
+        : 'rgba(var(--nav-rgb), 0.75)',
       backdropFilter: 'blur(24px)',
       WebkitBackdropFilter: 'blur(24px)',
       borderBottom: scrolled
         ? '1px solid rgba(124, 58, 237, 0.2)'
-        : '1px solid rgba(255,255,255,0.06)',
+        : '1px solid rgba(var(--ink-rgb),0.06)',
       boxShadow: scrolled
         ? '0 4px 40px rgba(0,0,0,0.6), 0 1px 0 rgba(124,58,237,0.1) inset'
         : 'none',
@@ -83,12 +84,13 @@ const Navbar = () => {
             <a
               key={link.label}
               href={link.href}
+              className="nav-link"
               style={{
                 padding: '8px 14px',
                 borderRadius: 8,
                 fontSize: 11,
                 fontWeight: 500,
-                color: 'rgba(255,255,255,0.5)',
+                color: 'rgba(var(--ink-rgb),0.5)',
                 textDecoration: 'none',
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
@@ -97,11 +99,11 @@ const Navbar = () => {
                 whiteSpace: 'nowrap',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.color = '#fff'
-                e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
+                e.currentTarget.style.color = 'var(--text)'
+                e.currentTarget.style.background = 'rgba(var(--ink-rgb),0.06)'
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.color = 'rgba(255,255,255,0.5)'
+                e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.5)'
                 e.currentTarget.style.background = 'transparent'
               }}
             >
@@ -112,6 +114,7 @@ const Navbar = () => {
 
         {/* ── RIGHT ACTIONS ──────────────────────────────────────── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <ThemeToggle />
           {isAuthenticated ? (
             <>
               <Link to={getDashboardLink()} style={{ textDecoration: 'none' }}>
@@ -130,26 +133,26 @@ const Navbar = () => {
               </Link>
               <button onClick={logout} style={{
                 background: 'none', border: 'none', padding: '9px 12px',
-                fontSize: 11, color: 'rgba(255,255,255,0.35)', cursor: 'pointer',
+                fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', cursor: 'pointer',
                 letterSpacing: '0.1em', textTransform: 'uppercase',
                 fontFamily: 'Inter, sans-serif', transition: 'color 0.2s',
               }}
-                onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.35)'}
+                onMouseEnter={e => e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.7)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.35)'}
               >Logout</button>
             </>
           ) : (
             <>
               <Link to="/login" style={{ textDecoration: 'none' }}>
                 <button style={{
-                  background: 'none', border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'none', border: '1px solid rgba(var(--ink-rgb),0.1)',
                   padding: '9px 18px', borderRadius: 10,
-                  fontSize: 11, color: 'rgba(255,255,255,0.55)', cursor: 'pointer',
+                  fontSize: 11, color: 'rgba(var(--ink-rgb),0.55)', cursor: 'pointer',
                   letterSpacing: '0.1em', textTransform: 'uppercase',
                   fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
                 }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.4)'; e.currentTarget.style.color = '#fff' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.4)'; e.currentTarget.style.color = 'var(--text)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(var(--ink-rgb),0.1)'; e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.55)' }}
                 >Sign In</button>
               </Link>
 
@@ -176,10 +179,10 @@ const Navbar = () => {
             style={{
               display: 'none',
               width: 38, height: 38, borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(var(--ink-rgb),0.1)',
+              background: 'rgba(var(--ink-rgb),0.04)',
               alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: 'rgba(255,255,255,0.6)',
+              cursor: 'pointer', color: 'rgba(var(--ink-rgb),0.6)',
               transition: 'all 0.2s',
             }}
             className="mobile-burger"
@@ -199,26 +202,26 @@ const Navbar = () => {
         overflow: 'hidden',
         maxHeight: mobileOpen ? 500 : 0,
         transition: 'max-height 0.35s ease',
-        background: 'rgba(5,8,22,0.98)',
+        background: 'rgba(var(--nav-rgb),0.98)',
         backdropFilter: 'blur(24px)',
-        borderTop: '1px solid rgba(255,255,255,0.05)',
+        borderTop: '1px solid rgba(var(--ink-rgb),0.05)',
       }}>
         <div style={{ padding: '16px 24px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {navLinks.map(link => (
             <a key={link.label} href={link.href} onClick={() => setMobileOpen(false)} style={{
               padding: '12px 16px', borderRadius: 10,
-              fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.5)',
+              fontSize: 12, fontWeight: 500, color: 'rgba(var(--ink-rgb),0.5)',
               textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase',
               fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
               display: 'block',
             }}
-              onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; e.currentTarget.style.background = 'transparent' }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'rgba(var(--ink-rgb),0.04)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.5)'; e.currentTarget.style.background = 'transparent' }}
             >{link.label}</a>
           ))}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 8, paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ borderTop: '1px solid rgba(var(--ink-rgb),0.05)', marginTop: 8, paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <Link to="/login" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none' }}>
-              <button style={{ width: '100%', padding: 12, borderRadius: 10, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Sign In</button>
+              <button style={{ width: '100%', padding: 12, borderRadius: 10, background: 'transparent', border: '1px solid rgba(var(--ink-rgb),0.1)', color: 'rgba(var(--ink-rgb),0.5)', fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Sign In</button>
             </Link>
             <Link to="/register" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none' }}>
               <button style={{ width: '100%', padding: 12, borderRadius: 10, background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', border: 'none', color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif', boxShadow: '0 0 20px rgba(124,58,237,0.3)' }}>Get Started Free</button>
@@ -232,6 +235,19 @@ const Navbar = () => {
           .desktop-nav { display: none !important; }
           .mobile-burger { display: flex !important; }
         }
+        .nav-link { position: relative; }
+        .nav-link::after {
+          content: '';
+          position: absolute;
+          left: 14px; right: 14px; bottom: 4px;
+          height: 1.5px;
+          border-radius: 2px;
+          background: linear-gradient(90deg, #7c3aed, #06b6d4);
+          transform: scaleX(0);
+          transform-origin: left;
+          transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .nav-link:hover::after { transform: scaleX(1); }
       `}</style>
     </nav>
   )

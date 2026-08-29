@@ -13,12 +13,6 @@ export default defineConfig({
         target: 'http://localhost:1643',
         changeOrigin: true,
       },
-      // Forward /scrape → Python Flask bot server (backend/routes/admin.js
-      // proxies to the same port).
-      '/scrape': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
     },
   },
 })

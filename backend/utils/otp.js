@@ -1,51 +1,65 @@
-// ─── In-memory OTP store ──────────────────────────────────────────────────────
-// Each entry: { code: '123456', expiresAt: Date }
-// Keyed by lowercased email address.
-// For multi-server deployments, swap this Map for a Redis/Mongo-backed store.
-
-const store = new Map()
-
-const OTP_TTL_MS = 10 * 60 * 1000 // 10 minutes
-
+'use strict'
 /**
- * Generate a random 6-digit OTP, persist it, and return the code.
- * Calling this again for the same email replaces any existing OTP.
- * @param {string} email
- * @returns {string} 6-digit code
+ * OTP store — Mongo-backed (models/Otp.js), 10-minute TTL, single use.
+ * All functions are async. A code is voided after MAX_ATTEMPTS wrong guesses.
  */
-function generateOtp(email) {
-  const code      = String(Math.floor(100000 + Math.random() * 900000))
-  const expiresAt = new Date(Date.now() + OTP_TTL_MS)
-  store.set(email.toLowerCase(), { code, expiresAt })
+const crypto = require('crypto')
+const Otp = require('../models/Otp')
+
+const OTP_TTL_MS = 10 * 60 * 1000
+const MAX_ATTEMPTS = 5
+
+const key = (email) => String(email || '').trim().toLowerCase()
+
+/** Create (or replace) the code for an email and return it. */
+async function generateOtp(email) {
+  const code = String(crypto.randomInt(100000, 1000000))   // 6 digits, crypto-strong
+  await Otp.findOneAndUpdate(
+    { email: key(email) },
+    { $set: { code, attempts: 0, expiresAt: new Date(Date.now() + OTP_TTL_MS) } },
+    { upsert: true, new: true },
+  )
   return code
 }
 
+/** Non-consuming: is there a live code for this email? */
+async function hasPendingOtp(email) {
+  const entry = await Otp.findOne({ email: key(email) }).lean()
+  return !!entry && Date.now() <= new Date(entry.expiresAt).getTime()
+}
+
 /**
- * Verify a submitted OTP against the stored one.
- * Deletes the entry on success (one-time use).
- * @param {string} email
- * @param {string} submittedCode
- * @returns {{ ok: boolean, reason?: string }}
+ * Non-consuming EXACT check (same rules as verifyOtp, but the code stays valid).
+ * Lets verify-otp run pre-creation work (e.g. the Instagram gate) only for
+ * callers who already hold the right code.
+ * @returns {Promise<{ ok: boolean, reason?: string }>}
  */
-function verifyOtp(email, submittedCode) {
-  const key   = email.toLowerCase()
-  const entry = store.get(key)
-
-  if (!entry) {
-    return { ok: false, reason: 'No OTP was requested for this email.' }
-  }
-
-  if (Date.now() > entry.expiresAt.getTime()) {
-    store.delete(key)
-    return { ok: false, reason: 'OTP has expired. Please request a new one.' }
-  }
-
-  if (entry.code !== String(submittedCode).trim()) {
-    return { ok: false, reason: 'Invalid OTP. Please check and try again.' }
-  }
-
-  store.delete(key) // consumed — cannot be reused
+async function checkOtp(email, submittedCode) {
+  const entry = await Otp.findOne({ email: key(email) }).lean()
+  if (!entry) return { ok: false, reason: 'No OTP was requested for this email.' }
+  if (Date.now() > new Date(entry.expiresAt).getTime()) return { ok: false, reason: 'OTP has expired. Please request a new one.' }
+  if (entry.attempts >= MAX_ATTEMPTS) return { ok: false, reason: 'Too many wrong attempts. Please request a new code.' }
+  if (entry.code !== String(submittedCode || '').trim()) return { ok: false, reason: 'Invalid OTP. Please check and try again.' }
   return { ok: true }
 }
 
-module.exports = { generateOtp, verifyOtp }
+/**
+ * Consuming check: on success the code is deleted; on a wrong guess the
+ * attempt counter is incremented.
+ * @returns {Promise<{ ok: boolean, reason?: string }>}
+ */
+async function verifyOtp(email, submittedCode) {
+  const email_ = key(email)
+  const entry = await Otp.findOne({ email: email_ })
+  if (!entry) return { ok: false, reason: 'No OTP was requested for this email.' }
+  if (Date.now() > entry.expiresAt.getTime()) { await entry.deleteOne(); return { ok: false, reason: 'OTP has expired. Please request a new one.' } }
+  if (entry.attempts >= MAX_ATTEMPTS) return { ok: false, reason: 'Too many wrong attempts. Please request a new code.' }
+  if (entry.code !== String(submittedCode || '').trim()) {
+    await Otp.updateOne({ _id: entry._id }, { $inc: { attempts: 1 } })
+    return { ok: false, reason: 'Invalid OTP. Please check and try again.' }
+  }
+  await entry.deleteOne()
+  return { ok: true }
+}
+
+module.exports = { generateOtp, verifyOtp, hasPendingOtp, checkOtp, OTP_TTL_MS, MAX_ATTEMPTS }

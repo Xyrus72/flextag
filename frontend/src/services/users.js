@@ -36,3 +36,9 @@ export const deleteAddress = (userId, addrId) =>
 
 export const setDefaultAddress = (userId, addrId) =>
   api.put(`/api/users/${userId}/addresses/${addrId}/default`).then(r => r.data)
+
+export const getPortfolio = (handle) =>
+  api.get(`/api/users/portfolio/${encodeURIComponent(handle)}`).then(r => r.data)
+
+export const getMyReferrals = () =>
+  api.get('/api/users/me/referrals').then(r => r.data)

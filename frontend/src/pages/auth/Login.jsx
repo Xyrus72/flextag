@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import AuthShell from '../../components/AuthShell'
 
 const Login = () => {
   const { login } = useAuth()
@@ -29,40 +30,15 @@ const Login = () => {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh', background: '#050816',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '24px', position: 'relative', overflow: 'hidden',
-      fontFamily: 'Inter, sans-serif',
-    }}>
-      <div className="noise-overlay" />
-      {/* Ambient orbs */}
-      <div style={{ position: 'fixed', top: '-10%', left: '-10%', width: '50%', height: '50%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-      <div style={{ position: 'fixed', bottom: '-10%', right: '-10%', width: '45%', height: '45%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
-      {/* Grid */}
-      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', backgroundImage: 'linear-gradient(rgba(124,58,237,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.03) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
-
-      <div style={{ width: '100%', maxWidth: 440, position: 'relative', zIndex: 10 }}>
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <Link to="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18, color: '#fff', fontStyle: 'italic', boxShadow: '0 0 24px rgba(124,58,237,0.4)' }}>F</div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontWeight: 900, fontSize: 22, color: '#fff', fontStyle: 'italic', letterSpacing: '-0.03em', lineHeight: 1 }}>FlexTag™</div>
-              <div style={{ fontSize: 9, color: 'rgba(167,139,250,0.6)', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 2 }}>Shop · Share · Earn</div>
-            </div>
-          </Link>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', marginTop: 20, fontWeight: 300 }}>Sign in to your account</p>
-        </div>
-
+    <AuthShell tagline="Sign in to your account">
         {/* Card */}
         <div style={{
-          background: 'rgba(255,255,255,0.04)',
+          background: 'rgba(var(--ink-rgb),0.04)',
           backdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid rgba(var(--ink-rgb),0.08)',
           borderRadius: 24,
           padding: 36,
-          boxShadow: '0 24px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(var(--ink-rgb),0.06)',
           position: 'relative', overflow: 'hidden',
         }}>
           {/* Card top glow */}
@@ -94,7 +70,7 @@ const Login = () => {
                 />
                 <button type="button" onClick={() => setShowPass(!showPass)} style={{
                   position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', padding: 0,
+                  background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(var(--ink-rgb),0.3)', padding: 0,
                 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     {showPass
@@ -119,8 +95,8 @@ const Login = () => {
             </button>
           </form>
 
-          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
+          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(var(--ink-rgb),0.06)', textAlign: 'center' }}>
+            <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.3)' }}>
               Don't have an account?{' '}
               <Link to="/register" style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: 600 }}
                 onMouseEnter={e => e.target.style.color = '#7c3aed'}
@@ -129,13 +105,8 @@ const Login = () => {
             </p>
           </div>
 
-          {/* Admin hint */}
-          <p style={{ textAlign: 'center', fontSize: 10, color: 'rgba(255,255,255,0.12)', marginTop: 12 }}>
-            Admin: admin@flextag.com / admin123
-          </p>
         </div>
-      </div>
-    </div>
+    </AuthShell>
   )
 }
 

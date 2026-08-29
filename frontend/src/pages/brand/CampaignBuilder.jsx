@@ -1,18 +1,24 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createCampaign } from '../../services/campaigns'
-import { useAuth } from '../../context/AuthContext'
+
+// Instagram post format a creator's submission must match (verified by the backend audit).
+const CONTENT_TYPE_LABELS = {
+  any:      'Any post or reel',
+  reel:     'Reel',
+  post:     'Feed post (photo)',
+  carousel: 'Carousel',
+}
 
 const CampaignBuilder = () => {
-  const { user } = useAuth()
   const navigate = useNavigate()
   const [step, setStep]       = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError]     = useState('')
   const [form, setForm]       = useState({
-    title: '', category: 'Beauty', product: '', price: '', cashbackRate: 50, stock: '',
+    title: '', category: 'Beauty', product: '', price: '', cashbackRate: 50, instantSplitPct: 50, stock: '',
     minFollowers: 1000, hashtags: '', handles: '', deadline: '', retentionDays: 7,
-    budgetCap: '', isPrivate: false,
+    budgetCap: '', isPrivate: false, contentType: 'any',
   })
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
 
@@ -28,6 +34,7 @@ const CampaignBuilder = () => {
         product:     form.product,
         price:       Number(form.price),
         cashbackRate: Number(form.cashbackRate),
+        instantSplitPct: Number(form.instantSplitPct),
         stock:       Number(form.stock) || 100,
         minFollowers: Number(form.minFollowers),
         hashtags:    form.hashtags,
@@ -36,6 +43,7 @@ const CampaignBuilder = () => {
         retentionDays: Number(form.retentionDays),
         budgetCap:   form.budgetCap ? Number(form.budgetCap) : 0,
         isPrivate:   form.isPrivate,
+        contentType: form.contentType,
       })
       navigate('/brand')
     } catch (err) {
@@ -74,8 +82,8 @@ const CampaignBuilder = () => {
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Campaign Title</label>
                 <input value={form.title} onChange={set('title')} placeholder="e.g. Summer Glow Collection" className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" /></div>
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Category</label>
-                <select value={form.category} onChange={set('category')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none" style={{ background: '#0b0f24', color: '#fff' }}>
-                  {['Beauty', 'Fashion', 'Tech', 'Lifestyle', 'Food', 'Health'].map(c => <option key={c} value={c} style={{ background: '#0b0f24', color: '#fff' }}>{c}</option>)}
+                <select value={form.category} onChange={set('category')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none" style={{ background: 'var(--bg-2)', color: 'var(--text)' }}>
+                  {['Beauty', 'Fashion', 'Tech', 'Lifestyle', 'Food', 'Health'].map(c => <option key={c} value={c} style={{ background: 'var(--bg-2)', color: 'var(--text)' }}>{c}</option>)}
                 </select></div>
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Campaign Deadline</label>
                 <input type="date" value={form.deadline} onChange={set('deadline')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none" /></div>
@@ -100,6 +108,14 @@ const CampaignBuilder = () => {
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Cashback Rate: <span className="text-violet-400 font-bold">{form.cashbackRate}%</span></label>
                 <input type="range" min="30" max="70" value={form.cashbackRate} onChange={set('cashbackRate')} className="w-full accent-violet-500" />
                 <div className="flex justify-between text-xs text-zinc-600"><span>30%</span><span>70%</span></div></div>
+              <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Instant Discount Split: <span className="text-cyan-400 font-bold">{form.instantSplitPct}%</span></label>
+                <input type="range" min="0" max="100" step="10" value={form.instantSplitPct} onChange={set('instantSplitPct')} className="w-full accent-cyan-500" />
+                <div className="flex justify-between text-xs text-zinc-600"><span>All after post</span><span>All instant</span></div>
+                {form.price && form.cashbackRate > 0 && (() => {
+                  const reward = Math.round(Number(form.price) * Number(form.cashbackRate) / 100)
+                  const instant = Math.round(reward * Number(form.instantSplitPct) / 100)
+                  return <p className="text-xs text-zinc-500 mt-1.5">Creators get <span className="text-cyan-400 font-semibold">৳{instant.toLocaleString()} off at checkout</span> + <span className="text-emerald-400 font-semibold">৳{(reward - instant).toLocaleString()} bonus</span> after their post verifies. Instant discounts convert far better — creators risk less upfront.</p>
+                })()}</div>
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">★ Budget Cap (৳)</label>
                 <input type="number" value={form.budgetCap} onChange={set('budgetCap')} placeholder="e.g. 50000" className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" />
                 <p className="text-xs text-zinc-600 mt-1">Campaign auto-closes when cashback reaches this limit</p></div>
@@ -121,9 +137,14 @@ const CampaignBuilder = () => {
                 <input value={form.hashtags} onChange={set('hashtags')} placeholder="#GlowUpMatte, #FlextagCreator" className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" /></div>
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Required Tags (handles)</label>
                 <input value={form.handles} onChange={set('handles')} placeholder="@glowupbd" className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" /></div>
+              <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Required Content Type</label>
+                <select value={form.contentType} onChange={set('contentType')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none" style={{ background: 'var(--bg-2)', color: 'var(--text)' }}>
+                  {Object.entries(CONTENT_TYPE_LABELS).map(([v, l]) => <option key={v} value={v} style={{ background: 'var(--bg-2)', color: 'var(--text)' }}>{l}</option>)}
+                </select>
+                <p className="text-xs text-zinc-600 mt-1">Submitted posts must match this format to pass verification</p></div>
               <div><label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Retention Period (days)</label>
-                <select value={form.retentionDays} onChange={set('retentionDays')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none" style={{ background: '#0b0f24', color: '#fff' }}>
-                  {[3, 5, 7, 14, 30].map(d => <option key={d} value={d} style={{ background: '#0b0f24', color: '#fff' }}>{d} days</option>)}
+                <select value={form.retentionDays} onChange={set('retentionDays')} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none" style={{ background: 'var(--bg-2)', color: 'var(--text)' }}>
+                  {[3, 5, 7, 14, 30].map(d => <option key={d} value={d} style={{ background: 'var(--bg-2)', color: 'var(--text)' }}>{d} days</option>)}
                 </select></div>
             </div>
           )}
@@ -138,10 +159,13 @@ const CampaignBuilder = () => {
                   ['Product',      form.product || '—'],
                   ['Price',        form.price ? `৳${Number(form.price).toLocaleString()}` : '—'],
                   ['Cashback',     `${form.cashbackRate}%`],
+                  ['Reward Split', `${form.instantSplitPct}% instant / ${100 - Number(form.instantSplitPct)}% after post`],
                   ['Stock',        form.stock || '100'],
                   ['Budget Cap',   form.budgetCap ? `৳${Number(form.budgetCap).toLocaleString()}` : 'Unlimited'],
                   ['Min Followers',Number(form.minFollowers).toLocaleString()],
                   ['Hashtags',     form.hashtags || '—'],
+                  ['Handles',      form.handles || '—'],
+                  ['Content type', CONTENT_TYPE_LABELS[form.contentType] || CONTENT_TYPE_LABELS.any],
                   ['Private',      form.isPrivate ? 'Yes ★' : 'No'],
                   ['Retention',    `${form.retentionDays} days`],
                 ].map(([l, v]) => (

@@ -1,9 +1,19 @@
 const express        = require('express')
 const bcrypt         = require('bcryptjs')
 const User           = require('../models/User')
-const { generateOtp, verifyOtp } = require('../utils/otp')
+const { generateOtp, verifyOtp, checkOtp } = require('../utils/otp')
 const { sendOtpEmail }           = require('../utils/mailer')
 const { requireAuth, requireRole } = require('../middleware/auth')
+const { precheck: igPrecheck, auditUserInBackground } = require('../services/instagram/audit')
+const { normalizeHandle, handleRegex } = require('../services/instagram/endpoints')
+const { getIgSettings }          = require('../utils/settings')
+const { createLimiter }          = require('../utils/rateLimit')
+const { generateReferralCode, resolveReferrer } = require('../services/referrals')
+
+// OTP endpoints are unauthenticated: cap them per IP so they can't be used to
+// spam inboxes, brute-force codes, or drive Instagram lookups through the gate.
+const otpSendLimiter   = createLimiter({ windowMs: 10 * 60_000, max: 5,  message: 'Too many verification codes requested — try again in a few minutes.' })
+const otpVerifyLimiter = createLimiter({ windowMs: 10 * 60_000, max: 15, message: 'Too many attempts — request a new code in a few minutes.' })
 const router         = express.Router()
 
 // ─── Helper: strip password before sending ─────────────────────────────────
@@ -21,7 +31,7 @@ const SELF_SIGNUP_ROLES = ['creator', 'brand']
 // ─── POST /api/auth/send-otp ─────────────────────────────────────────────────
 // Step 1 of OTP registration: validate the email isn't taken, then send OTP.
 // The full registration payload is NOT saved yet — it stays on the client.
-router.post('/send-otp', async (req, res) => {
+router.post('/send-otp', otpSendLimiter, async (req, res) => {
   try {
     const { email } = req.body
     if (!email) {
@@ -33,7 +43,7 @@ router.post('/send-otp', async (req, res) => {
       return res.status(409).json({ message: 'An account with this email already exists.' })
     }
 
-    const code = generateOtp(email)
+    const code = await generateOtp(email)
     await sendOtpEmail(email, code)
 
     return res.json({ message: `Verification code sent to ${email}.` })
@@ -45,7 +55,7 @@ router.post('/send-otp', async (req, res) => {
 
 // ─── POST /api/auth/verify-otp ───────────────────────────────────────────────
 // Step 2 of OTP registration: verify the OTP then create the account.
-router.post('/verify-otp', async (req, res) => {
+router.post('/verify-otp', otpVerifyLimiter, async (req, res) => {
   try {
     const {
       otp,
@@ -64,8 +74,45 @@ router.post('/verify-otp', async (req, res) => {
       return res.status(403).json({ message: 'Invalid role. Choose creator or brand.' })
     }
 
-    // Verify the OTP
-    const result = verifyOtp(email, otp)
+    // ── Instagram gate for creators ──────────────────────────────────────
+    // Runs BEFORE the OTP is consumed so a failed check doesn't burn the code,
+    // but only for callers who already hold the CORRECT code (exact, non-consuming
+    // check), so the endpoint can't be abused as a free Instagram lookup.
+    let igHandle = ''
+    let ig = null          // precheck result when Instagram was reachable
+    if (role === 'creator') {
+      igHandle = normalizeHandle(instagramHandle)
+      if (!igHandle) {
+        return res.status(400).json({ message: 'Your Instagram handle is required (letters, numbers, dots, underscores).' })
+      }
+      const pre = await checkOtp(email, otp)
+      if (!pre.ok) return res.status(400).json({ message: pre.reason })
+      if (await User.exists({ role: 'creator', instagramHandle: handleRegex(igHandle) })) {
+        return res.status(409).json({ message: `@${igHandle} is already linked to another FlexTag account.` })
+      }
+      const igSettings = await getIgSettings()
+      try {
+        ig = await igPrecheck(igHandle, { settings: igSettings })
+        if (igSettings.precheckEnforce && !ig.eligible) {
+          return res.status(403).json({
+            message: `@${igHandle} isn't eligible yet: ${ig.reasons.join('; ')}`,
+            reasons: ig.reasons,
+          })
+        }
+      } catch (err) {
+        if (err.code === 'NOT_FOUND' && igSettings.precheckEnforce) {
+          return res.status(403).json({ message: `We couldn't find @${igHandle} on Instagram. Check the spelling.`, reasons: ['Instagram account not found'] })
+        }
+        if (err.code === 'BAD_INPUT') {
+          return res.status(400).json({ message: 'Enter a valid Instagram handle.' })
+        }
+        // Instagram unreachable / no session / rate-limited → allow signup, flag for a later audit.
+        console.warn('[verify-otp] Instagram precheck unavailable:', err.code || '', err.message)
+      }
+    }
+
+    // Verify the OTP (consumes it)
+    const result = await verifyOtp(email, otp)
     if (!result.ok) {
       return res.status(400).json({ message: result.reason })
     }
@@ -78,12 +125,22 @@ router.post('/verify-otp', async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10)
 
+    const referralCode = await generateReferralCode()
+    const referredBy = await resolveReferrer(req.body.referralCode)
     const user = await User.create({
       name, email, password: hashed, phone, role,
-      instagramHandle, followersCount, tiktokHandle,
+      referralCode, referredBy,
+      instagramHandle: role === 'creator' ? igHandle : normalizeHandle(instagramHandle),
+      followersCount:  ig ? ig.followers : (Number(followersCount) || 0),
+      tiktokHandle,
       companyName, website, productCategory,
       isVerified: true, // email confirmed via OTP
+      igPrecheck: role !== 'creator' ? 'skipped' : ig ? (ig.eligible ? 'passed' : 'failed') : 'pending',
+      igIsPrivate: ig ? ig.isPrivate : null,
     })
+
+    // Full audit (posts, follower sample, health score) in the background
+    if (user.role === 'creator') auditUserInBackground(user)
 
     // Start session
     req.session.userId = user._id.toString()
@@ -122,9 +179,11 @@ router.post('/register', requireAuth, requireRole('admin'), async (req, res) => 
 
     const user = await User.create({
       name, email, password: hashed, phone, role,
-      instagramHandle, followersCount, tiktokHandle,
+      instagramHandle: normalizeHandle(instagramHandle), followersCount, tiktokHandle,
       companyName, website, productCategory,
+      igPrecheck: role === 'creator' ? 'pending' : 'skipped',
     })
+    if (user.role === 'creator') auditUserInBackground(user)
 
     // NOTE: no session is started here — the caller is an admin creating an
     // account for someone else, and must stay logged in as themselves.

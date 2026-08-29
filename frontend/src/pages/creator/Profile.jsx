@@ -143,18 +143,18 @@ export default function Profile() {
 
   const FieldInput = ({ label, fkey, type = 'text', readOnly = false }) => (
     <div>
-      <label style={{ display:'block', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(255,255,255,0.35)', marginBottom:6 }}>
+      <label style={{ display:'block', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.35)', marginBottom:6 }}>
         {label}
       </label>
       {editing && !readOnly ? (
         <input type={type} value={form[fkey]}
           onChange={e => setForm({ ...form, [fkey]: e.target.value })}
-          style={{ width:'100%', padding:'10px 14px', borderRadius:10, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff', fontSize:14, outline:'none', transition:'border 0.2s' }}
+          style={{ width:'100%', padding:'10px 14px', borderRadius:10, background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize:14, outline:'none', transition:'border 0.2s' }}
           onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.6)'}
-          onBlur={e  => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+          onBlur={e  => e.target.style.borderColor = 'rgba(var(--ink-rgb),0.1)'}
         />
       ) : (
-        <p style={{ fontSize:14, color: form[fkey] ? '#e4e4e7' : 'rgba(255,255,255,0.2)', padding:'10px 0' }}>
+        <p style={{ fontSize:14, color: form[fkey] ? '#e4e4e7' : 'rgba(var(--ink-rgb),0.2)', padding:'10px 0' }}>
           {form[fkey] || 'Not set'}
         </p>
       )}
@@ -163,12 +163,12 @@ export default function Profile() {
 
   const AddrInput = ({ label, field, state, setter, type = 'text' }) => (
     <div>
-      <label style={{ display:'block', fontSize:11, color:'rgba(255,255,255,0.35)', marginBottom:4 }}>{label}</label>
+      <label style={{ display:'block', fontSize:11, color:'rgba(var(--ink-rgb),0.35)', marginBottom:4 }}>{label}</label>
       <input type={type} placeholder={label}
         value={state[field]} onChange={e => setter({ ...state, [field]: e.target.value })}
-        style={{ width:'100%', padding:'9px 12px', borderRadius:8, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff', fontSize:13, outline:'none' }}
+        style={{ width:'100%', padding:'9px 12px', borderRadius:8, background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize:13, outline:'none' }}
         onFocus={e => e.target.style.borderColor='rgba(124,58,237,0.5)'}
-        onBlur={e  => e.target.style.borderColor='rgba(255,255,255,0.1)'}
+        onBlur={e  => e.target.style.borderColor='rgba(var(--ink-rgb),0.1)'}
       />
     </div>
   )
@@ -186,27 +186,27 @@ export default function Profile() {
         className="lg:grid-cols-2">
 
         {/* ── Profile Card ─────────────────────────────────────── */}
-        <div style={{ borderRadius:20, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', padding:28, display:'flex', flexDirection:'column', gap:0 }}>
+        <div style={{ borderRadius:20, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28, display:'flex', flexDirection:'column', gap:0 }}>
           {/* header row */}
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
-            <h2 style={{ fontSize:17, fontWeight:700, color:'#fff', margin:0 }}>Personal Info</h2>
+            <h2 style={{ fontSize:17, fontWeight:700, color: 'var(--text)', margin:0 }}>Personal Info</h2>
             <button
               onClick={() => { setEditing(!editing); setSaveMsg('') }}
-              style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, fontWeight:600, color: editing ? 'rgba(255,255,255,0.5)' : '#a78bfa', background:'none', border:'none', cursor:'pointer', padding:'6px 12px', borderRadius:8, transition:'all 0.2s' }}
+              style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, fontWeight:600, color: editing ? 'rgba(var(--ink-rgb),0.5)' : '#a78bfa', background:'none', border:'none', cursor:'pointer', padding:'6px 12px', borderRadius:8, transition:'all 0.2s' }}
             >
               {editing ? <><XIcon /> Cancel</> : <><EditIcon /> Edit Profile</>}
             </button>
           </div>
 
           {/* avatar + tier */}
-          <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:24, paddingBottom:24, borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:24, paddingBottom:24, borderBottom:'1px solid rgba(var(--ink-rgb),0.06)' }}>
             <div style={{ width:64, height:64, borderRadius:'50%', background:`linear-gradient(135deg, var(--tw-gradient-stops))`, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, fontWeight:700, color:'#fff' }}
               className={`bg-gradient-to-br ${tierGrad}`}>
               {user?.name?.[0]?.toUpperCase() || 'C'}
             </div>
             <div>
-              <p style={{ fontSize:16, fontWeight:700, color:'#fff', margin:0 }}>{user?.name}</p>
-              <p style={{ fontSize:12, color:'rgba(255,255,255,0.4)', margin:'2px 0 6px' }}>
+              <p style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:0 }}>{user?.name}</p>
+              <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.4)', margin:'2px 0 6px' }}>
                 {user?.instagramHandle ? `@${user.instagramHandle} · ` : ''}
                 {(user?.followersCount || 0).toLocaleString()} followers
               </p>
@@ -256,11 +256,11 @@ export default function Profile() {
         </div>
 
         {/* ── Shipping Addresses Card ───────────────────────────── */}
-        <div style={{ borderRadius:20, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', padding:28 }}>
+        <div style={{ borderRadius:20, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28 }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
             <div>
-              <h2 style={{ fontSize:17, fontWeight:700, color:'#fff', margin:0 }}>Shipping Addresses</h2>
-              <p style={{ fontSize:12, color:'rgba(255,255,255,0.3)', margin:'3px 0 0' }}>Saved to your account</p>
+              <h2 style={{ fontSize:17, fontWeight:700, color: 'var(--text)', margin:0 }}>Shipping Addresses</h2>
+              <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.3)', margin:'3px 0 0' }}>Saved to your account</p>
             </div>
             <button onClick={() => { setShowAddForm(!showAddForm); setEditingAddr(null) }}
               style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:10, fontSize:13, fontWeight:600, color:'#a78bfa', background:'rgba(124,58,237,0.1)', border:'1px solid rgba(124,58,237,0.2)', cursor:'pointer', transition:'all 0.2s' }}>
@@ -299,7 +299,7 @@ export default function Profile() {
                     {addrSaving ? 'Saving…' : 'Add Address'}
                   </button>
                   <button onClick={() => setShowAddForm(false)}
-                    style={{ padding:'11px 16px', borderRadius:10, fontSize:13, color:'rgba(255,255,255,0.5)', background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', cursor:'pointer' }}>
+                    style={{ padding:'11px 16px', borderRadius:10, fontSize:13, color:'rgba(var(--ink-rgb),0.5)', background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.08)', cursor:'pointer' }}>
                     Cancel
                   </button>
                 </div>
@@ -313,10 +313,10 @@ export default function Profile() {
               <div style={{ width:32, height:32, borderRadius:'50%', border:'2px solid rgba(124,58,237,0.3)', borderTopColor:'#7c3aed', animation:'spin 0.8s linear infinite' }} />
             </div>
           ) : addresses.length === 0 ? (
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'48px 0', borderRadius:14, border:'1px dashed rgba(255,255,255,0.08)' }}>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'48px 0', borderRadius:14, border:'1px dashed rgba(var(--ink-rgb),0.08)' }}>
               <HomeIcon />
-              <p style={{ fontSize:14, color:'rgba(255,255,255,0.3)', marginTop:12 }}>No addresses saved yet</p>
-              <p style={{ fontSize:12, color:'rgba(255,255,255,0.15)', marginTop:4 }}>Add an address to speed up checkout</p>
+              <p style={{ fontSize:14, color:'rgba(var(--ink-rgb),0.3)', marginTop:12 }}>No addresses saved yet</p>
+              <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.15)', marginTop:4 }}>Add an address to speed up checkout</p>
             </div>
           ) : (
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
@@ -346,7 +346,7 @@ export default function Profile() {
                             {addrSaving ? 'Saving…' : 'Update'}
                           </button>
                           <button onClick={() => setEditingAddr(null)}
-                            style={{ padding:'10px 14px', borderRadius:10, fontSize:13, color:'rgba(255,255,255,0.5)', background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', cursor:'pointer' }}>
+                            style={{ padding:'10px 14px', borderRadius:10, fontSize:13, color:'rgba(var(--ink-rgb),0.5)', background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.08)', cursor:'pointer' }}>
                             Cancel
                           </button>
                         </div>
@@ -355,30 +355,30 @@ export default function Profile() {
                   ) : (
                     <div style={{
                       padding:'16px 18px', borderRadius:14, transition:'all 0.2s',
-                      background: addr.isDefault ? 'rgba(124,58,237,0.07)' : 'rgba(255,255,255,0.02)',
-                      border: addr.isDefault ? '1px solid rgba(124,58,237,0.25)' : '1px solid rgba(255,255,255,0.06)',
+                      background: addr.isDefault ? 'rgba(124,58,237,0.07)' : 'rgba(var(--ink-rgb),0.02)',
+                      border: addr.isDefault ? '1px solid rgba(124,58,237,0.25)' : '1px solid rgba(var(--ink-rgb),0.06)',
                     }}>
                       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:8 }}>
                         <div style={{ flex:1 }}>
                           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                            <span style={{ fontSize:13, fontWeight:700, color:'#fff' }}>{addr.label || 'Address'}</span>
+                            <span style={{ fontSize:13, fontWeight:700, color: 'var(--text)' }}>{addr.label || 'Address'}</span>
                             {addr.isDefault && (
                               <span style={{ padding:'2px 8px', borderRadius:999, fontSize:10, fontWeight:700, background:'rgba(124,58,237,0.18)', color:'#a78bfa', border:'1px solid rgba(124,58,237,0.3)' }}>
                                 ★ Default
                               </span>
                             )}
                           </div>
-                          {addr.fullName && <p style={{ fontSize:12, color:'rgba(255,255,255,0.5)', margin:'0 0 2px' }}>{addr.fullName}</p>}
-                          <p style={{ fontSize:13, color:'rgba(255,255,255,0.65)', margin:'0 0 2px' }}>{addr.street}</p>
-                          <p style={{ fontSize:12, color:'rgba(255,255,255,0.4)', margin:0 }}>
+                          {addr.fullName && <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.5)', margin:'0 0 2px' }}>{addr.fullName}</p>}
+                          <p style={{ fontSize:13, color:'rgba(var(--ink-rgb),0.65)', margin:'0 0 2px' }}>{addr.street}</p>
+                          <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.4)', margin:0 }}>
                             {[addr.city, addr.state, addr.zip].filter(Boolean).join(', ')}
                             {addr.country ? ` · ${addr.country}` : ''}
                           </p>
-                          {addr.phone && <p style={{ fontSize:12, color:'rgba(255,255,255,0.35)', marginTop:4 }}>{addr.phone}</p>}
+                          {addr.phone && <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.35)', marginTop:4 }}>{addr.phone}</p>}
                         </div>
                       </div>
 
-                      <div style={{ display:'flex', gap:12, marginTop:12, paddingTop:12, borderTop:'1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ display:'flex', gap:12, marginTop:12, paddingTop:12, borderTop:'1px solid rgba(var(--ink-rgb),0.05)' }}>
                         {!addr.isDefault && (
                           <button onClick={() => handleSetDefault(addr._id)}
                             style={{ fontSize:12, color:'rgba(124,58,237,0.8)', fontWeight:600, background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:4, padding:0 }}>
@@ -386,7 +386,7 @@ export default function Profile() {
                           </button>
                         )}
                         <button onClick={() => startEditAddr(addr)}
-                          style={{ fontSize:12, color:'rgba(255,255,255,0.4)', fontWeight:600, background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:4, padding:0 }}>
+                          style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.4)', fontWeight:600, background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:4, padding:0 }}>
                           <EditIcon /> Edit
                         </button>
                         <button onClick={() => handleDeleteAddress(addr._id)}

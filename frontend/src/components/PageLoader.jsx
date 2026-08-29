@@ -31,8 +31,9 @@ const PageLoader = ({ onDone }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#050816] overflow-hidden"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden"
       style={{
+        background: 'var(--bg)',
         transition: 'opacity 0.6s ease, transform 0.6s ease',
         opacity:   phase === 2 ? 0 : 1,
         transform: phase === 2 ? 'scale(1.04)' : 'scale(1)',
@@ -45,7 +46,7 @@ const PageLoader = ({ onDone }) => {
 
       {/* Grid */}
       <div className="absolute inset-0 pointer-events-none"
-        style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
+        style={{ backgroundImage: 'linear-gradient(rgba(var(--ink-rgb),0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--ink-rgb),0.02) 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
 
       {/* 3D ring */}
       <div className="relative w-32 h-32 mb-10" style={{ perspective: '500px' }}>
@@ -66,18 +67,18 @@ const PageLoader = ({ onDone }) => {
       </div>
 
       {/* Brand name */}
-      <h1 className="text-4xl font-black italic tracking-tighter text-white mb-1">
+      <h1 className="text-4xl font-black italic tracking-tighter mb-1" style={{ color: 'var(--text)' }}>
         FlexTag<span className="gradient-text">™</span>
       </h1>
-      <p className="text-[10px] text-zinc-600 uppercase tracking-[0.3em] mb-10">Shop · Share · Earn</p>
+      <p className="text-[10px] uppercase tracking-[0.3em] mb-10" style={{ color: 'var(--text-dim)' }}>Shop · Share · Earn</p>
 
       {/* Progress bar */}
-      <div className="w-48 h-px bg-white/5 rounded-full overflow-hidden relative">
+      <div className="w-48 h-px rounded-full overflow-hidden relative" style={{ background: 'rgba(var(--ink-rgb),0.05)' }}>
         <div
           className="absolute inset-y-0 left-0 rounded-full grad-animate"
           style={{ width: `${pct}%`, transition: 'width 0.05s linear' }} />
       </div>
-      <p className="text-[10px] text-zinc-700 mt-3 font-mono tabular-nums">{pct}%</p>
+      <p className="text-[10px] mt-3 font-mono tabular-nums" style={{ color: 'var(--text-dim)' }}>{pct}%</p>
     </div>
   )
 }

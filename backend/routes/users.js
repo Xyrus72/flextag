@@ -2,6 +2,11 @@ const express = require('express')
 const router  = express.Router()
 const User    = require('../models/User')
 const { requireAuth, requireRole } = require('../middleware/auth')
+const { normalizeHandle, handleRegex } = require('../services/instagram/endpoints')
+const { auditUserInBackground } = require('../services/instagram/audit')
+const IgAudit = require('../models/IgAudit')
+const { notifySafe } = require('../services/notifications')
+const { generateReferralCode, REFERRAL_BONUS } = require('../services/referrals')
 
 // ── GET /api/users/brand/ratings — creator reviews for current brand ────────
 router.get('/brand/ratings', requireAuth, requireRole('brand'), async (req, res) => {
@@ -41,6 +46,61 @@ router.get('/leaderboard', async (req, res) => {
 
     res.json({ creators })
   } catch (err) {
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── GET /api/users/portfolio/:handle — PUBLIC creator portfolio ─────────────
+// Safe, shareable subset (no email / no fake-follower %). Powers /u/:handle.
+router.get('/portfolio/:handle', async (req, res) => {
+  try {
+    const handle = normalizeHandle(req.params.handle)
+    if (!handle) return res.status(400).json({ message: 'Invalid handle.' })
+    const creator = await User.findOne({ role: 'creator', instagramHandle: handleRegex(handle) })
+      .select('name instagramHandle avatar tier followersCount engagementRate igHealthScore igVerified completedCampaigns createdAt')
+      .lean()
+    if (!creator) return res.status(404).json({ message: 'Creator not found.' })
+
+    const Post = require('../models/Post')
+    const posts = await Post.find({ creatorId: creator._id, status: 'approved' })
+      .populate('campaignId', 'title brand product')
+      .sort({ approvedAt: -1, createdAt: -1 })
+      .limit(24)
+    const items = posts.map(p => {
+      const s = (p.verification && p.verification.snapshot) || {}
+      return {
+        _id: p._id, permalink: s.permalink || p.postUrl, thumbnail: s.thumbnail || '', mediaType: s.mediaType || '',
+        likes: s.likes ?? null, comments: s.comments ?? null, views: s.views ?? null,
+        brand: p.campaignId?.brand, product: p.campaignId?.product,
+      }
+    })
+    res.json({
+      creator: {
+        name: creator.name, instagramHandle: normalizeHandle(creator.instagramHandle), avatar: creator.avatar,
+        tier: creator.tier, followersCount: creator.followersCount, engagementRate: creator.engagementRate,
+        healthScore: creator.igHealthScore, igVerified: creator.igVerified, completedCampaigns: creator.completedCampaigns,
+        memberSince: creator.createdAt,
+      },
+      posts: items,
+    })
+  } catch (err) {
+    console.error('[users portfolio]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── GET /api/users/me/referrals — current user's referral code + stats ──────
+router.get('/me/referrals', requireAuth, async (req, res) => {
+  try {
+    let code = req.user.referralCode
+    if (!code) { code = await generateReferralCode(); await User.updateOne({ _id: req.user._id }, { $set: { referralCode: code } }) }
+    const [count, rewarded] = await Promise.all([
+      User.countDocuments({ referredBy: req.user._id }),
+      User.countDocuments({ referredBy: req.user._id, referralRewarded: true }),
+    ])
+    res.json({ code, count, rewarded, bonus: REFERRAL_BONUS })
+  } catch (err) {
+    console.error('[users referrals]', err)
     res.status(500).json({ message: 'Server error.' })
   }
 })
@@ -130,6 +190,27 @@ router.get('/', requireAuth, async (req, res) => {
   }
 })
 
+// ── POST /api/users/:id/invite — brand invites a creator to a campaign ──────
+router.post('/:id/invite', requireAuth, requireRole('brand', 'admin'), async (req, res) => {
+  try {
+    const creator = await User.findOne({ _id: req.params.id, role: 'creator' }).select('_id name')
+    if (!creator) return res.status(404).json({ message: 'Creator not found.' })
+    const brandName = req.user.companyName || req.user.name
+    const message = String(req.body?.message || '').trim().slice(0, 200)
+    notifySafe(creator._id, {
+      type: 'invite', icon: '📨',
+      title: `${brandName} invited you to a campaign`,
+      body: message || `${brandName} wants you to promote one of their products. Browse the catalog to get started.`,
+      link: '/creator/catalog',
+      meta: { brandId: String(req.user._id), campaignId: req.body?.campaignId || null },
+    })
+    res.json({ message: `Invite sent to ${creator.name}.` })
+  } catch (err) {
+    console.error('[users invite]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
 // ── GET /api/users/:id ─────────────────────────────────────────────────────
 router.get('/:id', requireAuth, async (req, res) => {
   try {
@@ -160,6 +241,20 @@ router.put('/:id', requireAuth, async (req, res) => {
     const user = await User.findById(req.params.id)
     if (!user) return res.status(404).json({ message: 'User not found.' })
 
+    // Normalize the Instagram handle; a changed handle invalidates identity checks.
+    const prevHandle = normalizeHandle(user.instagramHandle)
+    let handleChanged = false
+    if (req.body.instagramHandle !== undefined) {
+      const raw = String(req.body.instagramHandle || '').trim()
+      const next = normalizeHandle(raw)
+      if (raw && !next) return res.status(400).json({ message: 'Enter a valid Instagram handle (letters, numbers, dots, underscores).' })
+      req.body.instagramHandle = next
+      handleChanged = next !== prevHandle
+      if (handleChanged && next && await User.exists({ role: 'creator', instagramHandle: handleRegex(next), _id: { $ne: user._id } })) {
+        return res.status(409).json({ message: `@${next} is already linked to another FlexTag account.` })
+      }
+    }
+
     allowed.forEach(k => {
       if (req.body[k] !== undefined) {
         // Non-admin cannot change role / verification flags / tier
@@ -168,7 +263,24 @@ router.put('/:id', requireAuth, async (req, res) => {
       }
     })
 
+    if (handleChanged) {
+      user.igVerified = false
+      user.igVerifiedAt = null
+      user.igVerifyCode = ''
+      user.igVerifyCodeAt = null
+      user.igPrecheck = 'pending'
+      user.igAuditedAt = null
+      user.igHealthScore = null
+      user.igFakeFollowerPct = null
+      user.igIsPrivate = null
+    }
+
     await user.save()
+    if (handleChanged && user.role === 'creator') {
+      // The old handle's audit no longer describes this creator.
+      await IgAudit.updateMany({ user: user._id }, { $set: { user: null } }).catch(() => {})
+      auditUserInBackground(user)
+    }
     const obj = user.toObject()
     delete obj.password
     res.json({ user: obj })

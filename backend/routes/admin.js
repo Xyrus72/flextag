@@ -1,6 +1,5 @@
 const express  = require('express')
 const router   = express.Router()
-const http     = require('http')
 const User     = require('../models/User')
 const Campaign = require('../models/Campaign')
 const Order    = require('../models/Order')
@@ -8,35 +7,8 @@ const Post     = require('../models/Post')
 const Product  = require('../models/Product')
 const Transaction = require('../models/Transaction')
 const { requireAuth, requireRole } = require('../middleware/auth')
-
-// ─── Helper: proxy a request to the Python bot ──────────────────────────────
-function proxyToPythonBot(payload) {
-  return new Promise((resolve, reject) => {
-    const body = JSON.stringify(payload)
-    const options = {
-      hostname: '127.0.0.1',
-      port: 8000,
-      path: '/scrape',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body),
-      },
-    }
-    const req = http.request(options, (res) => {
-      let data = ''
-      res.on('data', chunk => (data += chunk))
-      res.on('end', () => {
-        try { resolve({ status: res.statusCode, body: JSON.parse(data) }) }
-        catch { resolve({ status: res.statusCode, body: { error: 'Bad response from bot' } }) }
-      })
-    })
-    req.on('error', err => reject(err))
-    req.setTimeout(30000, () => { req.destroy(); reject(new Error('Bot request timed out')) })
-    req.write(body)
-    req.end()
-  })
-}
+const { runAudit } = require('../services/instagram/audit')
+const igClient = require('../services/instagram/client')
 
 // ── GET /api/admin/stats — platform-wide KPIs ─────────────────────────────
 router.get('/stats', requireAuth, requireRole('admin'), async (req, res) => {
@@ -50,6 +22,7 @@ router.get('/stats', requireAuth, requireRole('admin'), async (req, res) => {
       txResult,
       escrowResult,
       commissionResult,
+      clawbackResult,
     ] = await Promise.all([
       User.countDocuments({ role: 'creator' }),
       User.countDocuments({ role: 'brand' }),
@@ -68,17 +41,22 @@ router.get('/stats', requireAuth, requireRole('admin'), async (req, res) => {
         { $match: { type: 'cashback', status: 'completed' } },
         { $group: { _id: null, total: { $sum: { $multiply: ['$amount', 0.10] } } } },
       ]),
+      Transaction.aggregate([
+        { $match: { type: 'clawback', status: 'completed' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } },
+      ]),
     ])
 
+    const clawed = clawbackResult[0]?.total || 0
     res.json({
       totalCreators,
       totalBrands,
       verifiedBrands,
       activeCampaigns,
       pendingPosts,
-      totalGMV:          txResult[0]?.total      || 0,
+      totalGMV:          Math.max(0, (txResult[0]?.total || 0) - clawed),           // net of clawbacks
       cashbackLiability: escrowResult[0]?.total  || 0,
-      commissionRevenue: commissionResult[0]?.total || 0,
+      commissionRevenue: Math.max(0, (commissionResult[0]?.total || 0) - clawed * 0.10),
     })
   } catch (err) {
     console.error('[admin stats]', err)
@@ -154,7 +132,8 @@ router.get('/financial', requireAuth, requireRole('admin'), async (req, res) => 
   try {
     // Per-campaign escrow liability
     const campaignEscrow = await Order.aggregate([
-      { $match: { cashbackReleased: false, status: { $ne: 'cancelled' } } },
+      // Liability = orders that can still be paid: exclude cancelled AND the fulfillment module's return states
+      { $match: { cashbackReleased: false, status: { $nin: ['cancelled', 'return_requested', 'returned'] } } },
       {
         $group: {
           _id: '$campaignId',
@@ -194,15 +173,21 @@ router.get('/financial', requireAuth, requireRole('admin'), async (req, res) => 
     ])
 
     const totalEscrow = enriched.reduce((s, e) => s + e.escrow, 0)
-    const commissionTx = await Transaction.aggregate([
-      { $match: { type: 'cashback', status: 'completed' } },
-      { $group: { _id: null, total: { $sum: { $multiply: ['$amount', 0.10] } } } },
+    const [commissionTx, clawbackTx] = await Promise.all([
+      Transaction.aggregate([
+        { $match: { type: 'cashback', status: 'completed' } },
+        { $group: { _id: null, total: { $sum: { $multiply: ['$amount', 0.10] } } } },
+      ]),
+      Transaction.aggregate([
+        { $match: { type: 'clawback', status: 'completed' } },
+        { $group: { _id: null, total: { $sum: { $multiply: ['$amount', 0.10] } } } },
+      ]),
     ])
 
     res.json({
       campaignEscrow: enriched,
       totalEscrow,
-      commissionRevenue: commissionTx[0]?.total || 0,
+      commissionRevenue: Math.max(0, (commissionTx[0]?.total || 0) - (clawbackTx[0]?.total || 0)),
       upcomingPayouts,
     })
   } catch (err) {
@@ -260,8 +245,8 @@ router.put('/products/:id/reject', requireAuth, requireRole('admin'), async (req
 router.put('/creators/:id/ig-verify', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const { igVerified } = req.body
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
+    const user = await User.findOneAndUpdate(
+      { _id: req.params.id, role: 'creator' },
       { igVerified: !!igVerified },
       { new: true }
     ).select('-password')
@@ -273,20 +258,21 @@ router.put('/creators/:id/ig-verify', requireAuth, requireRole('admin'), async (
   }
 })
 
-// ── POST /api/admin/instagram-lookup — proxy scrape to Python bot ─────────
+// ── POST /api/admin/instagram-lookup — run a fresh full audit for any handle ──
+// (kept at the old path for compatibility; the general API lives in routes/instagram.js)
 router.post('/instagram-lookup', requireAuth, requireRole('admin'), async (req, res) => {
-  const { username, max_posts = 10 } = req.body
-  if (!username) return res.status(400).json({ error: 'Username is required.' })
-
+  const { username } = req.body || {}
+  if (!username) return res.status(400).json({ message: 'Username is required.' })
   try {
-    const result = await proxyToPythonBot({ username, max_posts })
-    return res.status(result.status).json(result.body)
+    const audit = await runAudit(username, { depth: 'full', force: true, maxAgeMs: 0 })
+    return res.json({ audit })
   } catch (err) {
-    console.error('[admin instagram-lookup]', err.message)
-    if (err.message.includes('timed out')) {
-      return res.status(504).json({ error: 'Scraper timed out. Make sure bot/server.py is running on port 8000.' })
+    if (err instanceof igClient.IgError) {
+      const { status, message } = igClient.httpFor(err)
+      return res.status(status).json({ message, code: err.code })
     }
-    return res.status(503).json({ error: 'Could not reach scraper bot. Make sure bot/server.py is running on port 8000.' })
+    console.error('[admin instagram-lookup]', err)
+    return res.status(500).json({ message: 'Server error.' })
   }
 })
 

@@ -1,12 +1,19 @@
+/* Fonts — @import must precede all other statements (incl. @config) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
-/* ── Fonts ────────────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 /* ── Design Tokens ────────────────────────────────────────────────────────── */
+/* Dark is the default theme; <html data-theme="light"> flips the tokens.
+   --ink-rgb is the "foreground channel": rgba(var(--ink-rgb), a) replaces
+   every hardcoded rgba(255,255,255, a) so text/panels/borders theme together. */
 :root {
+  color-scheme: dark;
   --bg:           #050816;
+  --bg-2:         #0b0f24;
+  --nav-rgb:      5, 8, 22;
+  --ink-rgb:      255, 255, 255;
   --bg-surface:   rgba(255,255,255,0.04);
   --bg-surface-2: rgba(255,255,255,0.07);
   --border:       rgba(255,255,255,0.08);
@@ -19,11 +26,90 @@
   --text:         #ffffff;
   --text-muted:   rgba(255,255,255,0.5);
   --text-dim:     rgba(255,255,255,0.25);
+  /* accent shades used as TEXT — need darker versions on a light page */
+  --violet-ink:   #a78bfa;
+  --green-ink:    #4ade80;
+  --cyan-ink:     #67e8f9;
   --success:      #22c55e;
   --warning:      #f59e0b;
   --error:        #ef4444;
+  --footer-bg:    #030614;
   --grad:         linear-gradient(135deg, #7c3aed, #06b6d4);
+  /* Elevation: dark mode reads depth via deep black glow; light mode needs a
+     real, visibly-lifted shadow instead (glow reads as haze on white). */
+  --shadow-md: 0 12px 40px rgba(0,0,0,0.3);
+  --shadow-lg: 0 24px 60px rgba(0,0,0,0.45);
 }
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg:           #f5f6fb;
+  --bg-2:         #ffffff;
+  --nav-rgb:      248, 249, 253;
+  --ink-rgb:      0, 0, 0;
+  --bg-surface:   rgba(var(--ink-rgb),0.04);
+  --bg-surface-2: rgba(var(--ink-rgb),0.07);
+  --border:       rgba(var(--ink-rgb),0.1);
+  --text:         #000000;
+  --text-muted:   rgba(var(--ink-rgb),0.62);
+  --text-dim:     rgba(var(--ink-rgb),0.38);
+  --violet-ink:   #6d28d9;
+  --green-ink:    #15803d;
+  --cyan-ink:     #0e7490;
+  --footer-bg:    #eceef6;
+  --shadow-md: 0 8px 24px rgba(31,41,84,0.08), 0 2px 6px rgba(31,41,84,0.05);
+  --shadow-lg: 0 20px 48px rgba(31,41,84,0.12), 0 4px 12px rgba(31,41,84,0.06);
+}
+
+/* Footer's Tailwind grays were tuned for dark — deepen them on light.
+   Attribute selectors avoid escaping the "/" in utility class names. */
+:root[data-theme='light'] footer [class*="text-zinc-500"] { color: rgba(var(--ink-rgb),0.55); }
+:root[data-theme='light'] footer [class*="text-zinc-400"] { color: rgba(var(--ink-rgb),0.65); }
+:root[data-theme='light'] footer [class*="text-zinc-600"] { color: rgba(var(--ink-rgb),0.45); }
+:root[data-theme='light'] footer [class*="text-white"] { color: var(--text); }
+:root[data-theme='light'] footer [class*="border-white/5"],
+:root[data-theme='light'] footer [class*="border-white/10"] { border-color: rgba(var(--ink-rgb),0.1); }
+:root[data-theme='light'] footer [class*="bg-white/5"] { background-color: rgba(var(--ink-rgb),0.05); }
+
+/* ── Dashboard pages: same Tailwind-gray problem as the footer, app-wide ──
+   ~20 dashboard pages style text/panels with Tailwind's text-white / bg-white/N /
+   border-white/N / text-zinc-N instead of the CSS-variable classes above. Rather
+   than touch every className string, retune the exact utility set they use for
+   light mode. [class*="…"] matches the token inside a longer className list;
+   `:not([class*="hover:…"])` on the base rules keeps a plain "text-white" match
+   from firing on elements that only carry the hover: variant. */
+:root[data-theme='light'] main [class~="text-white"] { color: var(--text); }
+:root[data-theme='light'] main [class*="text-zinc-200"] { color: rgba(var(--ink-rgb),0.82); }
+:root[data-theme='light'] main [class*="text-zinc-300"] { color: rgba(var(--ink-rgb),0.72); }
+:root[data-theme='light'] main [class*="text-zinc-400"] { color: rgba(var(--ink-rgb),0.65); }
+:root[data-theme='light'] main [class*="text-zinc-500"] { color: rgba(var(--ink-rgb),0.55); }
+:root[data-theme='light'] main [class*="text-zinc-600"] { color: rgba(var(--ink-rgb),0.45); }
+:root[data-theme='light'] main [class*="text-zinc-700"] { color: rgba(var(--ink-rgb),0.38); }
+:root[data-theme='light'] main [class~="hover:text-white"]:hover { color: var(--text); }
+:root[data-theme='light'] main [class*="hover:text-zinc-300"]:hover { color: rgba(var(--ink-rgb),0.72); }
+
+:root[data-theme='light'] main [class*="bg-white/[0.01]"] { background-color: rgba(var(--ink-rgb),0.02); }
+:root[data-theme='light'] main [class*="bg-white/[0.02]"] { background-color: rgba(var(--ink-rgb),0.03); }
+:root[data-theme='light'] main [class*="bg-white/[0.03]"] { background-color: rgba(var(--ink-rgb),0.04); }
+:root[data-theme='light'] main [class~="bg-white/5"] { background-color: rgba(var(--ink-rgb),0.05); }
+:root[data-theme='light'] main [class~="bg-white/10"] { background-color: rgba(var(--ink-rgb),0.08); }
+:root[data-theme='light'] main [class*="hover:bg-white/5"]:hover { background-color: rgba(var(--ink-rgb),0.05); }
+:root[data-theme='light'] main [class*="hover:bg-white/10"]:hover { background-color: rgba(var(--ink-rgb),0.08); }
+
+:root[data-theme='light'] main [class*="border-white/[0.03]"] { border-color: rgba(var(--ink-rgb),0.06); }
+:root[data-theme='light'] main [class*="border-white/[0.05]"] { border-color: rgba(var(--ink-rgb),0.08); }
+:root[data-theme='light'] main [class~="border-white/5"] { border-color: rgba(var(--ink-rgb),0.1); }
+:root[data-theme='light'] main [class~="border-white/10"] { border-color: rgba(var(--ink-rgb),0.14); }
+:root[data-theme='light'] main [class*="hover:border-white/10"]:hover { border-color: rgba(var(--ink-rgb),0.16); }
+
+/* Theme switch feels smooth, not jarring */
+body, nav, section, footer {
+  transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease;
+}
+
+/* The hero's cinematic dark layers don't belong on a light page */
+:root[data-theme='light'] .hero-video { display: none; }
+:root[data-theme='light'] .hero-fx { opacity: 0.5; }
 
 /* ── Base ─────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
@@ -43,7 +129,7 @@ body {
 
 /* ── Scrollbar ────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: #050816; }
+::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: #1a1040; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
 
@@ -52,16 +138,16 @@ body {
 
 /* ── Glass Panel ──────────────────────────────────────────────────────────── */
 .glass-panel {
-  background: rgba(255,255,255,0.04);
+  background: rgba(var(--ink-rgb),0.04);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(var(--ink-rgb),0.08);
 }
 .glass-panel-strong {
-  background: rgba(255,255,255,0.06);
+  background: rgba(var(--ink-rgb),0.06);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(var(--ink-rgb),0.1);
 }
 
 /* ── Page Shell ───────────────────────────────────────────────────────────── */
@@ -99,7 +185,7 @@ body {
 .page-title {
   font-size: clamp(24px, 3vw, 36px);
   font-weight: 800;
-  color: #fff;
+  color: var(--text);
   letter-spacing: -0.03em;
   line-height: 1.1;
 }
@@ -112,9 +198,9 @@ body {
 
 /* ── Stat Card ────────────────────────────────────────────────────────────── */
 .stat-card {
-  background: rgba(255,255,255,0.04);
+  background: rgba(var(--ink-rgb),0.04);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(var(--ink-rgb),0.08);
   border-radius: 20px;
   padding: 24px;
   transition: all 0.2s ease;
@@ -122,37 +208,37 @@ body {
 .stat-card:hover {
   border-color: rgba(124,58,237,0.3);
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(124,58,237,0.1);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(124,58,237,0.1);
 }
 
 /* ── Table ────────────────────────────────────────────────────────────────── */
 .data-table {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(var(--ink-rgb),0.03);
+  border: 1px solid rgba(var(--ink-rgb),0.07);
   border-radius: 16px;
   overflow: hidden;
 }
 .data-table th {
-  background: rgba(255,255,255,0.03);
+  background: rgba(var(--ink-rgb),0.03);
   padding: 14px 20px;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--text-dim);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(var(--ink-rgb),0.05);
   text-align: left;
   white-space: nowrap;
 }
 .data-table td {
   padding: 14px 20px;
   font-size: 13px;
-  color: rgba(255,255,255,0.7);
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--text-muted);
+  border-bottom: 1px solid rgba(var(--ink-rgb),0.04);
   vertical-align: middle;
 }
 .data-table tr:last-child td { border-bottom: none; }
-.data-table tr:hover td { background: rgba(255,255,255,0.02); }
+.data-table tr:hover td { background: rgba(var(--ink-rgb),0.02); }
 
 /* ── Buttons ──────────────────────────────────────────────────────────────── */
 .btn-primary {
@@ -189,12 +275,12 @@ body {
   padding: 10px 22px;
   border-radius: 12px;
   background: transparent;
-  color: rgba(255,255,255,0.6);
+  color: var(--text-muted);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(var(--ink-rgb),0.12);
   cursor: pointer;
   font-family: inherit;
   transition: all 0.2s ease;
@@ -202,7 +288,7 @@ body {
 }
 .btn-ghost:hover:not(:disabled) {
   border-color: rgba(124,58,237,0.4);
-  color: #fff;
+  color: var(--text);
   background: rgba(124,58,237,0.08);
 }
 .btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -243,17 +329,17 @@ body {
 }
 .field-input {
   width: 100%;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(var(--ink-rgb),0.04);
+  border: 1px solid rgba(var(--ink-rgb),0.1);
   border-radius: 12px;
   padding: 12px 16px;
   font-size: 14px;
-  color: #fff;
+  color: var(--text);
   font-family: inherit;
   outline: none;
   transition: all 0.2s ease;
 }
-.field-input::placeholder { color: rgba(255,255,255,0.2); }
+.field-input::placeholder { color: var(--text-dim); }
 .field-input:focus {
   border-color: rgba(124,58,237,0.5);
   box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
@@ -263,24 +349,24 @@ body {
   width: 100%;
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(var(--ink-rgb),0.1);
   padding: 10px 0;
   font-size: 14px;
-  color: #fff;
+  color: var(--text);
   font-family: inherit;
   outline: none;
   transition: border-color 0.2s;
 }
-.field-input-underline::placeholder { color: rgba(255,255,255,0.2); }
+.field-input-underline::placeholder { color: var(--text-dim); }
 .field-input-underline:focus { border-color: rgba(124,58,237,0.6); }
 .field-select {
   width: 100%;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(var(--ink-rgb),0.04);
+  border: 1px solid rgba(var(--ink-rgb),0.1);
   border-radius: 12px;
   padding: 12px 16px;
   font-size: 14px;
-  color: rgba(255,255,255,0.8);
+  color: var(--text-muted);
   font-family: inherit;
   outline: none;
   cursor: pointer;
@@ -289,10 +375,10 @@ body {
 }
 .field-select:focus { border-color: rgba(124,58,237,0.5); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
 
-/* Global styling for select dropdown popup items */
+/* Global styling for select dropdown popup items (native popup — needs solid colors, not translucent) */
 select option {
-  background-color: #0b0f24 !important;
-  color: #ffffff !important;
+  background-color: var(--bg-2) !important;
+  color: var(--text) !important;
   padding: 8px 12px;
 }
 
@@ -312,8 +398,8 @@ select option {
 .badge-warning { background: rgba(245,158,11,0.12); color: #fbbf24;  border: 1px solid rgba(245,158,11,0.25); }
 .badge-error   { background: rgba(239,68,68,0.12);  color: #f87171;  border: 1px solid rgba(239,68,68,0.25); }
 .badge-info    { background: rgba(124,58,237,0.12); color: #a78bfa;  border: 1px solid rgba(124,58,237,0.25); }
-.badge-cyan    { background: rgba(6,182,212,0.12);  color: #67e8f9;  border: 1px solid rgba(6,182,212,0.25); }
-.badge-neutral { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.1); }
+.badge-cyan    { background: rgba(6,182,212,0.12);  color: var(--cyan-ink);  border: 1px solid rgba(6,182,212,0.25); }
+.badge-neutral { background: rgba(var(--ink-rgb),0.05); color: var(--text-muted); border: 1px solid rgba(var(--ink-rgb),0.1); }
 
 /* ── Card Hover ───────────────────────────────────────────────────────────── */
 .card-hover {
@@ -342,7 +428,7 @@ select option {
   align-items: center;
   justify-content: center;
   padding: 64px 24px;
-  border: 1px dashed rgba(255,255,255,0.08);
+  border: 1px dashed rgba(var(--ink-rgb),0.08);
   border-radius: 20px;
   text-align: center;
 }
@@ -456,7 +542,7 @@ select option {
   animation: fadeInUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .page-title {
-  background: linear-gradient(100deg, #fff 60%, #a78bfa 90%, #67e8f9 110%);
+  background: linear-gradient(100deg, var(--text) 60%, var(--violet-ink) 90%, var(--cyan-ink) 110%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -475,7 +561,7 @@ select option {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.06) 48%, rgba(103,232,249,0.05) 52%, transparent 70%);
+  background: linear-gradient(115deg, transparent 30%, rgba(var(--ink-rgb),0.06) 48%, rgba(103,232,249,0.05) 52%, transparent 70%);
   transform: translateX(-120%);
   transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
@@ -484,7 +570,7 @@ select option {
   transform: perspective(900px) translateY(-6px) rotateX(2deg) scale(1.015);
   border-color: rgba(124,58,237,0.45);
   box-shadow:
-    0 24px 60px rgba(0,0,0,0.45),
+    var(--shadow-lg),
     0 0 0 1px rgba(124,58,237,0.15),
     0 0 48px rgba(124,58,237,0.12);
 }
@@ -507,7 +593,7 @@ select option {
   transform: perspective(900px) translateY(-5px) rotateX(1.5deg);
   border-color: rgba(124,58,237,0.4);
   box-shadow:
-    0 20px 56px rgba(0,0,0,0.4),
+    var(--shadow-lg),
     0 0 40px rgba(124,58,237,0.1);
 }
 
@@ -524,6 +610,7 @@ select option {
   content: '';
   position: absolute;
   inset: 0;
+  /* Glossy sweep on a colored gradient button — literal white in both themes. */
   background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.35) 50%, transparent 65%);
   transform: translateX(-130%);
   transition: transform 0.6s ease;
@@ -571,7 +658,7 @@ select option {
 
 /* ── Empty states get a slow breathing border ────────────────────────────── */
 @keyframes borderBreathe {
-  0%, 100% { border-color: rgba(255,255,255,0.08); }
+  0%, 100% { border-color: rgba(var(--ink-rgb),0.08); }
   50%      { border-color: rgba(124,58,237,0.25); }
 }
 .empty-state { animation: borderBreathe 4s ease-in-out infinite; }
@@ -634,4 +721,12 @@ select option {
 @keyframes spin3d {
   from { transform: rotateX(var(--tilt, 60deg)) rotateZ(0deg); }
   to   { transform: rotateX(var(--tilt, 60deg)) rotateZ(360deg); }
+}
+
+/* ── Visible keyboard focus (a11y — skill checklist) ─────────────────────── */
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid rgba(167,139,250,0.85);
+  outline-offset: 2px;
+  border-radius: 4px;
 }

@@ -32,6 +32,7 @@ const ProductDetail = () => {
               brand: camp.brand,
               price: camp.price,
               cashbackRate: camp.cashbackRate,
+              instantSplitPct: camp.instantSplitPct || 0,
               image: '📦',
               rating: 4.8,
               reviews: 12,

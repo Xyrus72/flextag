@@ -1,21 +1,28 @@
-import React, { createContext, useContext, useEffect } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 
-// FlexTag is permanently dark-themed. ThemeContext kept for import compatibility.
+/**
+ * Single source of truth for light/dark mode. Applies <html data-theme="…">
+ * (index.css tokens key off that attribute) and persists the choice, so every
+ * ThemeToggle instance across the app — landing navbar, every dashboard shell —
+ * stays in sync instead of each keeping its own local state.
+ */
+const KEY = 'flextag-theme'
+const getInitial = () => (typeof localStorage !== 'undefined' && localStorage.getItem(KEY) === 'light' ? 'light' : 'dark')
+
 const ThemeContext = createContext({ theme: 'dark', toggleTheme: () => {} })
 
 export const ThemeProvider = ({ children }) => {
+  const [theme, setTheme] = useState(getInitial)
+
   useEffect(() => {
-    // Always enforce dark class and dark background
-    const root = document.documentElement
-    root.classList.remove('light')
-    root.classList.add('dark')
-    document.body.style.backgroundColor = '#050816'
-    document.body.style.color = '#d4d4d8'
-    localStorage.setItem('flextag-theme', 'dark')
-  }, [])
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem(KEY, theme)
+  }, [theme])
+
+  const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'))
 
   return (
-    <ThemeContext.Provider value={{ theme: 'dark', toggleTheme: () => {} }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   )

@@ -1,10 +1,9 @@
-import React from 'react'
 import { Outlet } from 'react-router-dom'
-import Sidebar from '../components/Sidebar'
+import AppShell from '../components/AppShell'
 import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, Megaphone, Package, BarChart3,
-  UserPlus, Star, Building2, PackagePlus, PackageCheck, MessageSquare,
+  UserPlus, Star, Building2, PackagePlus, PackageCheck, MessageSquare, ShieldCheck,
 } from 'lucide-react'
 
 const icons = {
@@ -13,6 +12,7 @@ const icons = {
   orders:      <NavIcon icon={Package}         color="#10b981" />,
   analytics:   <NavIcon icon={BarChart3}       color="#f59e0b" />,
   invite:      <NavIcon icon={UserPlus}        color="#7c3aed" />,
+  audit:       <NavIcon icon={ShieldCheck}     color="#22c55e" />,
   ratings:     <NavIcon icon={Star}            color="#f97316" />,
   profile:     <NavIcon icon={Building2}       color="#06b6d4" />,
   postProduct: <NavIcon icon={PackagePlus}     color="#a78bfa" />,
@@ -28,20 +28,14 @@ const brandLinks = [
   { path: '/brand/orders',           label: 'Order Fulfillment',icon: icons.orders },
   { path: '/brand/analytics',        label: 'Analytics',        icon: icons.analytics },
   { path: '/brand/invite',           label: 'Invite Creators',  icon: icons.invite },
+  { path: '/brand/creator-audit',    label: 'Creator Audit',    icon: icons.audit },
   { path: '/brand/ratings',          label: 'Brand Reputation', icon: icons.ratings },
   { path: '/brand/profile',          label: 'Company Profile',  icon: icons.profile },
   { path: '/brand/chat',             label: 'Live Chat',        icon: icons.chat, badge: '●' },
 ]
 
 const BrandLayout = () => (
-  <div style={{ minHeight: '100vh', background: '#050816', position: 'relative' }}>
-    <div className="aurora-bg" />
-    <div className="noise-overlay" />
-    <Sidebar links={brandLinks} />
-    <main style={{ marginLeft: 256, minHeight: '100vh', position: 'relative', zIndex: 10 }}>
-      <Outlet />
-    </main>
-  </div>
+  <AppShell links={brandLinks}><Outlet /></AppShell>
 )
 
 export default BrandLayout

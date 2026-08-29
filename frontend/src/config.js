@@ -8,6 +8,3 @@
  * Override per-environment with VITE_API_URL in a .env file.
  */
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1643'
-
-/** Python Instagram scraper bot. Override with VITE_BOT_URL. */
-export const BOT_URL = import.meta.env.VITE_BOT_URL || 'http://localhost:8000'

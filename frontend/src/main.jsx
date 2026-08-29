@@ -3,8 +3,18 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 
+// Apply the saved theme before first paint (dark is the default).
+document.documentElement.dataset.theme = localStorage.getItem('flextag-theme') === 'light' ? 'light' : 'dark'
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
   </StrictMode>,
 )
+
+// Register the PWA service worker in production only (it would interfere with dev HMR).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}

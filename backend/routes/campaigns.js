@@ -45,9 +45,9 @@ router.get('/:id', async (req, res) => {
 router.post('/', requireAuth, requireRole('brand'), async (req, res) => {
   try {
     const {
-      title, product, category, price, cashbackRate, stock,
+      title, product, category, price, cashbackRate, instantSplitPct, stock,
       minFollowers, hashtags, handles, deadline, retentionDays,
-      budgetCap, isPrivate,
+      budgetCap, isPrivate, contentType,
     } = req.body
 
     if (!title || !product || !price || !cashbackRate) {
@@ -62,11 +62,13 @@ router.post('/', requireAuth, requireRole('brand'), async (req, res) => {
       category: category || 'Beauty',
       price:    Number(price),
       cashbackRate: Number(cashbackRate),
+      instantSplitPct: Math.min(100, Math.max(0, Number(instantSplitPct) || 0)),
       stock:    Number(stock) || 100,
       stockLeft: Number(stock) || 100,
       minFollowers: Number(minFollowers) || 1000,
       hashtags: hashtags || '',
       handles:  handles  || '',
+      contentType: ['any', 'reel', 'post', 'carousel'].includes(contentType) ? contentType : 'any',
       deadline: deadline ? new Date(deadline) : undefined,
       retentionDays: Number(retentionDays) || 7,
       budgetCap: Number(budgetCap) || 0,
@@ -92,8 +94,11 @@ router.put('/:id', requireAuth, requireRole('brand', 'admin'), async (req, res) 
     }
 
     const allowed = ['title', 'status', 'stock', 'stockLeft', 'hashtags', 'handles',
-                     'deadline', 'budgetCap', 'isPrivate', 'retentionDays', 'cashbackRate']
-    allowed.forEach(k => { if (req.body[k] !== undefined) campaign[k] = req.body[k] })
+                     'deadline', 'budgetCap', 'isPrivate', 'retentionDays', 'cashbackRate', 'contentType', 'instantSplitPct']
+    allowed.forEach(k => {
+      if (req.body[k] === undefined) return
+      campaign[k] = k === 'instantSplitPct' ? Math.min(100, Math.max(0, Number(req.body[k]) || 0)) : req.body[k]
+    })
     await campaign.save()
 
     res.json({ campaign, message: 'Campaign updated.' })

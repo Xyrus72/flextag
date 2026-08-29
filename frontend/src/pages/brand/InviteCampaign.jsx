@@ -1,12 +1,26 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { getUsers } from '../../services/users'
 import api from '../../services/api'
+import { ShieldCheck, Users, AtSign, TrendingUp, Search } from 'lucide-react'
 
-const tierGrad = {
-  diamond: 'from-cyan-300 to-blue-400',
-  gold:    'from-yellow-400 to-amber-500',
-  silver:  'from-gray-300 to-gray-500',
-  bronze:  'from-amber-700 to-amber-900',
+const isNum = (n) => n != null && n !== '' && !Number.isNaN(Number(n))
+const compact = (n) => {
+  if (!isNum(n)) return '—'
+  const v = Number(n)
+  if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M'
+  if (v >= 1e3) return (v / 1e3).toFixed(1) + 'k'
+  return String(v)
+}
+const normHandle = (h) => String(h || '').replace(/^@/, '').trim()
+
+const gradeColor = (s) => (s >= 85 ? '#22c55e' : s >= 70 ? '#4ade80' : s >= 55 ? '#f59e0b' : '#ef4444')
+const qualityOf = (pct) => (pct == null ? { label: '—', color: 'rgba(var(--ink-rgb),0.4)' }
+  : pct < 15 ? { label: 'Clean', color: '#22c55e' } : pct < 30 ? { label: 'Fair', color: '#f59e0b' } : { label: 'Risky', color: '#ef4444' })
+
+const HealthDot = ({ score }) => {
+  if (!isNum(score)) return null
+  const c = gradeColor(Number(score))
+  return <span style={{ fontSize: 11, fontWeight: 700, color: c, background: `${c}18`, border: `1px solid ${c}38`, padding: '2px 8px', borderRadius: 8 }}>Health {Math.round(Number(score))}</span>
 }
 
 const InviteCampaign = () => {
@@ -14,9 +28,11 @@ const InviteCampaign = () => {
   const [loading, setLoading]   = useState(true)
   const [invited, setInvited]   = useState({})
   const [sending, setSending]   = useState({})
-  const [tierFilter, setTierFilter] = useState('all')
-  const [minER, setMinER]       = useState(0)
   const [search, setSearch]     = useState('')
+  const [minFollowers, setMinFollowers] = useState(0)
+  const [maxFake, setMaxFake]   = useState(100)
+  const [verifiedOnly, setVerifiedOnly] = useState(false)
+  const [sort, setSort]         = useState('health')
 
   useEffect(() => {
     getUsers({ role: 'creator' })
@@ -26,18 +42,23 @@ const InviteCampaign = () => {
   }, [])
 
   const filtered = creators
-    .filter(c => tierFilter === 'all' || c.tier === tierFilter)
-    .filter(c => (c.engagementRate || 0) >= minER)
-    .filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || (c.instagramHandle || '').includes(search.toLowerCase()))
+    .filter(c => !search || c.name?.toLowerCase().includes(search.toLowerCase()) || normHandle(c.instagramHandle).toLowerCase().includes(search.toLowerCase()))
+    .filter(c => (c.followersCount || 0) >= minFollowers)
+    .filter(c => c.igFakeFollowerPct == null || c.igFakeFollowerPct <= maxFake)
+    .filter(c => !verifiedOnly || c.igVerified)
+    .sort((a, b) => {
+      if (sort === 'followers') return (b.followersCount || 0) - (a.followersCount || 0)
+      if (sort === 'earnings')  return (b.totalEarnings || 0) - (a.totalEarnings || 0)
+      return (b.igHealthScore || 0) - (a.igHealthScore || 0) // health default
+    })
 
-  const toggleInvite = async (id) => {
-    setSending(s => ({ ...s, [id]: true }))
+  const invite = async (c) => {
+    setSending(s => ({ ...s, [c._id]: true }))
     try {
-      // In a real implementation, this would send an invite notification
-      await new Promise(r => setTimeout(r, 500)) // simulate API call
-      setInvited(inv => ({ ...inv, [id]: !inv[id] }))
-    } finally {
-      setSending(s => ({ ...s, [id]: false }))
+      await api.post(`/api/users/${c._id}/invite`, {})
+      setInvited(inv => ({ ...inv, [c._id]: true }))
+    } catch { /* keep button active to retry */ } finally {
+      setSending(s => ({ ...s, [c._id]: false }))
     }
   }
 
@@ -45,83 +66,84 @@ const InviteCampaign = () => {
 
   return (
     <div className="page-root">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">Private Campaign Invites</h1>
-          <span className="px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400 text-[10px] font-bold border border-violet-500/20">★ NEW</span>
-        </div>
-        <p className="text-zinc-500">Invite specific creators to your exclusive campaigns</p>
+      <div className="page-header">
+        <div className="page-label"><span>Brand · Creators</span></div>
+        <h1 className="page-title">Discover Creators</h1>
+        <p className="page-subtitle">Find verified creators by audience quality and reach — invite them to your campaigns</p>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search creators..."
-          className="flex-1 min-w-[200px] px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" />
-        <select value={tierFilter} onChange={e => setTierFilter(e.target.value)}
-          className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-zinc-300 text-sm focus:border-violet-500 outline-none">
-          <option value="all">All Tiers</option>
-          {['diamond', 'gold', 'silver', 'bronze'].map(t => <option key={t} value={t} className="capitalize">{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 20 }}>
+        <div style={{ position: 'relative', flex: '1 1 220px', minWidth: 200 }}>
+          <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(var(--ink-rgb),0.35)' }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or @handle…"
+            style={{ width: '100%', padding: '10px 12px 10px 34px', borderRadius: 12, background: 'rgba(var(--ink-rgb),0.05)', border: '1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+        </div>
+        <select value={minFollowers} onChange={e => setMinFollowers(Number(e.target.value))} className="disc-select">
+          <option value={0}>Any followers</option><option value={1000}>1k+</option><option value={5000}>5k+</option><option value={10000}>10k+</option><option value={50000}>50k+</option>
         </select>
-        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10">
-          <span className="text-xs text-zinc-500 whitespace-nowrap">Min ER:</span>
-          <input type="range" min="0" max="8" step="0.5" value={minER} onChange={e => setMinER(Number(e.target.value))} className="w-20 accent-violet-500" />
-          <span className="text-xs text-violet-400 font-bold w-8">{minER}%</span>
-        </div>
+        <select value={maxFake} onChange={e => setMaxFake(Number(e.target.value))} className="disc-select">
+          <option value={100}>Any audience</option><option value={30}>≤30% fake</option><option value={15}>≤15% fake</option>
+        </select>
+        <select value={sort} onChange={e => setSort(e.target.value)} className="disc-select">
+          <option value="health">Sort: Health</option><option value="followers">Sort: Followers</option><option value="earnings">Sort: Earnings</option>
+        </select>
+        <button type="button" onClick={() => setVerifiedOnly(v => !v)} style={{
+          padding: '9px 14px', borderRadius: 12, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+          border: `1px solid ${verifiedOnly ? 'rgba(34,197,94,0.4)' : 'rgba(var(--ink-rgb),0.1)'}`,
+          background: verifiedOnly ? 'rgba(34,197,94,0.12)' : 'rgba(var(--ink-rgb),0.04)', color: verifiedOnly ? '#4ade80' : 'rgba(var(--ink-rgb),0.5)',
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+        }}><ShieldCheck size={13} /> Verified only</button>
       </div>
+      <style>{`.disc-select{padding:10px 12px;border-radius:12px;background:rgba(var(--ink-rgb),0.05);border:1px solid rgba(var(--ink-rgb),0.1);color:#fff;font-size:13px;outline:none;cursor:pointer}`}</style>
 
-      {/* Invited count banner */}
-      {invitedCount > 0 && (
-        <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/15 mb-6 flex items-center justify-between">
-          <p className="text-sm text-emerald-400 font-semibold">{invitedCount} creator{invitedCount > 1 ? 's' : ''} selected for invite</p>
-          <button className="px-4 py-2 rounded-lg bg-emerald-500/15 text-emerald-400 text-xs font-bold border border-emerald-500/25 hover:bg-emerald-500/25 transition-all">
-            Send All Invites →
-          </button>
-        </div>
-      )}
+      <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)', marginBottom: 14 }}>
+        {filtered.length} creator{filtered.length !== 1 ? 's' : ''}{invitedCount > 0 ? ` · ${invitedCount} invited` : ''}
+      </p>
 
       {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
-        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><div className="spinner" /></div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-4xl mb-3">👥</p>
-          <p className="text-lg text-zinc-400">No creators found</p>
-          <p className="text-sm text-zinc-600">Adjust your filters or wait for creators to register</p>
-        </div>
+        <div className="empty-state"><p>🔍</p><p>No creators match these filters</p></div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(c => (
-            <div key={c._id} className={`rounded-2xl border p-5 transition-all hover:-translate-y-1 ${invited[c._id] ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-white/[0.03] border-white/5'}`}>
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${tierGrad[c.tier] || tierGrad.bronze} flex items-center justify-center text-white font-bold flex-shrink-0`}>{c.name[0]}</div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{c.name}</p>
-                  <p className="text-xs text-zinc-500">{c.instagramHandle || '@' + c.name.split(' ')[0].toLowerCase()}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                {[
-                  { l: 'Followers',  v: c.followersCount >= 1000 ? `${(c.followersCount / 1000).toFixed(1)}K` : (c.followersCount || 0) },
-                  { l: 'Engagement', v: `${c.engagementRate || 0}%` },
-                  { l: 'Campaigns',  v: c.completedCampaigns || 0 },
-                  { l: 'Earned',     v: `৳${((c.totalEarnings || 0) / 1000).toFixed(1)}K` },
-                ].map(s => (
-                  <div key={s.l} className="text-center p-2 rounded-lg bg-white/[0.02]">
-                    <p className="text-xs text-zinc-500">{s.l}</p>
-                    <p className="text-sm font-bold text-white">{s.v}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: 16 }}>
+          {filtered.map(c => {
+            const q = qualityOf(c.igFakeFollowerPct)
+            const handle = normHandle(c.instagramHandle)
+            return (
+              <div key={c._id} className="stat-card" style={{ padding: 18 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 46, height: 46, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 18, overflow: 'hidden' }}>
+                    {c.avatar ? <img src={c.avatar} alt="" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (c.name?.[0]?.toUpperCase() || '?')}
                   </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${c.tier === 'diamond' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : c.tier === 'gold' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'}`}>{c.tier || 'bronze'}</span>
-                <button onClick={() => toggleInvite(c._id)} disabled={sending[c._id]}
-                  className={`ml-auto px-4 py-2 rounded-lg text-xs font-semibold transition-all ${invited[c._id] ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25' : 'bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20'}`}>
-                  {sending[c._id] ? '...' : invited[c._id] ? '✓ Invited' : 'Invite'}
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
+                      {c.igVerified && <ShieldCheck size={14} style={{ color: '#22c55e', flexShrink: 0 }} />}
+                    </div>
+                    {handle && <a href={`https://instagram.com/${handle}`} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#a78bfa', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}><AtSign size={11} /> @{handle}</a>}
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, margin: '14px 0' }}>
+                  <div><p style={{ margin: 0, fontSize: 10, color: 'rgba(var(--ink-rgb),0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}><Users size={10} style={{ display: 'inline', marginRight: 3 }} />Followers</p><p style={{ margin: '2px 0 0', fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{compact(c.followersCount)}</p></div>
+                  <div><p style={{ margin: 0, fontSize: 10, color: 'rgba(var(--ink-rgb),0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}><TrendingUp size={10} style={{ display: 'inline', marginRight: 3 }} />Engagement</p><p style={{ margin: '2px 0 0', fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{isNum(c.engagementRate) ? c.engagementRate + '%' : '—'}</p></div>
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+                  <HealthDot score={c.igHealthScore} />
+                  {c.igFakeFollowerPct != null && <span style={{ fontSize: 11, fontWeight: 700, color: q.color, background: `${q.color}18`, border: `1px solid ${q.color}38`, padding: '2px 8px', borderRadius: 8 }}>{q.label} · {Math.round(c.igFakeFollowerPct)}% fake</span>}
+                  {c.completedCampaigns > 0 && <span className="badge badge-neutral">{c.completedCampaigns} campaigns</span>}
+                  {c.tier && <span className="badge badge-neutral" style={{ textTransform: 'capitalize' }}>{c.tier}</span>}
+                </div>
+
+                <button type="button" onClick={() => invite(c)} disabled={sending[c._id] || invited[c._id]}
+                  className={invited[c._id] ? 'btn-ghost' : 'btn-primary'} style={{ width: '100%', padding: 10, fontSize: 13 }}>
+                  {invited[c._id] ? '✓ Invited' : sending[c._id] ? 'Sending…' : 'Invite to campaign'}
                 </button>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

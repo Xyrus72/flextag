@@ -34,9 +34,27 @@ const Portfolio = () => {
     bronze:  'from-amber-700 to-amber-900',
   }
 
+  const handle = String(user?.instagramHandle || '').replace(/^@/, '').trim()
+  const publicUrl = handle ? `${window.location.origin}/u/${handle}` : ''
+  const copyPublic = () => { if (publicUrl) navigator.clipboard?.writeText(publicUrl).catch(() => {}) }
+
   return (
     <div className="page-root">
       <h1 className="text-2xl lg:text-3xl font-bold text-white mb-8">Creator Portfolio</h1>
+
+      {handle && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
+          padding: '12px 16px', borderRadius: 14, background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.2)', marginBottom: 24 }}>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>🔗 Your public page — share it with brands</p>
+            <p style={{ margin: '2px 0 0', fontSize: 12, color: '#a78bfa', wordBreak: 'break-all' }}>{publicUrl}</p>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={copyPublic} className="btn-ghost" style={{ padding: '8px 14px', fontSize: 12 }}>Copy</button>
+            <a href={`/u/${handle}`} target="_blank" rel="noreferrer" className="btn-primary" style={{ textDecoration: 'none', padding: '8px 14px', fontSize: 12 }}>Preview</a>
+          </div>
+        </div>
+      )}
 
       {/* Public profile card */}
       <div className="rounded-2xl bg-gradient-to-br from-violet-500/10 to-cyan-500/10 border border-violet-500/15 p-8 mb-8">

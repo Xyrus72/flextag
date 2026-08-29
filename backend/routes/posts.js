@@ -3,11 +3,14 @@ const router = express.Router()
 const Post = require('../models/Post')
 const Order = require('../models/Order')
 const Campaign = require('../models/Campaign')
-const Product = require('../models/Product')
-const Transaction = require('../models/Transaction')
-const User = require('../models/User')
 const { requireAuth, requireRole } = require('../middleware/auth')
+const { approvePost } = require('../services/postApproval')
+const { parsePostUrl } = require('../services/instagram/endpoints')
+const { notifySafe } = require('../services/notifications')
 const { auditInstagramPost } = require('../services/metaAuditor')
+
+const escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const NO_CASHBACK_STATUSES = ['cancelled', 'return_requested', 'returned']
 
 router.get('/', requireAuth, async (req, res) => {
   try {
@@ -19,9 +22,9 @@ router.get('/', requireAuth, async (req, res) => {
     if (status) filter.status = status
 
     const posts = await Post.find(filter)
-      .populate('creatorId', 'name instagramHandle avatar followersCount tier')
-      .populate('campaignId', 'name title brand retentionDays cashbackRate postingRules')
-      .populate('orderId', 'orderId cashbackAmount product')
+      .populate('creatorId', 'name instagramHandle avatar followersCount tier igVerified igHealthScore igFakeFollowerPct')
+      .populate('campaignId', 'title name brand brandId retentionDays cashbackRate hashtags handles contentType postingRules')
+      .populate('orderId', 'orderId cashbackAmount createdAt status product')
       .sort({ createdAt: -1 })
 
     res.json({ posts })
@@ -31,52 +34,118 @@ router.get('/', requireAuth, async (req, res) => {
   }
 })
 
+router.get('/showcase', requireAuth, async (req, res) => {
+  try {
+    const filter = { status: 'approved' }
+    if (req.user.role === 'brand') {
+      const camps = await Campaign.find({ brandId: req.user._id }).select('_id')
+      filter.campaignId = { $in: camps.map(c => c._id) }
+    } else if (req.user.role === 'creator') {
+      filter.creatorId = req.user._id
+    }
+    const posts = await Post.find(filter)
+      .populate('creatorId', 'name instagramHandle avatar')
+      .populate('campaignId', 'title brand product')
+      .populate('orderId', 'cashbackAmount rewardTotal instantDiscount')
+      .sort({ approvedAt: -1, createdAt: -1 })
+      .limit(60)
+
+    let reach = 0, engagement = 0, cashbackSpent = 0
+    const creators = new Set()
+    const items = posts.map(p => {
+      const s = (p.verification && p.verification.snapshot) || {}
+      reach += Number(s.views) || 0
+      engagement += (Number(s.likes) || 0) + (Number(s.comments) || 0)
+      if (p.cashbackReleased) cashbackSpent += Number(p.orderId?.rewardTotal || p.orderId?.cashbackAmount) || 0
+      creators.add(String(p.creatorId?._id || p.creatorId))
+      return {
+        _id: p._id, postUrl: p.postUrl, autoApproved: !!p.autoApproved, createdAt: p.approvedAt || p.createdAt,
+        creator: p.creatorId && { name: p.creatorId.name, instagramHandle: p.creatorId.instagramHandle, avatar: p.creatorId.avatar },
+        campaign: p.campaignId && { title: p.campaignId.title, product: p.campaignId.product, brand: p.campaignId.brand },
+        snapshot: {
+          likes: s.likes ?? null, comments: s.comments ?? null, views: s.views ?? null,
+          thumbnail: s.thumbnail || '', caption: (s.caption || '').slice(0, 140), mediaType: s.mediaType || '',
+          permalink: s.permalink || p.postUrl,
+        },
+      }
+    })
+    res.json({
+      posts: items,
+      summary: {
+        posts: items.length, creators: creators.size, reach, engagement, cashbackSpent,
+        costPerEngagement: engagement > 0 ? Math.round((cashbackSpent / engagement) * 100) / 100 : 0,
+      },
+    })
+  } catch (err) {
+    console.error('[posts showcase]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
 router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
   try {
     const { orderId, campaignId, postUrl, platform } = req.body
-    if (!postUrl) {
-      return res.status(400).json({ message: 'postUrl is required.' })
+    if (!campaignId || !postUrl) {
+      return res.status(400).json({ message: 'campaignId and postUrl required.' })
+    }
+    const plat = platform || 'instagram'
+    const url = String(postUrl).trim()
+    const shortcode = plat === 'instagram' ? parsePostUrl(url) : null
+    if (plat === 'instagram' && !shortcode) {
+      return res.status(400).json({ message: 'Paste the link of the Instagram post or reel (instagram.com/p/… or /reel/…).' })
     }
 
+    const campaign = await Campaign.findById(campaignId)
+    if (!campaign) return res.status(404).json({ message: 'Campaign not found.' })
+
     if (orderId) {
-      const existing = await Post.findOne({ orderId, creatorId: req.user._id })
+      const order = await Order.findOne({ _id: orderId, creatorId: req.user._id, campaignId: campaign._id })
+      if (!order) return res.status(404).json({ message: 'Order not found for this campaign.' })
+      if (NO_CASHBACK_STATUSES.includes(order.status)) {
+        return res.status(400).json({ message: `This order is ${order.status.replace('_', ' ')}, so no cashback can be claimed for it.` })
+      }
+      if (order.status !== 'delivered') {
+        return res.status(400).json({ message: 'Cashback can only be claimed once the order is delivered.' })
+      }
+      const existing = await Post.findOne({ orderId, creatorId: req.user._id, status: { $ne: 'rejected' } })
       if (existing) return res.status(409).json({ message: 'Post already submitted for this order.' })
     }
 
-    let postingRules = {}
-    let campaign = null
-    if (campaignId) {
-      campaign = await Product.findById(campaignId) || await Campaign.findById(campaignId)
-      if (campaign && campaign.postingRules) postingRules = campaign.postingRules
+    if (shortcode) {
+      const dup = await Post.findOne({
+        status: { $in: ['pending', 'approved'] },
+        postUrl: new RegExp(`/(?:p|reel|reels|tv)/${escapeRe(shortcode)}(?:[/?#]|$)`, 'i'),
+      }).select('_id')
+      if (dup) return res.status(409).json({ message: 'This Instagram post has already been submitted.' })
     }
 
-    const auditData = await auditInstagramPost(postUrl, postingRules)
+    let postingRules = {}
+    if (campaign && campaign.postingRules) postingRules = campaign.postingRules
 
+    const auditData = await auditInstagramPost(url, postingRules)
     if (auditData.auditStatus === 'failed') {
       return res.status(400).json({
         message: 'Meta Instagram Graph API Audit Failed: Required campaign hashtag (#FlexTag) or brand tag (@flextag.official) was not detected in post caption or post URL is invalid.'
       })
     }
 
+    const retentionDeadline = new Date()
+    retentionDeadline.setDate(retentionDeadline.getDate() + (campaign.retentionDays || 7))
+
     const post = await Post.create({
       creatorId: req.user._id,
-      campaignId: campaignId || undefined,
+      campaignId,
       orderId: orderId || undefined,
-      postUrl,
-      platform: platform || 'instagram',
-      status: 'approved',
-      retentionDeadline: auditData.retentionDeadline,
-      retentionDaysRemaining: auditData.retentionDaysRemaining,
-      auditStatus: 'passed',
-      auditResults: auditData.auditResults
+      postUrl: url,
+      platform: plat,
+      auditStatus: auditData.auditStatus,
+      retentionDeadline,
     })
 
-    if (campaign && campaign.totalCreators !== undefined) {
-      campaign.totalCreators = (campaign.totalCreators || 0) + 1
-      await campaign.save()
-    }
+    campaign.totalCreators = (campaign.totalCreators || 0) + 1
+    await campaign.save()
 
-    res.status(201).json({ post, message: 'Post submitted and audited successfully via Meta API.' })
+    res.status(201).json({ post, message: 'Post submitted for review.' })
   } catch (err) {
     console.error('[posts POST]', err)
     res.status(500).json({ message: 'Server error.' })
@@ -85,35 +154,20 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
 
 router.put('/:id/approve', requireAuth, requireRole('admin', 'brand'), async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id).populate('campaignId').populate('orderId')
+    const post = await Post.findById(req.params.id)
+      .populate('campaignId')
+      .populate('orderId')
+      .populate('creatorId', 'name instagramHandle igVerified')
     if (!post) return res.status(404).json({ message: 'Post not found.' })
-
-    post.status = 'approved'
-    post.auditStatus = 'passed'
-    await post.save()
-
-    if (post.orderId) {
-      const order = post.orderId
-      if (!order.cashbackReleased) {
-        await Transaction.create({
-          userId: post.creatorId,
-          type: 'cashback',
-          amount: order.cashbackAmount || 500,
-          desc: `Cashback for ${post.campaignId?.name || post.campaignId?.title || 'campaign'}`,
-          status: 'completed',
-          orderId: order._id,
-          postId: post._id,
-        })
-
-        await Order.findByIdAndUpdate(order._id, { cashbackReleased: true })
-        await User.findByIdAndUpdate(post.creatorId, {
-          $inc: { totalEarnings: order.cashbackAmount || 500, completedCampaigns: 1 },
-        })
-      }
+    if (req.user.role === 'brand' && String(post.campaignId?.brandId) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Access denied.' })
     }
+    if (post.status !== 'pending') return res.status(400).json({ message: 'Post is not pending.' })
 
-    res.json({ post, message: 'Post approved and cashback released.' })
+    const { released } = await approvePost(post, { approvedBy: req.user._id })
+    res.json({ post, message: released ? 'Post approved and cashback released.' : 'Post approved.' })
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ message: err.message })
     console.error('[posts approve]', err)
     res.status(500).json({ message: 'Server error.' })
   }
@@ -122,16 +176,26 @@ router.put('/:id/approve', requireAuth, requireRole('admin', 'brand'), async (re
 router.put('/:id/reject', requireAuth, requireRole('admin', 'brand'), async (req, res) => {
   try {
     const { reason } = req.body
-    const post = await Post.findById(req.params.id)
+    const post = await Post.findById(req.params.id).populate('campaignId', 'brandId')
     if (!post) return res.status(404).json({ message: 'Post not found.' })
+    if (req.user.role === 'brand' && String(post.campaignId?.brandId) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Access denied.' })
+    }
+    if (post.status === 'approved') {
+      return res.status(400).json({ message: 'Approved posts cannot be rejected — cashback was already released. Open a dispute instead.' })
+    }
 
     post.status = 'rejected'
     post.auditStatus = 'failed'
-    post.rejectionReason = reason || 'Does not meet Meta API campaign audit requirements.'
+    post.rejectionReason = reason || 'Does not meet campaign requirements.'
     await post.save()
+
+    notifySafe(post.creatorId, { type: 'post_verified', icon: '⚠️', title: 'Post needs changes',
+      body: post.rejectionReason, link: '/creator/submit-post' })
 
     res.json({ post, message: 'Post rejected.' })
   } catch (err) {
+    console.error('[posts reject]', err)
     res.status(500).json({ message: 'Server error.' })
   }
 })

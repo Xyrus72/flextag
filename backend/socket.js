@@ -29,7 +29,12 @@ User         → Access user data
 
 
 
-module.exports = function initSocket(io) {
+let ioRef = null
+/** The live Socket.IO server (or null before init) — used by services/notifications.js. */
+function getIo() { return ioRef }
+
+function initSocket(io) {
+  ioRef = io
   // ── Auth middleware: attach user from session ─────────────────────────────
   io.use((socket, next) => {
     const session = socket.request.session
@@ -143,3 +148,6 @@ module.exports = function initSocket(io) {
     })
   })
 }
+
+module.exports = initSocket
+module.exports.getIo = getIo

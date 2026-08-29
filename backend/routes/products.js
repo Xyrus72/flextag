@@ -199,8 +199,8 @@ router.post('/', requireAuth, requireRole('brand'), async (req, res) => {
       campaignBudget: Number(campaignBudget || 50000),
       creatorCriteria: { minFollowers: Number(minFollowers || 1000) },
       postingRules: {
-        hashtags: hashtags ? hashtags.split(',').map(h => h.trim()) : ['#FlexTag', '#BrandPartner'],
-        taggingHandles: taggingHandles ? taggingHandles.split(',').map(t => t.trim()) : ['@flextag.official']
+        hashtags: hashtags ? (Array.isArray(hashtags) ? hashtags : hashtags.split(',').map(h => h.trim())) : ['#FlexTag', '#BrandPartner'],
+        taggingHandles: taggingHandles ? (Array.isArray(taggingHandles) ? taggingHandles : taggingHandles.split(',').map(t => t.trim())) : ['@flextag.official']
       },
       status: 'approved'
     })
@@ -209,6 +209,25 @@ router.post('/', requireAuth, requireRole('brand'), async (req, res) => {
   } catch (err) {
     console.error('[products POST]', err)
     res.status(500).json({ message: 'Server error creating product.' })
+  }
+})
+
+router.put('/:id', requireAuth, requireRole('brand', 'admin'), async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+    if (!product) return res.status(404).json({ message: 'Product not found.' })
+    if (req.user.role === 'brand' && product.brandId?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Access denied.' })
+    }
+    const allowed = ['name', 'price', 'cashbackRate', 'instantSplitPct', 'category', 'image', 'description', 'stock', 'campaignBudget', 'totalCashbackSpent', 'isActive', 'inStock', 'creatorCriteria', 'postingRules']
+    allowed.forEach(k => {
+      if (req.body[k] === undefined) return
+      product[k] = k === 'instantSplitPct' ? Math.min(100, Math.max(0, Number(req.body[k]) || 0)) : req.body[k]
+    })
+    await product.save()
+    res.json({ product })
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' })
   }
 })
 
