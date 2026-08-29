@@ -2,7 +2,7 @@
 /** Fraud scoring rules — pure functions only (no DB, no network). */
 const test = require('node:test')
 const assert = require('node:assert')
-const { scoreSignals, canonicalEmail, WEIGHTS, LEVEL } = require('../services/fraud')
+const { scoreSignals, canonicalEmail, isUserDoc, WEIGHTS, LEVEL } = require('../services/fraud')
 
 const sig = (code) => ({ code, weight: WEIGHTS[code] })
 
@@ -55,4 +55,15 @@ test('levels line up with the enforcement thresholds', () => {
   assert.strictEqual(LEVEL(39), 'low')
   assert.strictEqual(LEVEL(40), 'medium')
   assert.strictEqual(LEVEL(70), 'high')
+})
+
+test('isUserDoc: an id is not a user — the bug that silenced every shared-identity signal', () => {
+  // A Mongoose ObjectId returns itself from `._id`, so an "has _id" check
+  // mistook `assess(user._id)` for a user document with no email/IP/phone.
+  const objectIdLike = {}
+  Object.defineProperty(objectIdLike, '_id', { get() { return objectIdLike } })
+  assert.strictEqual(isUserDoc(objectIdLike), false)
+  assert.strictEqual(isUserDoc('68b1f0c2a5d3e40012ab34cd'), false)
+  assert.strictEqual(isUserDoc(null), false)
+  assert.strictEqual(isUserDoc({ email: 'a@b.com', role: 'creator' }), true)
 })
