@@ -1,40 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { getPosts, approvePost, rejectPost } from '../../services/posts'
 
-const MOCK_POSTS = [
-  {
-    _id: 'post-101',
-    postUrl: 'https://www.instagram.com/reel/C3x9z_L9012/',
-    platform: 'instagram',
-    status: 'pending',
-    createdAt: new Date(),
-    creatorId: { _id: 'c1', name: 'Ayesha Rahman', instagramHandle: '@ayesha.creates', followersCount: 15400 },
-    campaignId: { title: 'AuraGlow Vitamin C Glow Campaign', hashtags: '#FlexTag #AuraGlow', handles: '@flextag.official' }
-  },
-  {
-    _id: 'post-102',
-    postUrl: 'https://www.instagram.com/p/C4A1b2c3456/',
-    platform: 'instagram',
-    status: 'pending',
-    createdAt: new Date(Date.now() - 3600000 * 5),
-    creatorId: { _id: 'c2', name: 'Tanvir Ahmed', instagramHandle: '@tanvir.vlogs', followersCount: 8200 },
-    campaignId: { title: 'SoundPulse Earbuds Launch', hashtags: '#FlexTag #SoundPulse', handles: '@flextag.official' }
-  },
-  {
-    _id: 'post-103',
-    postUrl: 'https://www.instagram.com/reel/C2d8e7f6543/',
-    platform: 'instagram',
-    status: 'approved',
-    createdAt: new Date(Date.now() - 86400000 * 2),
-    creatorId: { _id: 'c3', name: 'Nusrat Jahan', instagramHandle: '@nusrat.style', followersCount: 22100 },
-    campaignId: { title: 'PureBotanika Rose Toner Campaign', hashtags: '#FlexTag #PureBotanika', handles: '@flextag.official' }
-  }
-]
-
 const PostReview = () => {
-  const [posts, setPosts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('pending')
+  const [posts, setPosts]       = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [filter, setFilter]     = useState('pending')
   const [actioning, setActioning] = useState({})
   const [rejectReasons, setRejectReasons] = useState({})
   const [expandedId, setExpandedId] = useState(null)
@@ -42,11 +12,8 @@ const PostReview = () => {
   const load = () => {
     setLoading(true)
     getPosts({ status: filter === 'all' ? undefined : filter })
-      .then(d => {
-        const fetched = d.posts || []
-        setPosts(fetched.length > 0 ? fetched : MOCK_POSTS)
-      })
-      .catch(() => setPosts(MOCK_POSTS))
+      .then(d => setPosts(d.posts || []))
+      .catch(console.error)
       .finally(() => setLoading(false))
   }
 
@@ -56,38 +23,48 @@ const PostReview = () => {
     setActioning(a => ({ ...a, [id]: 'approving' }))
     try {
       await approvePost(id)
-    } catch (err) {}
-    setPosts(posts.map(p => p._id === id ? { ...p, status: 'approved' } : p))
-    setActioning(a => ({ ...a, [id]: null }))
+      setPosts(posts.map(p => p._id === id ? { ...p, status: 'approved' } : p))
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setActioning(a => ({ ...a, [id]: null }))
+    }
   }
 
   const handleReject = async (id) => {
     setActioning(a => ({ ...a, [id]: 'rejecting' }))
     try {
       await rejectPost(id, rejectReasons[id] || 'Does not meet campaign requirements.')
-    } catch (err) {}
-    setPosts(posts.map(p => p._id === id ? { ...p, status: 'rejected', rejectionReason: rejectReasons[id] || 'Does not meet campaign requirements.' } : p))
-    setActioning(a => ({ ...a, [id]: null }))
+      setPosts(posts.map(p => p._id === id ? { ...p, status: 'rejected' } : p))
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setActioning(a => ({ ...a, [id]: null }))
+    }
   }
 
   const statusConfig = {
-    pending: { bg: 'bg-yellow-500/10', text: 'text-yellow-400', label: 'Pending Audit' },
+    pending:  { bg: 'bg-yellow-500/10',  text: 'text-yellow-400',  label: 'Pending' },
     approved: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', label: 'Approved' },
-    rejected: { bg: 'bg-red-500/10', text: 'text-red-400', label: 'Rejected' },
+    rejected: { bg: 'bg-red-500/10',     text: 'text-red-400',     label: 'Rejected' },
   }
 
-  const filteredPosts = filter === 'all' ? posts : posts.filter(p => p.status === filter)
+  const counts = {
+    pending:  posts.filter(p => p.status === 'pending').length,
+    approved: posts.filter(p => p.status === 'approved').length,
+    rejected: posts.filter(p => p.status === 'rejected').length,
+  }
 
   return (
     <div className="page-root">
-      <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Post Review Queue</h1>
-      <p className="text-zinc-500 mb-6">Review and approve creator post submissions for cashback release</p>
+      <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Post Review</h1>
+      <p className="text-zinc-500 mb-6">Approve or reject creator post submissions</p>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {['pending', 'approved', 'rejected', 'all'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${filter === f ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white' : 'bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10'}`}>
-            {f} ({posts.filter(p => f === 'all' ? true : p.status === f).length})
+            {f} {f !== 'all' && `(${counts[f] || 0})`}
           </button>
         ))}
       </div>
@@ -96,15 +73,15 @@ const PostReview = () => {
         <div className="flex justify-center py-20">
           <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
         </div>
-      ) : filteredPosts.length === 0 ? (
+      ) : posts.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-4xl mb-3">✅</p>
-          <p className="text-lg text-zinc-400">No {filter !== 'all' ? filter : ''} posts in review queue</p>
+          <p className="text-lg text-zinc-400">No {filter !== 'all' ? filter : ''} posts</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredPosts.map(p => {
-            const sc = statusConfig[p.status] || statusConfig.pending
+          {posts.map(p => {
+            const sc       = statusConfig[p.status] || statusConfig.pending
             const expanded = expandedId === p._id
             return (
               <div key={p._id} className="rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden hover:border-white/10 transition-all">
@@ -116,10 +93,10 @@ const PostReview = () => {
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <p className="text-sm font-semibold text-white">{p.creatorId?.name || 'Creator'}</p>
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${sc.bg} ${sc.text}`}>{sc.label}</span>
-                      <span className="px-2 py-0.5 rounded-full bg-white/5 text-zinc-400 text-[10px] capitalize">{p.platform || 'instagram'}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-white/5 text-zinc-400 text-[10px] capitalize">{p.platform}</span>
                     </div>
                     <p className="text-xs text-zinc-500 truncate">
-                      {p.campaignId?.title || 'Campaign'} · {new Date(p.createdAt || Date.now()).toLocaleDateString()}
+                      {p.campaignId?.title || 'Campaign'} · {new Date(p.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
@@ -132,8 +109,8 @@ const PostReview = () => {
                   <div className="px-5 pb-5 pt-0 border-t border-white/5 space-y-4">
                     <div className="grid sm:grid-cols-3 gap-4 pt-4">
                       <div><p className="text-xs text-zinc-500 mb-1">Creator</p><p className="text-sm text-zinc-300">{p.creatorId?.name}</p><p className="text-xs text-zinc-500">{p.creatorId?.instagramHandle || '—'}</p></div>
-                      <div><p className="text-xs text-zinc-500 mb-1">Followers</p><p className="text-sm text-zinc-300">{(p.creatorId?.followersCount || 1000).toLocaleString()}</p></div>
-                      <div><p className="text-xs text-zinc-500 mb-1">Submitted Post URL</p>
+                      <div><p className="text-xs text-zinc-500 mb-1">Followers</p><p className="text-sm text-zinc-300">{(p.creatorId?.followersCount || 0).toLocaleString()}</p></div>
+                      <div><p className="text-xs text-zinc-500 mb-1">Post URL</p>
                         <a href={p.postUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:text-blue-300 underline break-all">{p.postUrl}</a>
                       </div>
                     </div>
@@ -143,7 +120,7 @@ const PostReview = () => {
                         <p className="text-xs text-zinc-500 mb-2 font-medium uppercase tracking-wider">Campaign Requirements</p>
                         <div className="flex flex-wrap gap-3 text-xs text-zinc-300">
                           {p.campaignId.hashtags && <span>🏷 {p.campaignId.hashtags}</span>}
-                          {p.campaignId.handles && <span>@ {p.campaignId.handles}</span>}
+                          {p.campaignId.handles  && <span>@ {p.campaignId.handles}</span>}
                         </div>
                       </div>
                     )}
