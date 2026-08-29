@@ -5,6 +5,7 @@ import {
   useSpring, AnimatePresence, useInView,
 } from 'framer-motion'
 import { API_URL } from '../config'
+import { useT } from '../context/LanguageContext'
 
 // WebGL hero scene — lazy so three.js never blocks first paint
 const Hero3D = lazy(() => import('../components/Hero3D'))
@@ -382,6 +383,8 @@ export default function Landing() {
     return () => window.removeEventListener('mousemove', onMove)
   }, [])
 
+  const t = useT()
+
   // Live headline numbers — real DB counts, no invented figures
   const [stats, setStats] = useState(null)
   useEffect(() => {
@@ -473,7 +476,7 @@ export default function Landing() {
             }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e', display: 'inline-block', animation: 'pulseRing 2s ease-in-out infinite' }} />
               {/* Hero type scale is golden-ratio (φ≈1.618): 11 → 18 → 47–123, each step ×φ */}
-              <span style={{ fontSize: 11, color: 'var(--violet-ink)', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Bangladesh's creator-commerce platform</span>
+              <span style={{ fontSize: 11, color: 'var(--violet-ink)', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase' }}>{t('hero.badge')}</span>
             </div>
           </motion.div>
 
@@ -488,8 +491,8 @@ export default function Landing() {
               color: 'var(--text)', margin: '0 0 24px',
             }}
           >
-            Shop. Share.<br />
-            <span className="shimmer-text">Get Paid.</span>
+            {t('hero.title1')}<br />
+            <span className="shimmer-text">{t('hero.title2')}</span>
           </motion.h1>
 
           <motion.p
@@ -498,9 +501,12 @@ export default function Landing() {
             transition={{ duration: 0.7, delay: 0.5 }}
             style={{ fontSize: 'clamp(16px, 1.4vw, 18px)', color: 'rgba(var(--ink-rgb),0.5)', lineHeight: 1.7, maxWidth: 560, margin: '0 auto 36px' }}
           >
-            FlexTag pays nano & micro-influencers{' '}
-            <span style={{ color: 'var(--violet-ink)', fontWeight: 700 }}>30–70% cashback</span>{' '}
-            for sharing products they genuinely love. Escrow-protected. Paid in 48 hours.
+            {t('hero.subtitle', { rate: '30–70%' }).split('30–70%').map((part, i, parts) => (
+              <span key={i}>
+                {part}
+                {i < parts.length - 1 && <span style={{ color: 'var(--violet-ink)', fontWeight: 700 }}>30–70%</span>}
+              </span>
+            ))}
           </motion.p>
 
           <motion.div
@@ -521,7 +527,7 @@ export default function Landing() {
                   cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                   boxShadow: '0 0 32px rgba(124,58,237,0.4)',
                 }}
-              >Start Earning Free →</motion.button>
+              >{t('hero.cta')}</motion.button>
             </Link>
             <a href="#how-it-works" style={{ textDecoration: 'none' }}>
               <motion.button
@@ -538,7 +544,7 @@ export default function Landing() {
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3" /></svg>
-                See How It Works
+                {t('hero.secondary')}
               </motion.button>
             </a>
           </motion.div>
@@ -562,10 +568,10 @@ export default function Landing() {
               ))}
             </div>
             <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.4)', margin: 0 }}>
-              <span style={{ color: 'var(--text)', fontWeight: 700 }}>{stats ? compactNum(stats.creators) : '—'}</span> creators ·{' '}
+              <span style={{ color: 'var(--text)', fontWeight: 700 }}>{stats ? compactNum(stats.creators) : '—'}</span> {t('hero.creators')} ·{' '}
               {stats && stats.cashbackPaid > 0
-                ? <><span style={{ color: 'var(--text)', fontWeight: 700 }}>৳{compactNum(stats.cashbackPaid)}</span> cashback paid</>
-                : <><span style={{ color: 'var(--text)', fontWeight: 700 }}>{stats ? compactNum(stats.brands) : '—'}</span> brand partners</>}
+                ? <><span style={{ color: 'var(--text)', fontWeight: 700 }}>৳{compactNum(stats.cashbackPaid)}</span> {t('hero.cashbackPaid')}</>
+                : <><span style={{ color: 'var(--text)', fontWeight: 700 }}>{stats ? compactNum(stats.brands) : '—'}</span> {t('hero.brandPartners')}</>}
             </p>
           </motion.div>
         </motion.div>

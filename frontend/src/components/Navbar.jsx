@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ThemeToggle from './ThemeToggle'
+import LanguageToggle from './LanguageToggle'
+import { useT } from '../context/LanguageContext'
 
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth()
+  const t = useT()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const location = useLocation()
-  const isLanding = location.pathname === '/'
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -22,11 +23,11 @@ const Navbar = () => {
   }
 
   const navLinks = [
-    { label: 'Home',         href: '/' },
-    { label: 'How It Works', href: '/#how-it-works' },
-    { label: 'For Brands',   href: '/#for-brands' },
-    { label: 'Catalog',      href: '/creator/catalog' },
-    { label: 'Contact',      href: '/#contact' },
+    { label: t('nav.home'),        href: '/' },
+    { label: t('nav.howItWorks'),  href: '/#how-it-works' },
+    { label: t('nav.forBrands'),   href: '/#for-brands' },
+    { label: t('nav.catalog'),     href: '/creator/catalog' },
+    { label: t('nav.contact'),     href: '/#contact' },
   ]
 
   return (
@@ -114,6 +115,7 @@ const Navbar = () => {
 
         {/* ── RIGHT ACTIONS ──────────────────────────────────────── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <LanguageToggle />
           <ThemeToggle />
           {isAuthenticated ? (
             <>

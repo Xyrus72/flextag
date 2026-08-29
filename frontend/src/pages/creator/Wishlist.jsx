@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { getWishlist } from '../../services/users'
 import WishlistButton from '../../components/WishlistButton'
 import StarRating from '../../components/StarRating'
+import { useT } from '../../context/LanguageContext'
 
 /**
  * Saved products.
@@ -12,6 +13,7 @@ import StarRating from '../../components/StarRating'
  * snapshot from the day it was saved.
  */
 const Wishlist = () => {
+  const t = useT()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -30,8 +32,8 @@ const Wishlist = () => {
     <div className="page-root">
       <div className="page-header">
         <div className="page-label"><span>Saved</span></div>
-        <h1 className="page-title">Wishlist</h1>
-        <p className="page-subtitle">Products you saved. Budgets move — check the cashback before you order.</p>
+        <h1 className="page-title">{t('page.wishlist.title')}</h1>
+        <p className="page-subtitle">{t('page.wishlist.subtitle')}</p>
       </div>
 
       {loading ? (

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { getWallet, requestWithdrawal, topUpWallet } from '../../services/wallet'
+import { useT } from '../../context/LanguageContext'
 
 const Wallet = () => {
+  const t = useT()
   const [walletData, setWalletData]           = useState({ transactions:[], totalEarnings:0, pendingEscrow:0, available:0 })
   const [loading, setLoading]                 = useState(true)
   const [withdrawAmount, setWithdrawAmount]   = useState('')
@@ -62,9 +64,9 @@ const Wallet = () => {
   }
 
   const balCards = [
-    { label:'Total Earnings',    value:`৳${totalEarnings.toLocaleString()}`, sub:'Lifetime cashback earned',    grad:'linear-gradient(135deg,#7c3aed44,#06b6d444)', border:'rgba(124,58,237,0.3)',  text:'#a78bfa' },
-    { label:'Pending Escrow',    value:`৳${pendingEscrow.toLocaleString()}`,  sub:'Awaiting post verification',  grad:'linear-gradient(135deg,#f59e0b22,#fbbf2422)', border:'rgba(245,158,11,0.3)', text:'#fbbf24' },
-    { label:'Available Balance', value:`৳${available.toLocaleString()}`,      sub: reserved > 0 ? `৳${reserved.toLocaleString()} reserved for a payout in the queue` : 'Ready to withdraw — usually paid same day', grad:'linear-gradient(135deg,#22c55e22,#4ade8022)', border:'rgba(34,197,94,0.3)', text:'#4ade80' },
+    { label:t('wallet.totalEarnings'),    value:`৳${totalEarnings.toLocaleString()}`, sub:'Lifetime cashback earned',    grad:'linear-gradient(135deg,#7c3aed44,#06b6d444)', border:'rgba(124,58,237,0.3)',  text:'#a78bfa' },
+    { label:t('wallet.pendingEscrow'),    value:`৳${pendingEscrow.toLocaleString()}`,  sub:'Awaiting post verification',  grad:'linear-gradient(135deg,#f59e0b22,#fbbf2422)', border:'rgba(245,158,11,0.3)', text:'#fbbf24' },
+    { label:t('wallet.available'), value:`৳${available.toLocaleString()}`,      sub: reserved > 0 ? `৳${reserved.toLocaleString()} reserved for a payout in the queue` : 'Ready to withdraw — usually paid same day', grad:'linear-gradient(135deg,#22c55e22,#4ade8022)', border:'rgba(34,197,94,0.3)', text:'#4ade80' },
   ]
 
   const txIcon = type => type === 'cashback' || type === 'top_up'
@@ -75,8 +77,8 @@ const Wallet = () => {
     <div className="page-root">
       <div className="page-header">
         <div className="page-label"><span>My Earnings</span></div>
-        <h1 className="page-title">Wallet</h1>
-        <p className="page-subtitle">Track your cashback earnings and withdraw anytime</p>
+        <h1 className="page-title">{t('page.wallet.title')}</h1>
+        <p className="page-subtitle">{t('page.wallet.subtitle')}</p>
       </div>
 
       {/* Balance cards */}
@@ -93,7 +95,7 @@ const Wallet = () => {
       <div style={{ display:'grid', gap:20 }} className="lg:grid-cols-3">
         {/* Transactions */}
         <div style={{ background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:20, padding:24, gridColumn:'span 2' }} className="lg:col-span-2">
-          <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>Transaction History</h2>
+          <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>{t('wallet.transactions')}</h2>
           {loading ? (
             <div style={{ display:'flex', justifyContent:'center', padding:'48px 0' }}><div className="spinner" /></div>
           ) : transactions.length === 0 ? (
@@ -135,7 +137,7 @@ const Wallet = () => {
         <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
           {/* Add Cash */}
           <div style={{ background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:20, padding:24 }}>
-            <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>Add Cash</h2>
+            <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>{t('wallet.addCash')}</h2>
             
             {topUpSuccess && <div style={{ padding:'10px 14px', borderRadius:12, background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.2)', marginBottom:14 }}><p style={{ fontSize:13, color:'#4ade80', margin:0 }}>{topUpSuccess}</p></div>}
             {topUpError   && <div style={{ padding:'10px 14px', borderRadius:12, background:'rgba(239,68,68,0.1)',  border:'1px solid rgba(239,68,68,0.2)',  marginBottom:14 }}><p style={{ fontSize:13, color:'#f87171', margin:0 }}>{topUpError}</p></div>}
@@ -156,7 +158,7 @@ const Wallet = () => {
 
           {/* Withdraw */}
           <div style={{ background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:20, padding:24 }}>
-            <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>Withdraw</h2>
+            <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>{t('wallet.withdraw')}</h2>
 
             <div style={{ padding:'12px 14px', borderRadius:12, background:'rgba(124,58,237,0.08)', border:'1px solid rgba(124,58,237,0.2)', marginBottom:16 }}>
               <p style={{ fontSize:12, color:'#a78bfa', fontWeight:600, margin:'0 0 4px' }}>Minimum withdrawal: ৳{minThreshold}</p>
@@ -179,7 +181,7 @@ const Wallet = () => {
                     placeholder={`Min ৳${minThreshold}`} max={available} className="field-input" />
                 </div>
                 <div>
-                  <label className="field-label">Payout Method</label>
+                  <label className="field-label">{t('wallet.payoutMethod')}</label>
                   <div style={{ display:'flex', gap:6 }}>
                     {[['bkash','bKash'], ['nagad','Nagad'], ['rocket','Rocket']].map(([value, label]) => (
                       <button key={value} onClick={() => setPayoutMethod(value)} style={{
@@ -202,7 +204,7 @@ const Wallet = () => {
                 <button onClick={handleWithdraw} className="btn-primary"
                   disabled={!withdrawAmount || Number(withdrawAmount)<minThreshold || Number(withdrawAmount)>available || !bkashNum || withdrawing}
                   style={{ width:'100%', padding:14, marginTop:4 }}>
-                  {withdrawing ? 'Submitting…' : 'Request Withdrawal'}
+                  {withdrawing ? 'Submitting…' : t('wallet.requestWithdrawal')}
                 </button>
               </div>
             )}
