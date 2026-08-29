@@ -12,6 +12,7 @@ const { getProvider, withFallback } = require('./provider')
 const { embedToPost } = require('./providers/session')
 const { approvePost } = require('../postApproval')
 const { getIgSettings } = require('../../utils/settings')
+const fraud = require('../fraud')
 
 const GRACE_MS = 5 * 60_000
 const RETENTION_FATAL = new Set(['NO_SESSION', 'SESSION_INVALID', 'RATE_LIMITED'])
@@ -196,15 +197,21 @@ async function verifyPost(postOrId, { by = null } = {}) {
   post.verification = verification
   applyAuditContract(post, verification, fetched, creator)
   // Automatic release requires: every required check passed, the setting is on,
-  // AND the creator has proven they own the handle (igVerified). Otherwise the
-  // post stays pending for a human.
-  if (verification.status === 'passed' && s.autoApprovePosts && post.status === 'pending' && creator?.igVerified === true) {
+  // the creator has proven they own the handle (igVerified), AND the risk engine
+  // has nothing serious on them. Otherwise the post stays pending for a human —
+  // a flagged account still gets reviewed, it just doesn't get paid on autopilot.
+  const riskClear = await fraud.shouldAutoApprove(creator?._id || post.creatorId).catch(() => true)
+  if (verification.status === 'passed' && s.autoApprovePosts && post.status === 'pending' && creator?.igVerified === true && riskClear) {
     // `released` can be false when the order isn't delivered / was returned / already paid — the UI must not claim cashback then.
     const { released } = await approvePost(post, { approvedBy: by, auto: true })
     return { post, verification, autoApproved: true, released, pendingReason: null }
   }
   await post.save()
-  const pendingReason = verification.status !== 'passed' ? 'checks' : !creator?.igVerified ? 'identity' : !s.autoApprovePosts ? 'manual' : 'state'
+  const pendingReason = verification.status !== 'passed' ? 'checks'
+    : !creator?.igVerified ? 'identity'
+    : !riskClear ? 'risk'
+    : !s.autoApprovePosts ? 'manual'
+    : 'state'
   return { post, verification, autoApproved: false, released: false, pendingReason }
 }
 

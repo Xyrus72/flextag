@@ -21,6 +21,8 @@ const Transaction = require('../../models/Transaction')
 const { walletBalance } = require('../../utils/balance')
 const { normalizeBdMobile, maskMobile } = require('../../utils/phone')
 const { notifySafe } = require('../notifications')
+const User = require('../../models/User')
+const fraud = require('../fraud')
 
 const PROVIDERS = {
   manual: require('./manual'),
@@ -69,7 +71,24 @@ async function sendPayout(txId, { actorId = null, auto = false } = {}) {
     throw Object.assign(new Error(`This payout is already ${existing.payoutStatus || existing.status} — nothing to send.`), { status: 409 })
   }
 
-  // 2. Re-check the balance as of NOW, ignoring this reservation.
+  // 2. Fraud gate. A held account, or one scoring above the payout threshold,
+  // does not get money moved on a schedule — an admin clears the flags first
+  // (Fraud Review), which is a deliberate human decision, not a retry.
+  const owner = await User.findById(tx.userId).select('blocked blockReason riskScore').lean()
+  const gate = await fraud.guard(owner, { action: 'payout' })
+  if (!gate.allowed) {
+    await Transaction.updateOne({ _id: tx._id }, { $set: {
+      payoutStatus: 'failed',
+      payoutError: `Held for review: ${gate.reason} (risk ${gate.score ?? '—'})`,
+    } })
+    return {
+      transaction: await Transaction.findById(tx._id),
+      status: 'failed',
+      message: 'Held for fraud review — clear the account in Fraud Review, then send.',
+    }
+  }
+
+  // 3. Re-check the balance as of NOW, ignoring this reservation.
   const balance = await walletBalance(tx.userId, { excludeTxId: tx._id })
   if (tx.amount > balance.available) {
     await Transaction.updateOne({ _id: tx._id }, { $set: {
@@ -83,7 +102,7 @@ async function sendPayout(txId, { actorId = null, auto = false } = {}) {
     }
   }
 
-  // 3. Move the money.
+  // 4. Move the money.
   const provider = getProvider()
   const account = normalizeBdMobile(tx.payoutAccount || tx.bkashNumber) || String(tx.payoutAccount || tx.bkashNumber || '')
   const reference = tx.payoutRef || `FT-${String(tx._id).slice(-8).toUpperCase()}`
@@ -95,7 +114,7 @@ async function sendPayout(txId, { actorId = null, auto = false } = {}) {
     return { transaction: await Transaction.findById(tx._id), status: 'failed', message: err.message }
   }
 
-  // 4. Record the outcome. Only 'paid' completes the ledger row.
+  // 5. Record the outcome. Only 'paid' completes the ledger row.
   const set = {
     payoutProvider: provider.name,
     payoutRef: result.reference || reference,

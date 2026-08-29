@@ -43,6 +43,19 @@ const userSchema = new mongoose.Schema({
   referredBy:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   referralRewarded: { type: Boolean, default: false },
 
+  // Fraud / identity signals (services/fraud.js) — evidence for a human, not a verdict
+  emailCanonical: { type: String, default: '', index: true },  // gmail dots/+tags stripped
+  signupIp:    { type: String, default: '' },
+  lastIp:      { type: String, default: '' },
+  riskScore:   { type: Number, default: 0 },
+  riskLevel:   { type: String, enum: ['clear', 'low', 'medium', 'high'], default: 'clear' },
+  riskFlags:   { type: [String], default: [] },
+  riskCheckedAt: { type: Date, default: null },
+  riskNote:    { type: String, default: '' },
+  riskWhitelisted: { type: Boolean, default: false },   // admin says the signals are known-good
+  blocked:     { type: Boolean, default: false },
+  blockReason: { type: String, default: '' },
+
   // Shared
   isVerified:  { type: Boolean, default: false },
   igVerified:  { type: Boolean, default: false },   // admin-verified Instagram identity

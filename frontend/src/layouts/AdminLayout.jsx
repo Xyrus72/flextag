@@ -3,7 +3,7 @@ import AppShell from '../components/AppShell'
 import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, BadgeCheck, FileSearch, Layers,
-  ShieldAlert, Percent, HeartPulse, Activity, PackageSearch, UserCheck, MessageSquare, Banknote,
+  ShieldAlert, Percent, HeartPulse, Activity, PackageSearch, UserCheck, MessageSquare, Banknote, Fingerprint,
 } from 'lucide-react'
 
 const icons = {
@@ -14,6 +14,7 @@ const icons = {
   commission: <NavIcon icon={Percent}         color="#f59e0b" />,
   financial:  <NavIcon icon={HeartPulse}      color="#10b981" />,
   payouts:    <NavIcon icon={Banknote}        color="#22c55e" />,
+  fraud:      <NavIcon icon={Fingerprint}     color="#f43f5e" />,
   analytics:  <NavIcon icon={Activity}        color="#a78bfa" />,
   review:     <NavIcon icon={FileSearch}      color="#7c3aed" />,
   products:   <NavIcon icon={PackageSearch}   color="#fbbf24" />,
@@ -28,7 +29,8 @@ const adminLinks = [
   { path: '/admin/creator-verification',   label: 'Creator Verification', icon: icons.creators },
   { path: '/admin/post-review',            label: 'Post Review',          icon: icons.review },
   { path: '/admin/categories',             label: 'Categories',           icon: icons.categories },
-  { path: '/admin/disputes',               label: 'Dispute Portal',       icon: icons.disputes,  badge: '2' },
+  { path: '/admin/disputes',               label: 'Dispute Portal',       icon: icons.disputes },
+  { path: '/admin/fraud',                  label: 'Fraud Review',         icon: icons.fraud },
   { path: '/admin/commission',             label: 'Commission Settings',  icon: icons.commission },
   { path: '/admin/payouts',                label: 'Creator Payouts',      icon: icons.payouts,   badge: '৳' },
   { path: '/admin/financial',              label: 'Financial Health',     icon: icons.financial },
