@@ -9,6 +9,7 @@ const Transaction = require('../models/Transaction')
 const { requireAuth, requireRole } = require('../middleware/auth')
 const { runAudit } = require('../services/instagram/audit')
 const fraud = require('../services/fraud')
+const audit = require('../services/audit')
 const igClient = require('../services/instagram/client')
 
 // ── GET /api/admin/stats — platform-wide KPIs ─────────────────────────────
@@ -252,6 +253,7 @@ router.put('/creators/:id/ig-verify', requireAuth, requireRole('admin'), async (
       { new: true }
     ).select('-password')
     if (!user) return res.status(404).json({ message: 'Creator not found.' })
+    audit.record({ actor: req.user, action: audit.ACTIONS.USER_VERIFIED, targetType: 'user', targetId: user._id, targetName: user.name, summary: igVerified ? 'Instagram identity verified' : 'Instagram verification revoked', req })
     res.json({ user, message: igVerified ? 'Instagram identity verified.' : 'Instagram verification revoked.' })
   } catch (err) {
     console.error('[admin ig-verify]', err)
@@ -334,6 +336,7 @@ router.post('/fraud/:id/block', requireAuth, requireRole('admin'), async (req, r
     const reason = String(req.body?.reason || '').slice(0, 300) || 'Account under review for suspicious activity.'
     const user = await User.findByIdAndUpdate(req.params.id, { $set: { blocked: true, blockReason: reason } }, { new: true }).select('-password')
     if (!user) return res.status(404).json({ message: 'User not found.' })
+    audit.record({ actor: req.user, action: audit.ACTIONS.USER_BLOCKED, targetType: 'user', targetId: user._id, targetName: user.name, summary: reason, req })
     res.json({ user, message: 'Account blocked — new orders and payouts are refused.' })
   } catch (err) {
     res.status(500).json({ message: 'Server error.' })
@@ -345,6 +348,7 @@ router.post('/fraud/:id/unblock', requireAuth, requireRole('admin'), async (req,
   try {
     const user = await User.findByIdAndUpdate(req.params.id, { $set: { blocked: false, blockReason: '' } }, { new: true }).select('-password')
     if (!user) return res.status(404).json({ message: 'User not found.' })
+    audit.record({ actor: req.user, action: audit.ACTIONS.USER_UNBLOCKED, targetType: 'user', targetId: user._id, targetName: user.name, req })
     res.json({ user, message: 'Account unblocked.' })
   } catch (err) {
     res.status(500).json({ message: 'Server error.' })
@@ -365,6 +369,10 @@ router.post('/fraud/:id/vouch', requireAuth, requireRole('admin'), async (req, r
     } }, { new: true }).select('-password')
     if (!user) return res.status(404).json({ message: 'User not found.' })
     if (!whitelisted) await fraud.assess(user)
+    audit.record({
+      actor: req.user, action: audit.ACTIONS.USER_VOUCHED, targetType: 'user', targetId: user._id, targetName: user.name,
+      summary: whitelisted ? `Vouched: ${note || 'no note'}` : 'Vouch revoked', req,
+    })
     res.json({ user, message: whitelisted ? 'Vouched — flags stay visible but stop scoring.' : 'Vouch revoked — the account is scored again.' })
   } catch (err) {
     res.status(500).json({ message: 'Server error.' })
@@ -380,9 +388,25 @@ router.post('/fraud/rescan', requireAuth, requireRole('admin'), async (req, res)
       const r = await fraud.assess(c._id).catch(() => null)
       if (r && r.score > 0) flagged += 1
     }
+    audit.record({ actor: req.user, action: audit.ACTIONS.FRAUD_RESCAN, summary: `Re-scored ${creators.length} creators, ${flagged} flagged`, meta: { scanned: creators.length, flagged }, req })
     res.json({ scanned: creators.length, flagged, message: `Re-scored ${creators.length} creators — ${flagged} carry at least one flag.` })
   } catch (err) {
     console.error('[admin fraud rescan]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── GET /api/admin/audit — who did what, with filters ──────────────────────
+router.get('/audit', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { action, actor, targetId, since, limit, skip } = req.query
+    const [{ entries, total }, actions] = await Promise.all([
+      audit.list({ action, actor, targetId, since, limit, skip }),
+      audit.knownActions(),
+    ])
+    res.json({ entries, total, actions: actions.sort() })
+  } catch (err) {
+    console.error('[admin audit]', err)
     res.status(500).json({ message: 'Server error.' })
   }
 })

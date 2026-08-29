@@ -167,6 +167,7 @@ app.use('/api/ai',           require('./routes/ai'))
 app.use('/api/stats',        require('./routes/stats'))
 app.use('/api/notifications', require('./routes/notifications'))
 app.use('/api/checkout',     require('./routes/checkout'))
+app.use('/api/brand-wallet', require('./routes/brandWallet'))
 
 // ─── Public share pages (crawler meta + OG images; NOT under /api) ───────────
 app.use('/share', require('./routes/share'))

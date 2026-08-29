@@ -14,6 +14,7 @@ const mongoose = require('mongoose')
 const Order = require('../models/Order')
 const Campaign = require('../models/Campaign')
 const Product = require('../models/Product')
+const brandWallet = require('../services/brandWallet')
 
 async function applyInstant(order, direction) {
   const amount = Number(order.instantDiscount) || 0
@@ -27,6 +28,17 @@ async function applyInstant(order, direction) {
   const inc = direction === 'commit' ? amount : -amount
   if (order.campaignId) await Campaign.updateOne({ _id: order.campaignId }, { $inc: { budgetUsed: inc } }).catch(() => {})
   if (order.productId) await Product.updateOne({ _id: order.productId }, { $inc: { totalCashbackSpent: inc } }).catch(() => {})
+  // Mirror it in the brand's funded balance. Keyed on the order so a replayed
+  // webhook cannot charge twice, and never allowed to throw into the order path.
+  if (order.brandId) {
+    const entry = {
+      brandId: order.brandId, amount, orderId: order._id, campaignId: order.campaignId, productId: order.productId,
+      ref: `${direction === 'commit' ? 'spend' : 'refund'}:instant:${order._id}`,
+      desc: `Instant discount on ${order.product}`,
+    }
+    if (direction === 'commit') await brandWallet.debit(entry).catch(() => {})
+    else await brandWallet.credit(entry).catch(() => {})
+  }
   return true
 }
 

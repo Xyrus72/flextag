@@ -35,6 +35,14 @@ const FRAUD_SETTING_DEFAULTS = [
   { key: 'fraudMaxOrdersPerDay',value: 5,  label: 'Order Burst Limit (per day)',   desc: 'More orders than this in 24h raises a velocity flag' },
 ]
 
+// Brand funding (services/brandWallet.js). Enforcement is OFF by default:
+// turning it on starts refusing orders on campaigns whose brand has not funded.
+const BRAND_SETTING_DEFAULTS = [
+  { key: 'requireBrandFunding',  value: 0,    label: 'Require Funded Brand Balance', desc: '1 = refuse orders when the brand has no funded balance left, 0 = track only' },
+  { key: 'brandMinFunding',      value: 1000, label: 'Minimum Brand Top-Up (৳)',     desc: 'Smallest amount a brand can add to their campaign balance' },
+  { key: 'brandLowBalanceAlert', value: 2000, label: 'Brand Low-Balance Alert (৳)',  desc: 'Warn the brand once their balance drops to this' },
+]
+
 let cache = { at: 0, map: null }
 const CACHE_MS = 30_000
 
@@ -42,7 +50,7 @@ async function getSettingsMap({ fresh = false } = {}) {
   if (!fresh && cache.map && Date.now() - cache.at < CACHE_MS) return cache.map
   const docs = await Settings.find().lean()
   const map = {}
-  for (const d of [...IG_SETTING_DEFAULTS, ...FRAUD_SETTING_DEFAULTS]) map[d.key] = d.value
+  for (const d of [...IG_SETTING_DEFAULTS, ...FRAUD_SETTING_DEFAULTS, ...BRAND_SETTING_DEFAULTS]) map[d.key] = d.value
   for (const d of docs) map[d.key] = d.value
   cache = { at: Date.now(), map }
   return map
@@ -67,4 +75,4 @@ async function getIgSettings(opts) {
 
 function invalidateSettingsCache() { cache = { at: 0, map: null } }
 
-module.exports = { IG_SETTING_DEFAULTS, FRAUD_SETTING_DEFAULTS, getSettingsMap, getIgSettings, invalidateSettingsCache }
+module.exports = { IG_SETTING_DEFAULTS, FRAUD_SETTING_DEFAULTS, BRAND_SETTING_DEFAULTS, getSettingsMap, getIgSettings, invalidateSettingsCache }

@@ -5,6 +5,7 @@ const Order    = require('../models/Order')
 const Transaction = require('../models/Transaction')
 const { requireAuth, requireRole } = require('../middleware/auth')
 const { notifySafe } = require('../services/notifications')
+const audit = require('../services/audit')
 
 /**
  * Disputes — the brand <-> creator conversation with an admin as referee.
@@ -149,6 +150,7 @@ router.put('/:id/investigate', requireAuth, requireRole('admin'), async (req, re
     for (const uid of [dispute.creatorId, dispute.brandId]) {
       notifySafe(uid, { type: 'dispute', icon: '🔍', title: 'Dispute under review', body: 'A FlexTag admin is looking into your dispute.', link: '/support/tickets' })
     }
+    audit.record({ actor: req.user, action: audit.ACTIONS.DISPUTE_INVESTIGATING, targetType: 'dispute', targetId: dispute._id, summary: 'Admin took the dispute on', req })
     res.json({ dispute })
   } catch (err) {
     res.status(500).json({ message: 'Server error.' })
@@ -203,6 +205,13 @@ router.put('/:id/resolve', requireAuth, requireRole('admin'), async (req, res) =
       link: '/brand/disputes',
     })
 
+    audit.record({
+      actor: req.user, action: refundTx ? audit.ACTIONS.DISPUTE_REFUNDED : audit.ACTIONS.DISPUTE_RESOLVED,
+      targetType: 'dispute', targetId: dispute._id, targetName: order?.orderId || '',
+      amount: refundTx ? refundTx.amount : null,
+      summary: `${dispute.resolutionType.replace(/_/g, ' ')}${refundTx ? ` — refunded ৳${refundTx.amount}` : ''}: ${dispute.resolution}`,
+      req,
+    })
     res.json({ dispute: await populated(Dispute.findById(dispute._id)), refund: refundTx, message: 'Dispute resolved.' })
   } catch (err) {
     console.error('[dispute resolve]', err)

@@ -23,6 +23,7 @@ const { normalizeBdMobile, maskMobile } = require('../../utils/phone')
 const { notifySafe } = require('../notifications')
 const User = require('../../models/User')
 const fraud = require('../fraud')
+const audit = require('../audit')
 
 const PROVIDERS = {
   manual: require('./manual'),
@@ -134,6 +135,16 @@ async function sendPayout(txId, { actorId = null, auto = false } = {}) {
   await Transaction.updateOne({ _id: tx._id }, { $set: set })
   const updated = await Transaction.findById(tx._id)
 
+  audit.record({
+    actor: actorId, action: result.status === 'paid' ? audit.ACTIONS.PAYOUT_SENT : audit.ACTIONS.PAYOUT_FAILED,
+    targetType: 'transaction', targetId: tx._id, targetName: owner?.name || '',
+    amount: tx.amount,
+    summary: result.status === 'paid'
+      ? `Paid ৳${tx.amount} to ${maskMobile(account)} via ${provider.name} (ref ${set.payoutRef})`
+      : `Payout of ৳${tx.amount} did not go through: ${result.message || 'provider refused'}`,
+    meta: { provider: provider.name, status: result.status, auto },
+  })
+
   if (result.status === 'paid') {
     notifySafe(tx.userId, {
       type: 'payout', icon: '💸', title: 'Payout sent',
@@ -158,6 +169,11 @@ async function rejectPayout(txId, { reason = '', actorId = null } = {}) {
     { new: true },
   )
   if (!tx) throw Object.assign(new Error('This payout is not in a rejectable state.'), { status: 409 })
+  audit.record({
+    actor: actorId, action: audit.ACTIONS.PAYOUT_REJECTED,
+    targetType: 'transaction', targetId: tx._id, amount: tx.amount,
+    summary: `Returned ৳${tx.amount} to the creator's balance${reason ? ` — ${reason}` : ''}`,
+  })
   notifySafe(tx.userId, {
     type: 'payout', icon: '↩️', title: 'Withdrawal returned',
     body: `Your ৳${tx.amount.toLocaleString()} request went back to your wallet balance.${reason ? ` Reason: ${reason}` : ''}`,
@@ -174,6 +190,11 @@ async function reconcilePayout(txId, { reference = '', actorId = null } = {}) {
     { new: true },
   )
   if (!tx) throw Object.assign(new Error('Only a processing payout can be reconciled.'), { status: 409 })
+  audit.record({
+    actor: actorId, action: audit.ACTIONS.PAYOUT_RECONCILED,
+    targetType: 'transaction', targetId: tx._id, amount: tx.amount,
+    summary: `Marked ৳${tx.amount} settled by hand${reference ? ` (ref ${reference})` : ''}`,
+  })
   notifySafe(tx.userId, {
     type: 'payout', icon: '💸', title: 'Payout confirmed',
     body: `৳${tx.amount.toLocaleString()} has been sent to your ${tx.payoutMethod || 'bKash'} account.`,
