@@ -1,6 +1,7 @@
 import { useState, useCallback, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
+import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { SocketProvider } from './context/SocketContext'
 import PageLoader from './components/PageLoader'
@@ -165,6 +166,7 @@ const App = () => {
   return (
     <BrowserRouter>
       <ThemeProvider>
+        <LanguageProvider>
         <AuthProvider>
           <SocketProvider>
             {!loaded && <PageLoader onDone={handleLoaderDone} />}
@@ -173,6 +175,7 @@ const App = () => {
             </div>
           </SocketProvider>
         </AuthProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </BrowserRouter>
   )

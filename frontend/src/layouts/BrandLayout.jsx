@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import AppShell from '../components/AppShell'
+import { useT } from '../context/LanguageContext'
 import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, Megaphone, Package, BarChart3,
@@ -21,23 +22,24 @@ const icons = {
   disputes:    <NavIcon icon={ShieldAlert}      color="#ef4444" />,
 }
 
-const brandLinks = [
-  { path: '/brand',                  label: 'Dashboard',        icon: icons.dashboard },
-  { path: '/brand/post-product',     label: 'Post Product',     icon: icons.postProduct, badge: '+' },
-  { path: '/brand/my-products',      label: 'My Products',      icon: icons.myProducts },
-  { path: '/brand/campaign-builder', label: 'Create Campaign',  icon: icons.campaign },
-  { path: '/brand/orders',           label: 'Order Fulfillment',icon: icons.orders },
-  { path: '/brand/analytics',        label: 'Analytics',        icon: icons.analytics },
-  { path: '/brand/invite',           label: 'Invite Creators',  icon: icons.invite },
-  { path: '/brand/creator-audit',    label: 'Creator Audit',    icon: icons.audit },
-  { path: '/brand/ratings',          label: 'Brand Reputation', icon: icons.ratings },
-  { path: '/brand/disputes',         label: 'Disputes',         icon: icons.disputes },
-  { path: '/brand/profile',          label: 'Company Profile',  icon: icons.profile },
-  { path: '/brand/chat',             label: 'Live Chat',        icon: icons.chat, badge: '●' },
+const brandLinks = (t) => [
+  { path: '/brand',                  label: t('menu.dashboard'),       icon: icons.dashboard },
+  { path: '/brand/post-product',     label: t('menu.postProduct'),     icon: icons.postProduct, badge: '+' },
+  { path: '/brand/my-products',      label: t('menu.myProducts'),      icon: icons.myProducts },
+  { path: '/brand/campaign-builder', label: t('menu.createCampaign'),  icon: icons.campaign },
+  { path: '/brand/orders',           label: t('menu.fulfillment'),     icon: icons.orders },
+  { path: '/brand/analytics',        label: t('menu.analytics'),       icon: icons.analytics },
+  { path: '/brand/invite',           label: t('menu.inviteCreators'),  icon: icons.invite },
+  { path: '/brand/creator-audit',    label: t('menu.creatorAudit'),    icon: icons.audit },
+  { path: '/brand/ratings',          label: t('menu.brandReputation'), icon: icons.ratings },
+  { path: '/brand/disputes',         label: t('menu.disputes'),        icon: icons.disputes },
+  { path: '/brand/profile',          label: t('menu.companyProfile'),  icon: icons.profile },
+  { path: '/brand/chat',             label: t('menu.liveChat'),        icon: icons.chat, badge: '●' },
 ]
 
-const BrandLayout = () => (
-  <AppShell links={brandLinks}><Outlet /></AppShell>
-)
+const BrandLayout = () => {
+  const t = useT()
+  return <AppShell links={brandLinks(t)}><Outlet /></AppShell>
+}
 
 export default BrandLayout

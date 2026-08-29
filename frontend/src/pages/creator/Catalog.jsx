@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getProducts } from '../../services/products'
 import StarRating from '../../components/StarRating'
+import { useT } from '../../context/LanguageContext'
 import WishlistButton from '../../components/WishlistButton'
 import { getWishlist } from '../../services/users'
 
 const Catalog = () => {
+  const t = useT()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -67,8 +69,8 @@ const Catalog = () => {
     <div className="page-root">
       <div className="page-header">
         <div className="page-label"><span>Browse Products</span></div>
-        <h1 className="page-title">Shop Catalog & Category Filter</h1>
-        <p className="page-subtitle">Browse products and earn 30% to 70% verified cashback by sharing authentic content</p>
+        <h1 className="page-title">{t('page.catalog.title')}</h1>
+        <p className="page-subtitle">{t('page.catalog.subtitle')}</p>
       </div>
 
       <div style={{ background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)', borderRadius: 20, padding: 20, marginBottom: 24 }}>

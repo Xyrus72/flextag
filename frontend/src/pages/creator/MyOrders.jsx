@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getOrders, rateOrder } from '../../services/orders'
 import StarRating from '../../components/StarRating'
+import { useT } from '../../context/LanguageContext'
 
 const statusConfig = {
   processing: { label: 'Processing', bg: 'bg-yellow-500/10', text: 'text-yellow-400', dot: 'bg-yellow-400' },
@@ -15,6 +16,7 @@ const statusConfig = {
 }
 
 const MyOrders = () => {
+  const t = useT()
   const navigate = useNavigate()
   const [orders, setOrders]   = useState([])
   const [loading, setLoading] = useState(true)
@@ -65,8 +67,8 @@ const MyOrders = () => {
     <div className="page-root">
       <div className="page-header">
         <div className="page-label"><span>Order History</span></div>
-        <h1 className="page-title">My Orders</h1>
-        <p className="page-subtitle">Track your orders and post content to earn cashback</p>
+        <h1 className="page-title">{t('page.orders.title')}</h1>
+        <p className="page-subtitle">{t('page.orders.subtitle')}</p>
       </div>
 
       <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:24 }}>

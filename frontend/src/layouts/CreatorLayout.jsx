@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import AppShell from '../components/AppShell'
+import { useT } from '../context/LanguageContext'
 import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, ShoppingBag, ShoppingCart, Package,
@@ -43,26 +44,28 @@ const icons = {
   instagram:   <NavIcon icon={InstagramGlyph}   color="#fd1d1d" />,
 }
 
-const creatorLinks = [
-  { path: '/creator',                  label: 'Dashboard',        icon: icons.dashboard },
-  { path: '/creator/catalog',          label: 'Shop Catalog',     icon: icons.catalog },
-  { path: '/creator/cart',             label: 'Cart',             icon: icons.cart },
-  { path: '/creator/wishlist',         label: 'Wishlist',         icon: icons.wishlist },
-  { path: '/creator/orders',           label: 'My Orders',        icon: icons.orders },
-  { path: '/creator/submit-post',      label: 'Submit Post',      icon: icons.post },
-  { path: '/creator/caption-validator',label: 'Caption Validator',icon: icons.caption, badge: 'AI' },
-  { path: '/creator/campaign-tracker', label: 'Campaign Tracker', icon: icons.tracker },
-  { path: '/creator/wallet',           label: 'Wallet',           icon: icons.wallet },
-  { path: '/creator/leaderboard',      label: 'Leaderboard',      icon: icons.leaderboard },
-  { path: '/creator/portfolio',        label: 'Portfolio',        icon: icons.portfolio },
-  { path: '/creator/profile',          label: 'Profile & Shipping',icon: icons.profile },
-  { path: '/creator/instagram-analyzer',  label: 'Account Audit',      icon: icons.instagram, badge: 'IG' },
-  { path: '/creator/disputes',        label: 'Disputes',         icon: icons.disputes },
-  { path: '/support/chat',            label: 'Live Chat',        icon: icons.chat, badge: '●' },
+// Labels are translated per render so the sidebar follows the language toggle.
+const creatorLinks = (t) => [
+  { path: '/creator',                     label: t('menu.dashboard'),        icon: icons.dashboard },
+  { path: '/creator/catalog',             label: t('menu.catalog'),          icon: icons.catalog },
+  { path: '/creator/cart',                label: t('menu.cart'),             icon: icons.cart },
+  { path: '/creator/wishlist',            label: t('menu.wishlist'),         icon: icons.wishlist },
+  { path: '/creator/orders',              label: t('menu.orders'),           icon: icons.orders },
+  { path: '/creator/submit-post',         label: t('menu.submitPost'),       icon: icons.post },
+  { path: '/creator/caption-validator',   label: t('menu.captionValidator'), icon: icons.caption, badge: 'AI' },
+  { path: '/creator/campaign-tracker',    label: t('menu.campaignTracker'),  icon: icons.tracker },
+  { path: '/creator/wallet',              label: t('menu.wallet'),           icon: icons.wallet },
+  { path: '/creator/leaderboard',         label: t('menu.leaderboard'),      icon: icons.leaderboard },
+  { path: '/creator/portfolio',           label: t('menu.portfolio'),        icon: icons.portfolio },
+  { path: '/creator/profile',             label: t('menu.profile'),          icon: icons.profile },
+  { path: '/creator/instagram-analyzer',  label: t('menu.accountAudit'),     icon: icons.instagram, badge: 'IG' },
+  { path: '/creator/disputes',            label: t('menu.disputes'),         icon: icons.disputes },
+  { path: '/support/chat',                label: t('menu.liveChat'),         icon: icons.chat, badge: '●' },
 ]
 
-const CreatorLayout = () => (
-  <AppShell links={creatorLinks}><Outlet /></AppShell>
-)
+const CreatorLayout = () => {
+  const t = useT()
+  return <AppShell links={creatorLinks(t)}><Outlet /></AppShell>
+}
 
 export default CreatorLayout

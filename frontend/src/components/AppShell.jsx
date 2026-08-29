@@ -4,6 +4,7 @@ import { Menu } from 'lucide-react'
 import Sidebar from './Sidebar'
 import NotificationBell from './NotificationBell'
 import ThemeToggle from './ThemeToggle'
+import LanguageToggle from './LanguageToggle'
 import useMediaQuery from '../hooks/useMediaQuery'
 
 /**
@@ -47,6 +48,7 @@ const AppShell = ({ links = [], children }) => {
             <img src="/products/flextag-logo.png" alt="FlexTag" style={{ height: 30, width: 'auto', objectFit: 'contain' }} />
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <LanguageToggle />
             <ThemeToggle />
             <NotificationBell />
           </div>
@@ -56,6 +58,7 @@ const AppShell = ({ links = [], children }) => {
       {/* Desktop floating theme toggle + bell */}
       {!isMobile && (
         <div style={{ position: 'fixed', top: 16, right: 22, zIndex: 35, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <LanguageToggle />
           <ThemeToggle />
           <NotificationBell />
         </div>
