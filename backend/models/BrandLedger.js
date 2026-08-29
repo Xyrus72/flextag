@@ -32,8 +32,11 @@ const brandLedgerSchema = new mongoose.Schema({
   orderId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
   productId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
 
-  // Idempotency key, e.g. "spend:instant:<orderId>" or "spend:bonus:<orderId>"
-  ref: { type: String, default: '' },
+  // Idempotency key, e.g. "spend:instant:<orderId>" or "spend:bonus:<orderId>".
+  // Left UNSET (not '') on rows that don't need one, so the partial unique index
+  // below can exclude them with $exists — MongoDB rejects $ne in a
+  // partialFilterExpression, and the index it rejects is simply never created.
+  ref: { type: String, default: undefined },
 
   // Gateway (SSLCommerz) fields for funding rows
   method:        { type: String, default: '' },        // sslcommerz | bank_transfer | admin_credit
@@ -43,9 +46,9 @@ const brandLedgerSchema = new mongoose.Schema({
   confirmedBy:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 }, { timestamps: true })
 
-// One row per (brand, ref) — the guard that makes replays harmless. Sparse so
-// the many rows without a ref (funding, manual refunds) are unaffected.
-brandLedgerSchema.index({ brandId: 1, ref: 1 }, { unique: true, partialFilterExpression: { ref: { $type: 'string', $ne: '' } } })
+// One row per (brand, ref) — the guard that makes replays harmless. Partial on
+// $exists so rows without a ref (funding, manual adjustments) are unaffected.
+brandLedgerSchema.index({ brandId: 1, ref: 1 }, { unique: true, partialFilterExpression: { ref: { $exists: true } } })
 brandLedgerSchema.index({ brandId: 1, createdAt: -1 })
 
 module.exports = mongoose.model('BrandLedger', brandLedgerSchema)

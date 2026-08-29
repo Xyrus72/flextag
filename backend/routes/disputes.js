@@ -4,7 +4,9 @@ const Dispute  = require('../models/Dispute')
 const Order    = require('../models/Order')
 const Transaction = require('../models/Transaction')
 const { requireAuth, requireRole } = require('../middleware/auth')
+const Post = require('../models/Post')
 const { notifySafe } = require('../services/notifications')
+const { approvePost } = require('../services/postApproval')
 const audit = require('../services/audit')
 
 /**
@@ -162,42 +164,112 @@ router.put('/:id/investigate', requireAuth, requireRole('admin'), async (req, re
 router.put('/:id/resolve', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const { resolution, resolutionType = 'other', refundAmount } = req.body
-    const dispute = await Dispute.findById(req.params.id)
-    if (!dispute) return res.status(404).json({ message: 'Dispute not found.' })
-    if (dispute.status === 'resolved') return res.status(409).json({ message: 'Already resolved.' })
+    const existing = await Dispute.findById(req.params.id)
+    if (!existing) return res.status(404).json({ message: 'Dispute not found.' })
+    if (existing.status === 'resolved') return res.status(409).json({ message: 'Already resolved.' })
 
-    const order = await Order.findById(dispute.orderId)
-    let refundTx = null
+    const order = await Order.findById(existing.orderId)
 
+    /* ── 1. Validate everything BEFORE claiming ──────────────────────────────
+     * Every check here is read-only, so a rejected resolution leaves the dispute
+     * exactly as it was — open, and still answerable. Claiming first and then
+     * bailing out would strand it as "resolved" with no resolution and no money.
+     */
+    let refundAmountFinal = 0
     if (resolutionType === 'refund') {
       // Never refund more than the creator actually paid for that order.
-      const cap = order?.total || dispute.amount || 0
-      const amount = Math.min(Math.max(0, Number(refundAmount) || 0), cap)
-      if (amount <= 0) return res.status(400).json({ message: `Enter a refund between ৳1 and ৳${cap.toLocaleString()}.` })
-      refundTx = await Transaction.create({
-        userId: dispute.creatorId,
-        type:   'refund',
-        amount,
-        desc:   `Dispute refund — ${order?.product || 'order'} (${order?.orderId || ''})`.trim(),
-        status: 'completed',
-        orderId: dispute.orderId,
-      })
-      dispute.refundAmount = amount
-      dispute.refundTxId = refundTx._id
+      const cap = order?.total || existing.amount || 0
+      refundAmountFinal = Math.min(Math.max(0, Number(refundAmount) || 0), cap)
+      if (refundAmountFinal <= 0) {
+        return res.status(400).json({ message: `Enter a refund between ৳1 and ৳${cap.toLocaleString()}.` })
+      }
     }
 
-    dispute.status = 'resolved'
+    // "Release the cashback" has to actually release it. It used to be a label
+    // an admin could pick while no money moved — the same dishonesty this whole
+    // portal exists to settle. It goes through services/postApproval, the ONE
+    // verified release path, so the ledger, budget and notification all follow.
+    let postToApprove = null
+    if (resolutionType === 'cashback_released') {
+      postToApprove = await Post.findOne({ orderId: existing.orderId, status: 'pending' })
+        .populate('campaignId').populate('orderId').populate('creatorId', 'name instagramHandle igVerified igHealthScore')
+      if (!postToApprove) {
+        return res.status(400).json({
+          message: order?.cashbackReleased
+            ? 'That order\'s cashback has already been released — resolve this another way.'
+            : 'There is no post awaiting approval for that order, so there is no cashback to release. Approve the post in Post Review first, or pick a different outcome.',
+        })
+      }
+    }
+
+    /* ── 2. Claim it ─────────────────────────────────────────────────────────
+     * A read-then-write check lets two concurrent resolves both pass and both
+     * mint a refund. This makes the loser lose, before any money moves.
+     */
+    const dispute = await Dispute.findOneAndUpdate(
+      { _id: req.params.id, status: { $ne: 'resolved' } },
+      { $set: { status: 'resolved', resolvedBy: req.user._id, resolvedAt: new Date() } },
+      { new: true },
+    )
+    if (!dispute) return res.status(409).json({ message: 'Someone else just resolved this one.' })
+
+    // If the money step fails we hold the claim, so nobody else can act on this
+    // dispute — hand it back rather than leaving it closed and unpaid.
+    const releaseClaim = () => Dispute.updateOne(
+      { _id: dispute._id },
+      { $set: { status: existing.status, resolvedBy: null, resolvedAt: null } },
+    ).catch(() => {})
+
+    /* ── 3. Move the money ───────────────────────────────────────────────── */
+    let refundTx = null
+    let releasedCashback = 0
+
+    if (resolutionType === 'refund') {
+      try {
+        refundTx = await Transaction.create({
+          userId: dispute.creatorId,
+          type:   'refund',
+          amount: refundAmountFinal,
+          desc:   `Dispute refund — ${order?.product || 'order'} (${order?.orderId || ''})`.trim(),
+          status: 'completed',
+          orderId: dispute.orderId,
+        })
+        dispute.refundAmount = refundAmountFinal
+        dispute.refundTxId = refundTx._id
+      } catch (err) {
+        await releaseClaim()
+        console.error('[dispute refund]', err)
+        return res.status(500).json({ message: 'Could not issue the refund — the dispute is still open.' })
+      }
+    }
+
+    if (postToApprove) {
+      try {
+        const { released } = await approvePost(postToApprove, { approvedBy: req.user._id })
+        if (!released) {
+          await releaseClaim()
+          return res.status(400).json({ message: 'The post was approved but the order is not in a state that pays out (not delivered, cancelled, or already paid).' })
+        }
+        releasedCashback = postToApprove.orderId?.cashbackAmount || order?.cashbackAmount || 0
+      } catch (err) {
+        await releaseClaim()
+        return res.status(err.status || 500).json({ message: err.message || 'Could not release the cashback — the dispute is still open.' })
+      }
+    }
+
     dispute.resolution = String(resolution || 'Resolved by admin').slice(0, 1000)
     dispute.resolutionType = ['refund', 'cashback_released', 'replacement', 'rejected', 'other'].includes(resolutionType) ? resolutionType : 'other'
-    dispute.resolvedBy = req.user._id
-    dispute.resolvedAt = new Date()
     dispute.messages.push({ from: req.user._id, role: 'admin', text: dispute.resolution })
     await dispute.save()
 
     notifySafe(dispute.creatorId, {
-      type: 'dispute', icon: refundTx ? '💰' : '✅', title: 'Dispute resolved',
-      body: refundTx ? `৳${refundTx.amount.toLocaleString()} was refunded to your wallet. ${dispute.resolution}` : dispute.resolution,
-      link: refundTx ? '/creator/wallet' : '/creator/disputes',
+      type: 'dispute', icon: refundTx || releasedCashback ? '💰' : '✅', title: 'Dispute resolved',
+      body: refundTx
+        ? `৳${refundTx.amount.toLocaleString()} was refunded to your wallet. ${dispute.resolution}`
+        : releasedCashback
+          ? `৳${releasedCashback.toLocaleString()} cashback was released to your wallet. ${dispute.resolution}`
+          : dispute.resolution,
+      link: refundTx || releasedCashback ? '/creator/wallet' : '/creator/disputes',
     })
     notifySafe(dispute.brandId, {
       type: 'dispute', icon: '✅', title: 'Dispute resolved',
@@ -208,8 +280,8 @@ router.put('/:id/resolve', requireAuth, requireRole('admin'), async (req, res) =
     audit.record({
       actor: req.user, action: refundTx ? audit.ACTIONS.DISPUTE_REFUNDED : audit.ACTIONS.DISPUTE_RESOLVED,
       targetType: 'dispute', targetId: dispute._id, targetName: order?.orderId || '',
-      amount: refundTx ? refundTx.amount : null,
-      summary: `${dispute.resolutionType.replace(/_/g, ' ')}${refundTx ? ` — refunded ৳${refundTx.amount}` : ''}: ${dispute.resolution}`,
+      amount: refundTx ? refundTx.amount : (releasedCashback || null),
+      summary: `${dispute.resolutionType.replace(/_/g, ' ')}${refundTx ? ` — refunded ৳${refundTx.amount}` : releasedCashback ? ` — released ৳${releasedCashback}` : ''}: ${dispute.resolution}`,
       req,
     })
     res.json({ dispute: await populated(Dispute.findById(dispute._id)), refund: refundTx, message: 'Dispute resolved.' })
