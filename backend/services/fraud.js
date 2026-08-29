@@ -22,6 +22,7 @@ const User = require('../models/User')
 const Order = require('../models/Order')
 const Transaction = require('../models/Transaction')
 const { getSettingsMap } = require('../utils/settings')
+const { handleRegex } = require('./instagram/endpoints')
 
 const DAY = 86_400_000
 
@@ -43,6 +44,7 @@ const DISPOSABLE_DOMAINS = new Set([
 
 const WEIGHTS = {
   shared_payout_account: 40,   // the money lands in one wallet — the strongest signal there is
+  duplicate_ig_handle:   35,   // two accounts, one Instagram — one of them is a second wallet
   shared_signup_ip:      18,
   shared_phone:          25,
   duplicate_identity:    35,   // same canonical email as another account
@@ -118,6 +120,12 @@ async function assess(userOrId, { persist = true } = {}) {
     Order.countDocuments({ creatorId: uid, cashbackClawedBack: true }),
   ])
 
+  // Self-heal: accounts created before these fields existed carry no canonical
+  // email, which would make them permanently invisible to the twin check.
+  if (!user.emailCanonical && user.email) {
+    User.updateOne({ _id: uid }, { $set: { emailCanonical: canonicalEmail(user.email) } }).catch(() => {})
+  }
+
   // ── Shared identity ──────────────────────────────────────────────────────
   if (payoutAccounts.length) {
     const others = await Transaction.find({
@@ -144,6 +152,21 @@ async function assess(userOrId, { persist = true } = {}) {
       `${emailTwins.map(u => u.email).join(', ')} normalise to the same inbox (dots and +tags stripped).`,
       emailTwins.map(u => String(u._id)))
   }
+  // Signup enforces one handle per creator, but accounts that predate that rule
+  // (or changed handle to collide) are exactly what this queue is for.
+  const handle = String(user.instagramHandle || '').replace(/^@/, '').trim()
+  if (handle) {
+    const sameHandle = await User.find({
+      _id: { $ne: uid }, role: 'creator',
+      instagramHandle: handleRegex(handle),
+    }).select('name email').limit(5).lean()
+    if (sameHandle.length) {
+      add('duplicate_ig_handle', 'Same Instagram handle as another account',
+        `@${handle} is also on: ${sameHandle.map(u => u.name).join(', ')}.`,
+        sameHandle.map(u => String(u._id)))
+    }
+  }
+
   if (DISPOSABLE_DOMAINS.has(String(user.email || '').split('@')[1])) {
     add('disposable_email', 'Disposable email domain', `${user.email} is a throwaway inbox provider.`)
   }

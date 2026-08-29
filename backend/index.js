@@ -181,9 +181,14 @@ app.use((err, req, res, _next) => {
 })
 
 // Nothing else catches these: an unhandled rejection in a background job used to
-// vanish into the log (or take the process down on newer Node).
+// vanish into the log. A rejection is recoverable, so we report and carry on —
+// an uncaught exception is not: the process is in an unknown state, so report,
+// give the reporter a moment to flush, then die and let the platform restart us.
 process.on('unhandledRejection', (reason) => errors.captureError(reason, { tag: 'unhandledRejection' }))
-process.on('uncaughtException', (err) => { errors.captureError(err, { tag: 'uncaughtException' }); })
+process.on('uncaughtException', (err) => {
+  errors.captureError(err, { tag: 'uncaughtException' })
+  setTimeout(() => process.exit(1), 500).unref()
+})
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 server.listen(PORT, () => console.log(`🚀  FlexTag API running on http://localhost:${PORT}`))
