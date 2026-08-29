@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { updateUser } from '../../services/users'
 import { getProducts } from '../../services/products'
@@ -17,8 +17,6 @@ const XIcon      = () => <Icon d="M18 6L6 18M6 6l12 12" />
 const UploadIcon = () => <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
 const SearchIcon = () => <Icon d="M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
 const PackageIcon= () => <Icon d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-const GlobeIcon  = () => <Icon d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-const MapPinIcon = () => <Icon d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z M12 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
 
 const CATEGORIES = [
   'Fashion', 'Beauty & Skincare', 'Electronics', 'Food & Beverage',
@@ -38,6 +36,28 @@ const StatusBadge = ({ active, status }) => {
   if (active) return                <span style={{ padding:'3px 10px', borderRadius:999, fontSize:11, fontWeight:700, background:'rgba(34,197,94,0.12)', color:'#4ade80', border:'1px solid rgba(34,197,94,0.2)' }}>Active</span>
   return                            <span style={{ padding:'3px 10px', borderRadius:999, fontSize:11, fontWeight:700, background:'rgba(113,113,122,0.15)', color:'#71717a', border:'1px solid rgba(113,113,122,0.2)' }}>Inactive</span>
 }
+
+/* Module scope: a component created during render remounts its input on every
+ keystroke — that is what made these fields feel laggy. */
+const FieldInput = ({ label, fkey, form, setForm, editing, type = 'text', placeholder = '' }) => (
+  <div>
+    <label style={{ display:'block', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.3)', marginBottom:5 }}>
+      {label}
+    </label>
+    {editing ? (
+      <input type={type} value={form[fkey]} placeholder={placeholder}
+        onChange={e => setForm({ ...form, [fkey]: e.target.value })}
+        style={{ width:'100%', padding:'10px 14px', borderRadius:10, background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize:14, outline:'none', transition:'border 0.2s' }}
+        onFocus={e => e.target.style.borderColor='rgba(16,185,129,0.5)'}
+        onBlur={e  => e.target.style.borderColor='rgba(var(--ink-rgb),0.1)'}
+      />
+    ) : (
+      <p style={{ fontSize:14, color: form[fkey] ? '#e4e4e7' : 'rgba(var(--ink-rgb),0.2)', padding:'10px 0', margin:0 }}>
+        {form[fkey] || 'Not set'}
+      </p>
+    )}
+  </div>
+)
 
 export default function BrandProfile() {
   const { user, setUser } = useAuth()
@@ -114,25 +134,6 @@ export default function BrandProfile() {
   const pendingCount = products.filter(p => p.status === 'pending').length
   const lowStockCount = products.filter(p => p.stock < 10 && p.stock > 0).length
 
-  const FieldInput = ({ label, fkey, type = 'text', placeholder = '' }) => (
-    <div>
-      <label style={{ display:'block', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.3)', marginBottom:5 }}>
-        {label}
-      </label>
-      {editing ? (
-        <input type={type} value={form[fkey]} placeholder={placeholder}
-          onChange={e => setForm({ ...form, [fkey]: e.target.value })}
-          style={{ width:'100%', padding:'10px 14px', borderRadius:10, background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize:14, outline:'none', transition:'border 0.2s' }}
-          onFocus={e => e.target.style.borderColor='rgba(16,185,129,0.5)'}
-          onBlur={e  => e.target.style.borderColor='rgba(var(--ink-rgb),0.1)'}
-        />
-      ) : (
-        <p style={{ fontSize:14, color: form[fkey] ? '#e4e4e7' : 'rgba(var(--ink-rgb),0.2)', padding:'10px 0', margin:0 }}>
-          {form[fkey] || 'Not set'}
-        </p>
-      )}
-    </div>
-  )
 
   return (
     <div className="page-root">
@@ -200,13 +201,13 @@ export default function BrandProfile() {
 
           {/* fields */}
           <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-            <FieldInput label="Company Name"     fkey="companyName" />
+            <FieldInput label="Company Name"     fkey="companyName" form={form} setForm={setForm} editing={editing} />
             <div>
               <label style={{ display:'block', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.3)', marginBottom:5 }}>Email</label>
               <p style={{ fontSize:14, color:'rgba(var(--ink-rgb),0.4)', padding:'10px 0', margin:0 }}>{user?.email}</p>
             </div>
-            <FieldInput label="Website"          fkey="website"         placeholder="https://example.com" />
-            <FieldInput label="Company Address"  fkey="address"         placeholder="Street, City, Country" />
+            <FieldInput label="Website"          fkey="website"         placeholder="https://example.com" form={form} setForm={setForm} editing={editing} />
+            <FieldInput label="Company Address"  fkey="address"         placeholder="Street, City, Country" form={form} setForm={setForm} editing={editing} />
 
             {editing ? (
               <div>
@@ -219,7 +220,7 @@ export default function BrandProfile() {
                 </select>
               </div>
             ) : (
-              <FieldInput label="Product Category" fkey="productCategory" />
+              <FieldInput label="Product Category" fkey="productCategory" form={form} setForm={setForm} editing={editing} />
             )}
 
             {editing && (

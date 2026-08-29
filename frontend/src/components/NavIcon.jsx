@@ -1,4 +1,3 @@
-import React from 'react'
 
 /**
  * NavIcon — wraps a Lucide icon with a glowing gradient tint.

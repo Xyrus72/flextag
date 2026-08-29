@@ -46,8 +46,8 @@ const OrderFulfillment = () => {
     }
   }
 
+  // `loading` starts true; the Refresh button turns the spinner back on itself.
   const load = () => {
-    setLoading(true)
     getOrders({ status: 'all' }).then(data => setOrders(data.orders || [])).catch(console.error).finally(() => setLoading(false))
   }
 
@@ -86,7 +86,7 @@ const OrderFulfillment = () => {
     <div className="page-root">
       <div className="flex flex-wrap items-start justify-between gap-4 mb-7">
         <div><p className="page-label"><span>Brand operations</span></p><h1 className="page-title">Order Fulfillment</h1><p className="page-subtitle">Pack, ship, and resolve creator orders from one workspace.</p></div>
-        <button className="btn-ghost" onClick={load} disabled={loading}><RotateCcw size={15} /> Refresh</button>
+        <button className="btn-ghost" onClick={() => { setLoading(true); load() }} disabled={loading}><RotateCcw size={15} /> Refresh</button>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-7">
         {[['To pack', ['processing', 'packed'], Package], ['In transit', ['shipped'], Truck], ['Returns', ['return_requested', 'returned'], RotateCcw], ['Cancelled', ['cancelled'], X]].map(([label, statuses, Icon]) => <div className="stat-card !p-4" key={label}><Icon size={17} className="text-cyan-300 mb-3" /><p className="text-2xl font-bold text-white">{statuses.reduce((total, status) => total + count(status), 0)}</p><p className="text-xs text-zinc-500">{label}</p></div>)}

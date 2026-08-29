@@ -25,10 +25,6 @@ Message      → Access message data
 User         → Access user data
  
  */
-
-
-
-
 let ioRef = null
 /** The live Socket.IO server (or null before init) — used by services/notifications.js. */
 function getIo() { return ioRef }

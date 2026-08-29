@@ -35,6 +35,41 @@ const TIER_GRADIENT = {
 
 const EMPTY_ADDR = { label: 'Home', fullName: '', phone: '', street: '', city: '', state: '', zip: '', country: 'Bangladesh' }
 
+/* Defined at module scope: a component re-created on every render remounts its
+ inputs, which is why typing in them used to feel laggy. */
+const FieldInput = ({ label, fkey, form, setForm, editing, type = 'text', readOnly = false }) => (
+  <div>
+    <label style={{ display:'block', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.35)', marginBottom:6 }}>
+      {label}
+    </label>
+    {editing && !readOnly ? (
+      <input type={type} value={form[fkey]}
+        onChange={e => setForm({ ...form, [fkey]: e.target.value })}
+        style={{ width:'100%', padding:'10px 14px', borderRadius:10, background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize:14, outline:'none', transition:'border 0.2s' }}
+        onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.6)'}
+        onBlur={e  => e.target.style.borderColor = 'rgba(var(--ink-rgb),0.1)'}
+      />
+    ) : (
+      <p style={{ fontSize:14, color: form[fkey] ? '#e4e4e7' : 'rgba(var(--ink-rgb),0.2)', padding:'10px 0' }}>
+        {form[fkey] || 'Not set'}
+      </p>
+    )}
+  </div>
+)
+
+const AddrInput = ({ label, field, state, setter, type = 'text' }) => (
+  <div>
+    <label style={{ display:'block', fontSize:11, color:'rgba(var(--ink-rgb),0.35)', marginBottom:4 }}>{label}</label>
+    <input type={type} placeholder={label}
+      value={state[field]} onChange={e => setter({ ...state, [field]: e.target.value })}
+      style={{ width:'100%', padding:'9px 12px', borderRadius:8, background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize:13, outline:'none' }}
+      onFocus={e => e.target.style.borderColor='rgba(124,58,237,0.5)'}
+      onBlur={e  => e.target.style.borderColor='rgba(var(--ink-rgb),0.1)'}
+    />
+  </div>
+)
+
+
 export default function Profile() {
   const { user, setUser } = useAuth()
 
@@ -142,38 +177,6 @@ export default function Profile() {
   /* ── render helpers ──────────────────────────────────────────── */
   const tierGrad = TIER_GRADIENT[user?.tier] || TIER_GRADIENT.bronze
 
-  const FieldInput = ({ label, fkey, type = 'text', readOnly = false }) => (
-    <div>
-      <label style={{ display:'block', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.35)', marginBottom:6 }}>
-        {label}
-      </label>
-      {editing && !readOnly ? (
-        <input type={type} value={form[fkey]}
-          onChange={e => setForm({ ...form, [fkey]: e.target.value })}
-          style={{ width:'100%', padding:'10px 14px', borderRadius:10, background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize:14, outline:'none', transition:'border 0.2s' }}
-          onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.6)'}
-          onBlur={e  => e.target.style.borderColor = 'rgba(var(--ink-rgb),0.1)'}
-        />
-      ) : (
-        <p style={{ fontSize:14, color: form[fkey] ? '#e4e4e7' : 'rgba(var(--ink-rgb),0.2)', padding:'10px 0' }}>
-          {form[fkey] || 'Not set'}
-        </p>
-      )}
-    </div>
-  )
-
-  const AddrInput = ({ label, field, state, setter, type = 'text' }) => (
-    <div>
-      <label style={{ display:'block', fontSize:11, color:'rgba(var(--ink-rgb),0.35)', marginBottom:4 }}>{label}</label>
-      <input type={type} placeholder={label}
-        value={state[field]} onChange={e => setter({ ...state, [field]: e.target.value })}
-        style={{ width:'100%', padding:'9px 12px', borderRadius:8, background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize:13, outline:'none' }}
-        onFocus={e => e.target.style.borderColor='rgba(124,58,237,0.5)'}
-        onBlur={e  => e.target.style.borderColor='rgba(var(--ink-rgb),0.1)'}
-      />
-    </div>
-  )
-
   // ── Email preferences ─────────────────────────────────────────
   // Money and dispute emails are opt-out; the daily digest is everything else.
   const [emailPrefs, setEmailPrefs] = useState({ transactional: true, digest: true })
@@ -262,16 +265,16 @@ export default function Profile() {
 
           {/* fields */}
           <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-            <FieldInput label="Full Name"          fkey="name" />
-            <FieldInput label="Email"              fkey="email" readOnly />
-            <FieldInput label="Phone Number"       fkey="phone" type="tel" />
+            <FieldInput label="Full Name"          fkey="name" form={form} setForm={setForm} editing={editing} />
+            <FieldInput label="Email"              fkey="email" readOnly form={form} setForm={setForm} editing={editing} />
+            <FieldInput label="Phone Number"       fkey="phone" type="tel" form={form} setForm={setForm} editing={editing} />
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-              <FieldInput label="Instagram Handle" fkey="instagramHandle" />
-              <FieldInput label="TikTok Handle"    fkey="tiktokHandle" />
+              <FieldInput label="Instagram Handle" fkey="instagramHandle" form={form} setForm={setForm} editing={editing} />
+              <FieldInput label="TikTok Handle"    fkey="tiktokHandle" form={form} setForm={setForm} editing={editing} />
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-              <FieldInput label="Follower Count"      fkey="followersCount"  type="number" />
-              <FieldInput label="Engagement Rate (%)" fkey="engagementRate"  type="number" />
+              <FieldInput label="Follower Count"      fkey="followersCount"  type="number" form={form} setForm={setForm} editing={editing} />
+              <FieldInput label="Engagement Rate (%)" fkey="engagementRate"  type="number" form={form} setForm={setForm} editing={editing} />
             </div>
 
             {editing && (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { getAdminFinancial } from '../../services/admin'
 
 const FinancialDashboard = () => {

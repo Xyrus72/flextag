@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { getAdminProducts, approveProduct, rejectProduct } from '../../services/admin'
 
 const STATUS_CFG = {
@@ -15,8 +15,9 @@ const ProductApproval = () => {
   const [reasons, setReasons]       = useState({})
   const [expandedId, setExpandedId] = useState(null)
 
+  // `loading` starts true; changing the filter turns the spinner on from the
+  // button (see changeFilter) rather than from inside the effect.
   const load = () => {
-    setLoading(true)
     getAdminProducts(filter !== 'all' ? { status: filter } : {})
       .then(d => setProducts(d.products || []))
       .catch(console.error)
@@ -24,6 +25,8 @@ const ProductApproval = () => {
   }
 
   useEffect(() => { load() }, [filter])
+
+  const changeFilter = (f) => { setLoading(true); setFilter(f) }
 
   const handleApprove = async (id) => {
     setActioning(a => ({ ...a, [id]: 'approving' }))
@@ -58,7 +61,7 @@ const ProductApproval = () => {
       {/* Filter tabs */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
         {['pending', 'approved', 'rejected', 'all'].map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{
+          <button key={f} onClick={() => changeFilter(f)} style={{
             padding: '8px 18px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', textTransform: 'capitalize',
             background: filter === f ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
             color: filter === f ? '#fff' : 'rgba(var(--ink-rgb),0.4)',
