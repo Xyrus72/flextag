@@ -2,7 +2,7 @@ const express  = require('express')
 const router   = express.Router()
 const Settings = require('../models/Settings')
 const { requireAuth, requireRole } = require('../middleware/auth')
-const { IG_SETTING_DEFAULTS, invalidateSettingsCache } = require('../utils/settings')
+const { IG_SETTING_DEFAULTS, FRAUD_SETTING_DEFAULTS, invalidateSettingsCache } = require('../utils/settings')
 
 const DEFAULTS = [
   { key: 'commissionRate',  value: 10,   label: 'Commission Rate (%)',             desc: 'Platform commission from each cashback payout' },
@@ -13,6 +13,8 @@ const DEFAULTS = [
   { key: 'maxCashback',     value: 70,   label: 'Max Cashback Rate (%)',           desc: 'Maximum cashback percentage brands can offer' },
   // Instagram audit / verification thresholds (numeric; on/off stored as 1/0)
   ...IG_SETTING_DEFAULTS,
+  // Fraud thresholds (services/fraud.js)
+  ...FRAUD_SETTING_DEFAULTS,
 ]
 
 // Seed defaults if not present

@@ -25,6 +25,16 @@ const IG_SETTING_DEFAULTS = [
   { key: 'igUnverifiedRewardCap', value: envNum('IG_UNVERIFIED_REWARD_CAP', 500), label: 'Unverified Reward Cap (৳/order)', desc: 'Max reward per order for creators who have not bio-verified their Instagram (0 = no cap; higher tiers multiply it)' },
 ]
 
+// Fraud thresholds — admin-tunable so a launch-week false positive can be
+// loosened without a deploy. All numeric (PUT /api/settings coerces with Number).
+const FRAUD_SETTING_DEFAULTS = [
+  { key: 'fraudEnforce',        value: 1,  label: 'Fraud Rules Enforced',          desc: '1 = act on risk scores (block/hold), 0 = only score and show in the admin queue' },
+  { key: 'fraudBlockScore',     value: 80, label: 'Block Orders at Risk Score',    desc: 'Creators at or above this risk score cannot place new orders' },
+  { key: 'fraudHoldPayoutScore',value: 60, label: 'Hold Payouts at Risk Score',    desc: 'Payouts at or above this score need a human decision before sending' },
+  { key: 'fraudReviewScore',    value: 40, label: 'Manual Post Review at Score',   desc: 'Verified posts stop auto-releasing cashback at or above this score' },
+  { key: 'fraudMaxOrdersPerDay',value: 5,  label: 'Order Burst Limit (per day)',   desc: 'More orders than this in 24h raises a velocity flag' },
+]
+
 let cache = { at: 0, map: null }
 const CACHE_MS = 30_000
 
@@ -32,7 +42,7 @@ async function getSettingsMap({ fresh = false } = {}) {
   if (!fresh && cache.map && Date.now() - cache.at < CACHE_MS) return cache.map
   const docs = await Settings.find().lean()
   const map = {}
-  for (const d of IG_SETTING_DEFAULTS) map[d.key] = d.value
+  for (const d of [...IG_SETTING_DEFAULTS, ...FRAUD_SETTING_DEFAULTS]) map[d.key] = d.value
   for (const d of docs) map[d.key] = d.value
   cache = { at: Date.now(), map }
   return map
@@ -57,4 +67,4 @@ async function getIgSettings(opts) {
 
 function invalidateSettingsCache() { cache = { at: 0, map: null } }
 
-module.exports = { IG_SETTING_DEFAULTS, getSettingsMap, getIgSettings, invalidateSettingsCache }
+module.exports = { IG_SETTING_DEFAULTS, FRAUD_SETTING_DEFAULTS, getSettingsMap, getIgSettings, invalidateSettingsCache }

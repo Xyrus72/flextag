@@ -9,6 +9,7 @@ const { ensureCampaignForProduct } = require('./orders')
 const { computeReward, rewardCapFor } = require('../utils/reward')
 const { commitInstant, inFlightReward } = require('../utils/rewardLedger')
 const { getIgSettings } = require('../utils/settings')
+const fraud = require('../services/fraud')
 
 const STORE_ID   = process.env.SSLCZ_STORE_ID
 const STORE_PASS = process.env.SSLCZ_STORE_PASSWORD
@@ -27,6 +28,10 @@ router.post('/init', requireAuth, requireRole('creator'), async (req, res) => {
     if (!configured()) return res.status(503).json({ message: 'Online payment isn\'t configured yet. Add SSLCZ_STORE_ID / SSLCZ_STORE_PASSWORD to backend/.env, or pay on delivery.' })
     const { items, address } = req.body
     if (!items || !items.length || !address) return res.status(400).json({ message: 'items and address are required.' })
+
+    // Same fraud gate as the COD path — neither door is the soft one.
+    const gate = await fraud.guard(req.user, { action: 'order' })
+    if (!gate.allowed) return res.status(403).json({ message: gate.reason })
 
     const settings = await getIgSettings().catch(() => null)
     const cap = rewardCapFor(req.user, settings?.unverifiedRewardCap ?? 500)

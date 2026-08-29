@@ -51,3 +51,22 @@ export const lookupInstagram = (username, max_posts = 30) => api.post('/api/admi
 
 export const igVerifyCreator = (id, igVerified) =>
   api.put(`/api/admin/creators/${id}/ig-verify`, { igVerified }).then(r => r.data)
+
+// ── Fraud review ─────────────────────────────────────────────────────────────
+export const getFraudQueue = (params = {}) =>
+  api.get('/api/admin/fraud', { params }).then(r => r.data)
+
+export const getFraudDetail = (id) =>
+  api.get(`/api/admin/fraud/${id}`).then(r => r.data)
+
+export const blockUser = (id, reason) =>
+  api.post(`/api/admin/fraud/${id}/block`, { reason }).then(r => r.data)
+
+export const unblockUser = (id) =>
+  api.post(`/api/admin/fraud/${id}/unblock`).then(r => r.data)
+
+export const vouchUser = (id, { note = '', whitelisted = true } = {}) =>
+  api.post(`/api/admin/fraud/${id}/vouch`, { note, whitelisted }).then(r => r.data)
+
+export const rescanFraud = () =>
+  api.post('/api/admin/fraud/rescan').then(r => r.data)

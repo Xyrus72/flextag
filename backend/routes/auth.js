@@ -9,6 +9,8 @@ const { normalizeHandle, handleRegex } = require('../services/instagram/endpoint
 const { getIgSettings }          = require('../utils/settings')
 const { createLimiter }          = require('../utils/rateLimit')
 const { generateReferralCode, resolveReferrer } = require('../services/referrals')
+const { clientIp } = require('../utils/requestIp')
+const { canonicalEmail, assessInBackground } = require('../services/fraud')
 
 // OTP endpoints are unauthenticated: cap them per IP so they can't be used to
 // spam inboxes, brute-force codes, or drive Instagram lookups through the gate.
@@ -130,6 +132,11 @@ router.post('/verify-otp', otpVerifyLimiter, async (req, res) => {
     const user = await User.create({
       name, email, password: hashed, phone, role,
       referralCode, referredBy,
+      // Identity signals for services/fraud.js — the multi-account ring is the
+      // one attack that actually drains a cashback budget.
+      emailCanonical: canonicalEmail(email),
+      signupIp: clientIp(req),
+      lastIp:   clientIp(req),
       instagramHandle: role === 'creator' ? igHandle : normalizeHandle(instagramHandle),
       followersCount:  ig ? ig.followers : (Number(followersCount) || 0),
       tiktokHandle,
@@ -141,6 +148,8 @@ router.post('/verify-otp', otpVerifyLimiter, async (req, res) => {
 
     // Full audit (posts, follower sample, health score) in the background
     if (user.role === 'creator') auditUserInBackground(user)
+    // Score the new account against existing ones (shared IP/phone/inbox, rings)
+    if (user.role === 'creator') assessInBackground(user._id)
 
     // Start session
     req.session.userId = user._id.toString()
@@ -179,6 +188,7 @@ router.post('/register', requireAuth, requireRole('admin'), async (req, res) => 
 
     const user = await User.create({
       name, email, password: hashed, phone, role,
+      emailCanonical: canonicalEmail(email),
       instagramHandle: normalizeHandle(instagramHandle), followersCount, tiktokHandle,
       companyName, website, productCategory,
       igPrecheck: role === 'creator' ? 'pending' : 'skipped',
@@ -215,6 +225,13 @@ router.post('/login', async (req, res) => {
 
     req.session.userId = user._id.toString()
     req.session.role   = user.role
+
+    // Backfill identity fields for accounts created before fraud scoring existed,
+    // and keep the last-seen IP fresh. Never blocks the login.
+    const patch = { lastIp: clientIp(req) }
+    if (!user.emailCanonical) patch.emailCanonical = canonicalEmail(user.email)
+    if (!user.signupIp) patch.signupIp = patch.lastIp
+    User.updateOne({ _id: user._id }, { $set: patch }).catch(() => {})
 
     return res.json({ message: 'Login successful.', user: safeUser(user) })
   } catch (err) {

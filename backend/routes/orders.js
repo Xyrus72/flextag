@@ -11,6 +11,7 @@ const { computeReward, rewardCapFor } = require('../utils/reward')
 const { commitInstant, reclaimInstant, inFlightReward } = require('../utils/rewardLedger')
 const { getIgSettings } = require('../utils/settings')
 const { computeTier } = require('../utils/tier')
+const fraud = require('../services/fraud')
 
 // helper to generate order IDs
 const genOrderId = () => 'ORD-' + Math.floor(1000 + Math.random() * 9000)
@@ -99,6 +100,11 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
       return res.status(400).json({ message: 'campaignId and address required.' })
     }
 
+    // Fraud gate: an account an admin has held — or one the risk engine scores
+    // above the block threshold — cannot commit more brand budget.
+    const gate = await fraud.guard(req.user, { action: 'order' })
+    if (!gate.allowed) return res.status(403).json({ message: gate.reason })
+
     // The cart may hold a Campaign id or (module-2 catalog) a Product id — bridge the latter.
     let campaign = await Campaign.findById(campaignId)
     if (!campaign) {
@@ -157,6 +163,8 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
     campaign.stockLeft = Math.max(0, campaign.stockLeft - quantity)
     campaign.totalOrders += 1
     await campaign.save()
+
+    fraud.assessInBackground(req.user._id)   // velocity signals move with each order
 
     res.status(201).json({ order, message: 'Order placed.' })
   } catch (err) {

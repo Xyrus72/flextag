@@ -8,6 +8,7 @@ const Product  = require('../models/Product')
 const Transaction = require('../models/Transaction')
 const { requireAuth, requireRole } = require('../middleware/auth')
 const { runAudit } = require('../services/instagram/audit')
+const fraud = require('../services/fraud')
 const igClient = require('../services/instagram/client')
 
 // ── GET /api/admin/stats — platform-wide KPIs ─────────────────────────────
@@ -273,6 +274,116 @@ router.post('/instagram-lookup', requireAuth, requireRole('admin'), async (req, 
     }
     console.error('[admin instagram-lookup]', err)
     return res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+/* ── Fraud review ────────────────────────────────────────────────────────────
+ * Risk scores are evidence for a human, so these routes are read-heavy: list
+ * who is flagged, look at exactly WHY, then block, vouch for, or ignore.
+ */
+
+// GET /api/admin/fraud?level=high|medium|low|blocked|all
+router.get('/fraud', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { level = 'flagged' } = req.query
+    const filter = { role: 'creator' }
+    if (level === 'blocked') filter.blocked = true
+    else if (level === 'flagged') filter.riskScore = { $gt: 0 }
+    else if (['high', 'medium', 'low', 'clear'].includes(level)) filter.riskLevel = level
+
+    const [users, counts, thresholds] = await Promise.all([
+      User.find(filter)
+        .select('name email phone instagramHandle tier igVerified riskScore riskLevel riskFlags riskCheckedAt riskNote riskWhitelisted blocked blockReason signupIp createdAt totalEarnings completedCampaigns')
+        .sort({ blocked: -1, riskScore: -1, createdAt: -1 })
+        .limit(100)
+        .lean(),
+      User.aggregate([
+        { $match: { role: 'creator' } },
+        { $group: { _id: { $ifNull: ['$riskLevel', 'clear'] }, count: { $sum: 1 } } },
+      ]),
+      fraud.fraudSettings(),
+    ])
+    const blocked = await User.countDocuments({ role: 'creator', blocked: true })
+    res.json({
+      users,
+      counts: { ...Object.fromEntries(counts.map(c => [c._id, c.count])), blocked },
+      thresholds,
+    })
+  } catch (err) {
+    console.error('[admin fraud]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// GET /api/admin/fraud/:id — recompute now and return the evidence behind the score
+router.get('/fraud/:id', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password')
+    if (!user) return res.status(404).json({ message: 'User not found.' })
+    const assessment = await fraud.assess(user)
+    res.json({ user: await User.findById(req.params.id).select('-password'), assessment })
+  } catch (err) {
+    console.error('[admin fraud detail]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// POST /api/admin/fraud/:id/block  { reason }
+router.post('/fraud/:id/block', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const reason = String(req.body?.reason || '').slice(0, 300) || 'Account under review for suspicious activity.'
+    const user = await User.findByIdAndUpdate(req.params.id, { $set: { blocked: true, blockReason: reason } }, { new: true }).select('-password')
+    if (!user) return res.status(404).json({ message: 'User not found.' })
+    res.json({ user, message: 'Account blocked — new orders and payouts are refused.' })
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// POST /api/admin/fraud/:id/unblock
+router.post('/fraud/:id/unblock', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, { $set: { blocked: false, blockReason: '' } }, { new: true }).select('-password')
+    if (!user) return res.status(404).json({ message: 'User not found.' })
+    res.json({ user, message: 'Account unblocked.' })
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// POST /api/admin/fraud/:id/vouch  { note, whitelisted }
+// "I looked at this — the shared IP is a household, not a ring." Signals stay
+// visible, they just stop scoring until someone revokes the vouch.
+router.post('/fraud/:id/vouch', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const whitelisted = req.body?.whitelisted !== false
+    const note = String(req.body?.note || '').slice(0, 300)
+    const user = await User.findByIdAndUpdate(req.params.id, { $set: {
+      riskWhitelisted: whitelisted,
+      riskNote: note,
+      ...(whitelisted ? { riskScore: 0, riskLevel: 'clear' } : {}),
+    } }, { new: true }).select('-password')
+    if (!user) return res.status(404).json({ message: 'User not found.' })
+    if (!whitelisted) await fraud.assess(user)
+    res.json({ user, message: whitelisted ? 'Vouched — flags stay visible but stop scoring.' : 'Vouch revoked — the account is scored again.' })
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// POST /api/admin/fraud/rescan — re-score every creator (bounded)
+router.post('/fraud/rescan', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const creators = await User.find({ role: 'creator' }).select('_id').sort({ createdAt: -1 }).limit(300).lean()
+    let flagged = 0
+    for (const c of creators) {
+      const r = await fraud.assess(c._id).catch(() => null)
+      if (r && r.score > 0) flagged += 1
+    }
+    res.json({ scanned: creators.length, flagged, message: `Re-scored ${creators.length} creators — ${flagged} carry at least one flag.` })
+  } catch (err) {
+    console.error('[admin fraud rescan]', err)
+    res.status(500).json({ message: 'Server error.' })
   }
 })
 
