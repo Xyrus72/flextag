@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useT } from '../context/LanguageContext'
 
 /**
  * AuthShell — shared split-panel layout for Login & Register.
@@ -10,12 +11,15 @@ import { motion } from 'framer-motion'
  */
 
 const VALUE_PROPS = [
-  { icon: '💸', title: '30–70% cashback', desc: 'Real money back on every approved post' },
-  { icon: '🛡️', title: 'Escrow-protected', desc: 'Funds locked before campaigns go live' },
-  { icon: '⚡', title: '48h payouts', desc: 'bKash & Nagad withdrawals, no hassle' },
+  { icon: '💸', key: 'perk1' },
+  { icon: '🛡️', key: 'perk2' },
+  { icon: '⚡', key: 'perk3' },
 ]
 
-const AuthShell = ({ tagline = 'Sign in to your account', children }) => (
+const AuthShell = ({ tagline, children }) => {
+  const t = useT()
+
+  return (
   <div style={{
     minHeight: '100vh', background: 'var(--bg)', position: 'relative',
     overflow: 'hidden', fontFamily: 'Inter, sans-serif',
@@ -73,9 +77,9 @@ const AuthShell = ({ tagline = 'Sign in to your account', children }) => (
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           style={{ fontSize: 'clamp(32px, 3.2vw, 46px)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.08, color: 'var(--text)', margin: '0 0 16px' }}
         >
-          Turn influence into
+          {t('auth.headline1')}
           <br />
-          <span className="gradient-text">real income.</span>
+          <span className="gradient-text">{t('auth.headline2')}</span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
@@ -83,14 +87,13 @@ const AuthShell = ({ tagline = 'Sign in to your account', children }) => (
           transition={{ duration: 0.7, delay: 0.15 }}
           style={{ fontSize: 15, color: 'rgba(var(--ink-rgb),0.45)', lineHeight: 1.7, maxWidth: 420, margin: '0 0 36px' }}
         >
-          The creator-commerce platform trusted by nano & micro-influencers
-          across Bangladesh. Shop products, share authentic content, earn cashback.
+          {t('auth.blurb')}
         </motion.p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 420 }}>
           {VALUE_PROPS.map((v, i) => (
             <motion.div
-              key={v.title}
+              key={v.key}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.3 + i * 0.12, ease: [0.22, 1, 0.36, 1] }}
@@ -104,8 +107,8 @@ const AuthShell = ({ tagline = 'Sign in to your account', children }) => (
             >
               <span style={{ fontSize: 22, flexShrink: 0 }}>{v.icon}</span>
               <div>
-                <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{v.title}</p>
-                <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.4)', margin: '2px 0 0' }}>{v.desc}</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{t(`auth.${v.key}.title`)}</p>
+                <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.4)', margin: '2px 0 0' }}>{t(`auth.${v.key}.desc`)}</p>
               </div>
             </motion.div>
           ))}
@@ -154,13 +157,14 @@ const AuthShell = ({ tagline = 'Sign in to your account', children }) => (
               <div style={{ fontSize: 9, color: 'rgba(167,139,250,0.6)', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 2 }}>Shop · Share · Earn</div>
             </div>
           </Link>
-          <p style={{ fontSize: 14, color: 'rgba(var(--ink-rgb),0.35)', marginTop: 16, fontWeight: 300 }}>{tagline}</p>
+          <p style={{ fontSize: 14, color: 'rgba(var(--ink-rgb),0.35)', marginTop: 16, fontWeight: 300 }}>{tagline || t('auth.tagline')}</p>
         </div>
 
         {children}
       </div>
     </div>
   </div>
-)
+  )
+}
 
 export default AuthShell

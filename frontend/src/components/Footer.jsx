@@ -1,31 +1,33 @@
 import { Link } from 'react-router-dom'
+import { useT } from '../context/LanguageContext'
 
-const COLUMNS = [
+// Built per render so the columns follow the language toggle like the nav does.
+const columnsFor = (t) => [
   {
-    title: 'Platform',
+    title: t('footer.platform'),
     links: [
-      { label: 'How It Works', href: '/#how-it-works' },
-      { label: 'Shop Catalog', href: '/creator/catalog' },
-      { label: 'Leaderboard', href: '/creator/leaderboard' },
-      { label: 'Creator Signup', href: '/register' },
+      { label: t('footer.howItWorks'), href: '/#how-it-works' },
+      { label: t('footer.catalog'), href: '/creator/catalog' },
+      { label: t('footer.leaderboard'), href: '/creator/leaderboard' },
+      { label: t('footer.creatorSignup'), href: '/register' },
     ],
   },
   {
-    title: 'For Brands',
+    title: t('footer.forBrands'),
     links: [
-      { label: 'Launch a Campaign', href: '/register?role=brand' },
-      { label: 'Brand Dashboard', href: '/brand' },
-      { label: 'Pricing & Fees', href: '/#for-brands' },
-      { label: 'Success Stories', href: '/#testimonials' },
+      { label: t('footer.launchCampaign'), href: '/register?role=brand' },
+      { label: t('footer.brandDashboard'), href: '/brand' },
+      { label: t('footer.pricing'), href: '/#for-brands' },
+      { label: t('footer.stories'), href: '/#testimonials' },
     ],
   },
   {
-    title: 'Support',
+    title: t('footer.support'),
     links: [
-      { label: 'Help Center / FAQ', href: '/support/faq' },
-      { label: 'Live Chat', href: '/support/chat' },
-      { label: 'Submit a Ticket', href: '/support/tickets' },
-      { label: 'Contact Us', href: '/#contact' },
+      { label: t('footer.faq'), href: '/support/faq' },
+      { label: t('footer.liveChat'), href: '/support/chat' },
+      { label: t('footer.ticket'), href: '/support/tickets' },
+      { label: t('footer.contact'), href: '/#contact' },
     ],
   },
 ]
@@ -37,7 +39,11 @@ const SOCIALS = [
   { label: 'YouTube', path: 'M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z M9.75 15.02l5.75-3.27-5.75-3.27v6.54z' },
 ]
 
-const Footer = () => (
+const Footer = () => {
+  const t = useT()
+  const COLUMNS = columnsFor(t)
+
+  return (
   <footer id="contact" className="relative z-20 border-t border-white/5 pt-16 pb-8 px-6 overflow-hidden" style={{ background: 'var(--footer-bg)' }}>
     {/* Top gradient line */}
     <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
@@ -60,7 +66,7 @@ const Footer = () => (
             </div>
             <div>
               <span className="text-lg font-black italic tracking-tighter text-white group-hover:text-violet-300 transition-colors">FlexTag™</span>
-              <p className="text-[9px] text-violet-400/60 uppercase tracking-[0.2em] leading-none">Shop · Share · Earn</p>
+              <p className="text-[9px] text-violet-400/60 uppercase tracking-[0.2em] leading-none">{t('footer.tagline')}</p>
             </div>
           </Link>
           <p className="text-[13px] text-white/35 leading-relaxed max-w-xs mb-6">
@@ -130,6 +136,7 @@ const Footer = () => (
       </div>
     </div>
   </footer>
-)
+  )
+}
 
 export default Footer
