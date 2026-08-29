@@ -70,3 +70,7 @@ export const vouchUser = (id, { note = '', whitelisted = true } = {}) =>
 
 export const rescanFraud = () =>
   api.post('/api/admin/fraud/rescan').then(r => r.data)
+
+// ── Audit trail ──────────────────────────────────────────────────────────────
+export const getAuditLog = (params = {}) =>
+  api.get('/api/admin/audit', { params }).then(r => r.data)

@@ -75,6 +75,10 @@ const en = {
   'menu.companyProfile': 'Company Profile',
   'menu.payouts': 'Creator Payouts',
   'menu.fraud': 'Fraud Review',
+  'menu.audit': 'Audit Trail',
+  'menu.brandWallet': 'Campaign Balance',
+  'menu.notifications': 'Notifications',
+  'menu.earnings': 'My Earnings',
 
   // ── Page headers ───────────────────────────────────────────────────────
   'page.catalog.title': 'Shop Catalog & Category Filter',
@@ -163,6 +167,10 @@ const bn = {
   'menu.companyProfile': 'কোম্পানি প্রোফাইল',
   'menu.payouts': 'ক্রিয়েটর পেআউট',
   'menu.fraud': 'ফ্রড রিভিউ',
+  'menu.audit': 'অডিট ট্রেইল',
+  'menu.brandWallet': 'ক্যাম্পেইন ব্যালেন্স',
+  'menu.notifications': 'নোটিফিকেশন',
+  'menu.earnings': 'আমার আয়',
 
   'page.catalog.title': 'শপ ক্যাটালগ ও ক্যাটাগরি ফিল্টার',
   'page.catalog.subtitle': 'পণ্য দেখুন, নিজের কনটেন্ট শেয়ার করে যাচাইকৃত ক্যাশব্যাক আয় করুন',

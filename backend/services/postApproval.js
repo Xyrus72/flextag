@@ -17,6 +17,8 @@ const Campaign = require('../models/Campaign')
 const Product = require('../models/Product')
 const { notifySafe } = require('./notifications')
 const { onCampaignCompleted } = require('./referrals')
+const brandWallet = require('./brandWallet')
+const audit = require('./audit')
 
 const DAY = 86_400_000
 
@@ -78,6 +80,20 @@ async function approvePost(post, { approvedBy = null, auto = false } = {}) {
         const productId = c?.productId || order.productId
         if (productId) await Product.updateOne({ _id: productId }, { $inc: { totalCashbackSpent: amount } }).catch(() => {})
       }
+      // The brand's funded balance pays for this. Keyed on the order, so an
+      // approval that races itself can only ever debit once — and a ledger
+      // failure never blocks money already promised to the creator.
+      if (order.brandId) {
+        await brandWallet.debit({
+          brandId: order.brandId, amount, orderId: order._id, campaignId,
+          ref: `spend:bonus:${order._id}`, desc: `Cashback bonus on ${order.product}`,
+        }).catch(() => {})
+      }
+      audit.record({
+        actor: approvedBy || null, action: audit.ACTIONS.CASHBACK_RELEASED,
+        targetType: 'order', targetId: order._id, targetName: order.orderId, amount,
+        summary: `Released ৳${amount} cashback for ${order.product}${auto ? ' (automatic verification)' : ''}`,
+      })
       released = true
     }
   }

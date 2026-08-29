@@ -5,9 +5,25 @@ const { requireAuth, requireRole } = require('../middleware/auth')
 const { computeBalance, walletBalance } = require('../utils/balance')
 const { normalizeBdMobile, isValidBdMobile, maskMobile } = require('../utils/phone')
 const payouts = require('../services/payouts')
+const audit = require('../services/audit')
+const fraud = require('../services/fraud')
+const { notifySafe } = require('../services/notifications')
+const { getSettingsMap } = require('../utils/settings')
+const User = require('../models/User')
 
-const MIN_WITHDRAWAL = Number(process.env.MIN_WITHDRAWAL) || 500
 const PAYOUT_METHODS = ['bkash', 'nagad', 'rocket']
+
+/**
+ * The withdrawal floor is an admin setting (Commission & Settings), with the env
+ * var as the fallback — it used to be a constant here AND a setting there,
+ * which meant the admin panel showed a number the API ignored.
+ */
+async function minWithdrawal() {
+  const m = await getSettingsMap().catch(() => ({}))
+  const fromSettings = Number(m.minWithdrawal)
+  if (Number.isFinite(fromSettings) && fromSettings > 0) return fromSettings
+  return Number(process.env.MIN_WITHDRAWAL) || 500
+}
 
 // ── GET /api/transactions — creator's own transactions + balances ──────────
 router.get('/', requireAuth, async (req, res) => {
@@ -32,8 +48,10 @@ router.get('/', requireAuth, async (req, res) => {
       pendingEscrow: balance.pendingEscrow,
       available:     balance.available,
       reserved:      balance.reserved || 0,
-      minWithdrawal: MIN_WITHDRAWAL,
+      minWithdrawal: await minWithdrawal(),
       payoutMethods: PAYOUT_METHODS,
+      blocked:       !!req.user.blocked,
+      blockReason:   req.user.blockReason || '',
     })
   } catch (err) {
     console.error('[transactions GET]', err)
@@ -53,8 +71,16 @@ router.post('/withdraw', requireAuth, requireRole('creator'), async (req, res) =
     if (!isValidBdMobile(rawAccount)) {
       return res.status(400).json({ message: 'That does not look like a Bangladeshi mobile number (e.g. 01712345678).' })
     }
-    if (Number(amount) < MIN_WITHDRAWAL) {
-      return res.status(400).json({ message: `Minimum withdrawal is ৳${MIN_WITHDRAWAL}.` })
+    const floor = await minWithdrawal()
+    if (Number(amount) < floor) {
+      return res.status(400).json({ message: `Minimum withdrawal is ৳${floor}.` })
+    }
+
+    // A held account should hear it here, not silently sit in a queue that will
+    // refuse them later.
+    const gate = await fraud.guard(req.user, { action: 'payout' })
+    if (!gate.allowed && req.user.blocked) {
+      return res.status(403).json({ message: gate.reason })
     }
 
     // One pending payout at a time — stops accidental double requests and keeps
@@ -81,6 +107,23 @@ router.post('/withdraw', requireAuth, requireRole('creator'), async (req, res) =
       payoutStatus: 'queued',
       bkashNumber:  normalized,   // legacy field kept in sync for old readers
     })
+
+    audit.record({
+      actor: req.user, action: audit.ACTIONS.PAYOUT_REQUESTED, targetType: 'transaction', targetId: tx._id,
+      amount: tx.amount, summary: `Requested ৳${tx.amount} to ${maskMobile(normalized)} (${payoutMethod})`, req,
+    })
+    // Re-score on the way out: a payout request is when a ring's shared number
+    // becomes visible, and the queue reads the score at send time.
+    fraud.assessInBackground(req.user._id)
+    // Somebody has to know money is waiting — silent queues are how creators end
+    // up waiting a week.
+    User.find({ role: 'admin' }).select('_id').lean()
+      .then(admins => admins.forEach(a => notifySafe(a._id, {
+        type: 'payout', icon: '💸', title: 'Payout requested',
+        body: `${req.user.name} asked for ৳${tx.amount.toLocaleString()} (${payoutMethod}).`,
+        link: '/admin/payouts',
+      })))
+      .catch(() => {})
 
     res.status(201).json({
       transaction: tx,
@@ -195,6 +238,62 @@ router.post('/payouts/run', requireAuth, requireRole('admin'), async (req, res) 
     })
   } catch (err) {
     res.status(500).json({ message: err.message || 'Server error.' })
+  }
+})
+
+// ── POST /api/transactions/withdraw/:id/cancel — creator changes their mind ─
+// Their money, their call: while it is still queued they can pull it back
+// (wrong number, wrong amount) without waiting for an admin.
+router.post('/withdraw/:id/cancel', requireAuth, requireRole('creator'), async (req, res) => {
+  try {
+    const tx = await Transaction.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user._id, type: 'withdrawal', status: 'pending', payoutStatus: { $in: ['queued', null] } },
+      { $set: { status: 'failed', payoutStatus: 'rejected', payoutError: 'Cancelled by the creator' } },
+      { new: true },
+    )
+    if (!tx) return res.status(409).json({ message: 'That payout is already being processed — contact support to stop it.' })
+    audit.record({ actor: req.user, action: audit.ACTIONS.PAYOUT_CANCELLED, targetType: 'transaction', targetId: tx._id, amount: tx.amount, summary: 'Creator cancelled their own request', req })
+    res.json({ transaction: tx, message: 'Request cancelled — the money is back in your balance.' })
+  } catch (err) {
+    console.error('[withdraw cancel]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── GET /api/transactions/export.csv — reconciliation export ───────────────
+// Admins get the payout ledger; creators get their own statement.
+router.get('/export.csv', requireAuth, async (req, res) => {
+  try {
+    const filter = req.user.role === 'admin'
+      ? (req.query.type === 'payouts' ? { type: 'withdrawal' } : {})
+      : { userId: req.user._id }
+    const rows = await Transaction.find(filter)
+      .populate('userId', 'name email instagramHandle')
+      .sort({ createdAt: -1 }).limit(5000).lean()
+
+    // Excel-safe: quote anything containing a comma, quote or newline.
+    const esc = (v) => {
+      const s = String(v ?? '')
+      return /["\r\n,]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const header = ['date', 'type', 'status', 'payout_status', 'amount_bdt', 'method', 'account', 'reference', 'description']
+    if (req.user.role === 'admin') header.splice(1, 0, 'creator', 'email')
+    const lines = [header.join(',')]
+    for (const t of rows) {
+      const base = [
+        new Date(t.createdAt).toISOString(),
+        ...(req.user.role === 'admin' ? [t.userId?.name || '', t.userId?.email || ''] : []),
+        t.type, t.status, t.payoutStatus || '', t.amount,
+        t.payoutMethod || '', t.payoutAccount || t.bkashNumber || '', t.payoutRef || '', t.desc || '',
+      ]
+      lines.push(base.map(esc).join(','))
+    }
+    res.set('Content-Type', 'text/csv; charset=utf-8')
+    res.set('Content-Disposition', `attachment; filename="flextag-${req.user.role === 'admin' ? 'payouts' : 'wallet'}-${new Date().toISOString().slice(0, 10)}.csv"`)
+    res.send(lines.join('\r\n'))
+  } catch (err) {
+    console.error('[transactions export]', err)
+    res.status(500).json({ message: 'Server error.' })
   }
 })
 

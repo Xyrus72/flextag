@@ -3,7 +3,7 @@ import AppShell from '../components/AppShell'
 import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, BadgeCheck, FileSearch, Layers,
-  ShieldAlert, Percent, HeartPulse, Activity, PackageSearch, UserCheck, MessageSquare, Banknote, Fingerprint,
+  ShieldAlert, Percent, HeartPulse, Activity, PackageSearch, UserCheck, MessageSquare, Banknote, Fingerprint, ScrollText,
 } from 'lucide-react'
 
 const icons = {
@@ -15,6 +15,7 @@ const icons = {
   financial:  <NavIcon icon={HeartPulse}      color="#10b981" />,
   payouts:    <NavIcon icon={Banknote}        color="#22c55e" />,
   fraud:      <NavIcon icon={Fingerprint}     color="#f43f5e" />,
+  audit:      <NavIcon icon={ScrollText}      color="#94a3b8" />,
   analytics:  <NavIcon icon={Activity}        color="#a78bfa" />,
   review:     <NavIcon icon={FileSearch}      color="#7c3aed" />,
   products:   <NavIcon icon={PackageSearch}   color="#fbbf24" />,
@@ -35,6 +36,7 @@ const adminLinks = [
   { path: '/admin/payouts',                label: 'Creator Payouts',      icon: icons.payouts,   badge: '৳' },
   { path: '/admin/financial',              label: 'Financial Health',     icon: icons.financial },
   { path: '/admin/analytics',              label: 'Platform Analytics',   icon: icons.analytics },
+  { path: '/admin/audit',                  label: 'Audit Trail',          icon: icons.audit },
   { path: '/admin/chat',                   label: 'Live Chat Support',    icon: icons.chat,      badge: '●' },
 ]
 

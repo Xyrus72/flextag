@@ -1,16 +1,31 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { getAdminFinancial } from '../../services/admin'
+import { getPlatformFloat, confirmBankTransfer } from '../../services/brandWallet'
 
 const FinancialDashboard = () => {
   const [data, setData]     = useState({ campaignEscrow: [], totalEscrow: 0, commissionRevenue: 0, upcomingPayouts: [] })
   const [loading, setLoading] = useState(true)
+  // Brand funding — the money brands have actually put in, against what the
+  // platform still owes creators.
+  const [float, setFloat]   = useState(null)
+  const [busyId, setBusyId] = useState(null)
+
+  const loadFloat = useCallback(() => getPlatformFloat().then(setFloat).catch(() => {}), [])
 
   useEffect(() => {
     getAdminFinancial()
       .then(d => setData(d))
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [])
+    loadFloat()
+  }, [loadFloat])
+
+  const confirmTransfer = async (entry) => {
+    if (!window.confirm(`Confirm you can see ৳${entry.amount.toLocaleString()} from ${entry.brandId?.companyName || entry.brandId?.name || 'this brand'} on the statement?`)) return
+    setBusyId(entry._id)
+    try { await confirmBankTransfer(entry._id); await loadFloat() } catch { /* surfaced by the row staying */ }
+    finally { setBusyId(null) }
+  }
 
   const { campaignEscrow, totalEscrow, commissionRevenue, upcomingPayouts } = data
 
@@ -38,6 +53,81 @@ const FinancialDashboard = () => {
             <p className="text-xs text-zinc-500 mt-1">{s.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* ── Brand funding ─────────────────────────────────────────────── */}
+      <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6 mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+          <div>
+            <h2 className="text-lg font-bold text-white">Brand Funding</h2>
+            <p className="text-xs text-zinc-500">Money brands have put in, against what has been paid out on their behalf.</p>
+          </div>
+          {float && (
+            <div className="text-right">
+              <p className={`text-2xl font-extrabold ${float.float >= (data.totalEscrow || 0) ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                ৳{(float.float || 0).toLocaleString()}
+              </p>
+              <p className="text-xs text-zinc-500">held for campaigns</p>
+            </div>
+          )}
+        </div>
+
+        {!float ? (
+          <p className="text-sm text-zinc-500">No brand funding recorded yet.</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+              {[
+                { l: 'Funded',   v: float.funded,   c: 'text-emerald-400' },
+                { l: 'Spent',    v: float.spent,    c: 'text-violet-400' },
+                { l: 'Refunded', v: float.refunded, c: 'text-cyan-400' },
+                { l: 'Fees',     v: float.fees,     c: 'text-yellow-400' },
+              ].map(m => (
+                <div key={m.l} className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.03]">
+                  <p className={`text-lg font-bold ${m.c}`}>৳{(m.v || 0).toLocaleString()}</p>
+                  <p className="text-xs text-zinc-500">{m.l}</p>
+                </div>
+              ))}
+            </div>
+
+            {float.pendingTransfers?.length > 0 && (
+              <div className="mb-5">
+                <p className="text-sm font-bold text-white mb-3">Bank transfers awaiting confirmation</p>
+                <div className="space-y-2">
+                  {float.pendingTransfers.map(t => (
+                    <div key={t._id} className="flex flex-wrap items-center gap-3 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20">
+                      <div className="flex-1 min-w-[200px]">
+                        <p className="text-sm text-white">{t.brandId?.companyName || t.brandId?.name || 'Brand'}</p>
+                        <p className="text-xs text-zinc-500">{t.desc} · {new Date(t.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <span className="text-sm font-bold text-yellow-400">৳{t.amount.toLocaleString()}</span>
+                      <button className="btn-primary" style={{ padding: '7px 14px', fontSize: 12 }}
+                        disabled={busyId === t._id} onClick={() => confirmTransfer(t)}>
+                        {busyId === t._id ? 'Confirming…' : 'Confirm received'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {float.balances?.length > 0 && (
+              <div>
+                <p className="text-sm font-bold text-white mb-3">Balances (lowest first)</p>
+                <div className="space-y-2">
+                  {float.balances.slice(0, 6).map(b => (
+                    <div key={b.brandId} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02]">
+                      <span className="text-sm text-zinc-300">{b.name}</span>
+                      <span className={`text-sm font-bold ${b.balance <= 0 ? 'text-red-400' : b.balance < 2000 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                        ৳{b.balance.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">

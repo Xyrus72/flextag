@@ -45,6 +45,7 @@ const Analytics         = lazy(() => import('./pages/brand/Analytics'))
 const InviteCampaign    = lazy(() => import('./pages/brand/InviteCampaign'))
 const CreatorAudit      = lazy(() => import('./pages/brand/CreatorAudit'))
 const BrandRatings      = lazy(() => import('./pages/brand/BrandRatings'))
+const BrandWallet       = lazy(() => import('./pages/brand/BrandWallet'))
 const PostProduct       = lazy(() => import('./pages/brand/PostProduct'))
 const MyProducts        = lazy(() => import('./pages/brand/MyProducts'))
 
@@ -56,6 +57,7 @@ const CommissionSettings = lazy(() => import('./pages/admin/CommissionSettings')
 const FinancialDashboard = lazy(() => import('./pages/admin/FinancialDashboard'))
 const Payouts           = lazy(() => import('./pages/admin/Payouts'))
 const FraudReview       = lazy(() => import('./pages/admin/FraudReview'))
+const AuditLog          = lazy(() => import('./pages/admin/AuditLog'))
 const PlatformAnalytics = lazy(() => import('./pages/admin/PlatformAnalytics'))
 const PostReview        = lazy(() => import('./pages/admin/PostReview'))
 const ProductApproval   = lazy(() => import('./pages/admin/ProductApproval'))
@@ -129,6 +131,7 @@ const AppRoutes = () => (
         <Route path="/brand/creator-audit" element={<CreatorAudit />} />
         <Route path="/brand/ratings" element={<BrandRatings />} />
         <Route path="/brand/disputes" element={<Disputes />} />
+        <Route path="/brand/wallet" element={<BrandWallet />} />
         <Route path="/brand/profile" element={<BrandProfile />} />
         <Route path="/brand/chat" element={<Chat />} />
       </Route>
@@ -146,6 +149,7 @@ const AppRoutes = () => (
         <Route path="/admin/financial" element={<FinancialDashboard />} />
         <Route path="/admin/payouts" element={<Payouts />} />
         <Route path="/admin/fraud" element={<FraudReview />} />
+        <Route path="/admin/audit" element={<AuditLog />} />
         <Route path="/admin/analytics" element={<PlatformAnalytics />} />
         <Route path="/admin/chat" element={<AdminChat />} />
       </Route>

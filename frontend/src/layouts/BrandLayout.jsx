@@ -4,7 +4,7 @@ import { useT } from '../context/LanguageContext'
 import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, Megaphone, Package, BarChart3,
-  UserPlus, Star, Building2, PackagePlus, PackageCheck, MessageSquare, ShieldCheck, ShieldAlert,
+  UserPlus, Star, Building2, PackagePlus, PackageCheck, MessageSquare, ShieldCheck, ShieldAlert, Wallet,
 } from 'lucide-react'
 
 const icons = {
@@ -20,6 +20,7 @@ const icons = {
   myProducts:  <NavIcon icon={PackageCheck}    color="#4ade80" />,
   chat:        <NavIcon icon={MessageSquare}    color="#06b6d4" />,
   disputes:    <NavIcon icon={ShieldAlert}      color="#ef4444" />,
+  wallet:      <NavIcon icon={Wallet}           color="#22c55e" />,
 }
 
 const brandLinks = (t) => [
@@ -28,6 +29,7 @@ const brandLinks = (t) => [
   { path: '/brand/my-products',      label: t('menu.myProducts'),      icon: icons.myProducts },
   { path: '/brand/campaign-builder', label: t('menu.createCampaign'),  icon: icons.campaign },
   { path: '/brand/orders',           label: t('menu.fulfillment'),     icon: icons.orders },
+  { path: '/brand/wallet',           label: t('menu.brandWallet'),     icon: icons.wallet },
   { path: '/brand/analytics',        label: t('menu.analytics'),       icon: icons.analytics },
   { path: '/brand/invite',           label: t('menu.inviteCreators'),  icon: icons.invite },
   { path: '/brand/creator-audit',    label: t('menu.creatorAudit'),    icon: icons.audit },

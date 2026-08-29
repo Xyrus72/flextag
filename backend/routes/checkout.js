@@ -10,6 +10,7 @@ const { computeReward, rewardCapFor } = require('../utils/reward')
 const { commitInstant, inFlightReward } = require('../utils/rewardLedger')
 const { getIgSettings } = require('../utils/settings')
 const fraud = require('../services/fraud')
+const brandWallet = require('../services/brandWallet')
 
 const STORE_ID   = process.env.SSLCZ_STORE_ID
 const STORE_PASS = process.env.SSLCZ_STORE_PASSWORD
@@ -62,6 +63,8 @@ router.post('/init', requireAuth, requireRole('creator'), async (req, res) => {
       if (campaign.budgetCap > 0 && (campaign.budgetUsed || 0) + r.rewardTotal > campaign.budgetCap) {
         return res.status(400).json({ message: `"${campaign.product}" has reached its cashback budget.` })
       }
+      const funding = await brandWallet.canAfford(campaign.brandId, r.rewardTotal)
+      if (!funding.allowed) return res.status(400).json({ message: `"${campaign.product}": ${funding.reason}` })
       totalAmount += r.payable
       orderDocs.push({
         orderId: genOrderId(), creatorId: req.user._id, brandId: campaign.brandId,

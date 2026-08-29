@@ -13,6 +13,8 @@ const { getIgSettings } = require('../utils/settings')
 const { computeTier } = require('../utils/tier')
 const fraud = require('../services/fraud')
 const ratings = require('../services/ratings')
+const brandWallet = require('../services/brandWallet')
+const audit = require('../services/audit')
 
 // helper to generate order IDs
 const genOrderId = () => 'ORD-' + Math.floor(1000 + Math.random() * 9000)
@@ -139,6 +141,11 @@ router.post('/', requireAuth, requireRole('creator'), async (req, res) => {
       return res.status(400).json({ message: 'This campaign has reached its cashback budget.' })
     }
 
+    // Funded-balance gate. Off unless an admin turns requireBrandFunding on, so
+    // switching the brand ledger on does not retroactively freeze campaigns.
+    const funding = await brandWallet.canAfford(campaign.brandId, r.rewardTotal)
+    if (!funding.allowed) return res.status(400).json({ message: funding.reason })
+
     const order = await Order.create({
       orderId:    genOrderId(),
       creatorId:  req.user._id,
@@ -206,6 +213,17 @@ async function clawbackCashback(order) {
     }
     if (claimed.campaignId) await Campaign.updateOne({ _id: claimed.campaignId }, { $inc: { budgetUsed: -amount } }).catch(() => {})
     if (claimed.productId) await Product.updateOne({ _id: claimed.productId }, { $inc: { totalCashbackSpent: -amount } }).catch(() => {})
+    // The brand paid for a post that is now void — give it back to their balance.
+    if (claimed.brandId) {
+      await brandWallet.credit({
+        brandId: claimed.brandId, amount, orderId: claimed._id, campaignId: claimed.campaignId,
+        ref: `refund:bonus:${claimed._id}`, desc: `Cashback reversed — ${claimed.product} was returned`,
+      }).catch(() => {})
+    }
+    audit.record({
+      action: audit.ACTIONS.CASHBACK_CLAWED_BACK, targetType: 'order', targetId: claimed._id, targetName: claimed.orderId,
+      amount, summary: `Reversed ৳${amount} after ${claimed.product} was returned`,
+    })
     notifySafe(claimed.creatorId, { type: 'cashback', icon: '↩️', title: 'Cashback reversed',
       body: `৳${amount.toLocaleString()} was deducted because your ${claimed.product} order was returned.`, link: '/creator/wallet' })
   }
