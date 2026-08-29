@@ -84,6 +84,14 @@ const userSchema = new mongoose.Schema({
   igVerifyCode:      { type: String, default: '' },
   igVerifyCodeAt:    { type: Date, default: null },
   igVerifiedAt:      { type: Date, default: null },
+  // "Connect Instagram" (OAuth). The token is `select: false` so it can never
+  // ride along in a user payload by accident — routes ask for it explicitly.
+  igConnected:       { type: Boolean, default: false },
+  igGraphUserId:     { type: String, default: '' },
+  igGraphUsername:   { type: String, default: '' },
+  igGraphToken:      { type: String, default: '', select: false },
+  igTokenExpiresAt:  { type: Date, default: null },
+  igConnectedAt:     { type: Date, default: null },
   avatar:      { type: String, default: null },
   isSuper:     { type: Boolean, default: false },
 }, { timestamps: true })

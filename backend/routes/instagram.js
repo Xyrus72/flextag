@@ -7,6 +7,7 @@ const { cleanUsername } = require('../services/instagram/endpoints')
 const { precheck, runAudit, fetchProfile } = require('../services/instagram/audit')
 const { getProvider, providers } = require('../services/instagram/provider')
 const { verifyPost } = require('../services/instagram/postCheck')
+const connect = require('../services/instagram/connect')
 const IgAudit = require('../models/IgAudit')
 const Post    = require('../models/Post')
 const User    = require('../models/User')
@@ -184,6 +185,165 @@ router.post('/verify-identity/check', requireAuth, requireRole('creator'), ident
     await IgAudit.updateOne({ username: handle }, { $set: { user: req.user._id } }).catch(() => {})
     res.json({ verified: true, handle, message: 'Instagram ownership verified — your posts can now be approved automatically. You can remove the code from your bio.' })
   } catch (err) { sendIgError(req, res, err, 'verify-identity/check') }
+})
+
+/* ── Connect Instagram (OAuth) ───────────────────────────────────────────────
+ * A creator-authorised token proves ownership continuously and unlocks stories
+ * — which vanish in 24h and no scraper can see. Everything degrades: with no
+ * Meta app configured these return 503 and the bio-code path stays the way
+ * creators verify.
+ */
+
+// GET /api/instagram/connect/status
+router.get('/connect/status', requireAuth, requireRole('creator'), async (req, res) => {
+  const u = req.user
+  res.json({
+    available: connect.configured(),
+    connected: !!u.igConnected,
+    username: u.igGraphUsername || '',
+    connectedAt: u.igConnectedAt || null,
+    expiresAt: u.igTokenExpiresAt || null,
+    expired: !!(u.igTokenExpiresAt && new Date(u.igTokenExpiresAt) < new Date()),
+  })
+})
+
+// POST /api/instagram/connect/start -> { url }
+router.post('/connect/start', requireAuth, requireRole('creator'), identityLimiter, async (req, res) => {
+  try {
+    if (!connect.configured()) {
+      return res.status(503).json({ message: 'Instagram connect is not set up yet. Verify with the bio code instead.' })
+    }
+    // CSRF: the state we hand Facebook must come back to the same session.
+    const state = crypto.randomBytes(16).toString('hex')
+    req.session.igOauthState = state
+    res.json({ url: connect.authUrl(state), scopes: connect.SCOPES })
+  } catch (err) { sendIgError(req, res, err, 'connect/start') }
+})
+
+// GET /api/instagram/connect/callback — Facebook redirects the human here
+router.get('/connect/callback', async (req, res) => {
+  const frontend = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '')
+  const back = (status, detail = '') =>
+    res.redirect(`${frontend}/creator/instagram-analyzer?connect=${status}${detail ? `&reason=${encodeURIComponent(detail)}` : ''}`)
+  try {
+    const { code, state, error_description: errorDescription } = req.query
+    if (errorDescription) return back('denied', String(errorDescription).slice(0, 120))
+    if (!code) return back('error', 'No authorization code came back from Facebook.')
+    if (!req.session?.userId) return back('error', 'Your session expired — log in and try again.')
+    if (!state || state !== req.session.igOauthState) return back('error', 'Security check failed — start the connection again.')
+    delete req.session.igOauthState
+
+    const { token, expiresAt } = await connect.exchangeCode(String(code))
+    const account = await connect.resolveAccount(token)
+
+    // One Instagram account, one FlexTag creator — the same guard the handle has.
+    const taken = await User.exists({ _id: { $ne: req.session.userId }, igGraphUserId: account.igUserId })
+    if (taken) return back('taken', `@${account.username} is already connected to another FlexTag account.`)
+
+    await User.findByIdAndUpdate(req.session.userId, { $set: {
+      igConnected: true,
+      igGraphUserId: account.igUserId,
+      igGraphUsername: account.username,
+      igGraphToken: token,
+      igTokenExpiresAt: expiresAt,
+      igConnectedAt: new Date(),
+      // OAuth is stronger proof of ownership than a bio code.
+      igVerified: true,
+      igVerifiedAt: new Date(),
+      igVerifyCode: '',
+      instagramHandle: account.username,
+      followersCount: account.followers,
+      igIsPrivate: false,
+    } })
+    back('ok')
+  } catch (err) {
+    console.warn('[instagram connect callback]', err.code || '', err.message)
+    back('error', err instanceof client.IgError ? err.message : 'Could not finish the connection.')
+  }
+})
+
+// POST /api/instagram/connect/disconnect
+router.post('/connect/disconnect', requireAuth, requireRole('creator'), async (req, res) => {
+  await User.findByIdAndUpdate(req.user._id, { $set: {
+    igConnected: false, igGraphToken: '', igTokenExpiresAt: null, igGraphUserId: '', igGraphUsername: '',
+  } })
+  // igVerified stays: ownership was proven, disconnecting does not unprove it.
+  res.json({ connected: false, message: 'Instagram disconnected. Your verification badge stays.' })
+})
+
+// GET /api/instagram/stories/me — the creator's live stories (24h window)
+router.get('/stories/me', requireAuth, requireRole('creator'), verifyLimiter, async (req, res) => {
+  try {
+    const me = await User.findById(req.user._id).select('+igGraphToken igGraphUserId igConnected')
+    if (!me?.igConnected || !me.igGraphToken) {
+      return res.status(400).json({ message: 'Connect your Instagram first — stories can only be read with your permission.' })
+    }
+    const stories = await connect.fetchStories(me.igGraphUserId, me.igGraphToken)
+    res.json({ stories, count: stories.length })
+  } catch (err) { sendIgError(req, res, err, 'stories/me') }
+})
+
+// POST /api/instagram/verify-story  { postId }
+// Stories vanish in 24h, so "was it live?" can only ever be answered while it
+// IS live — and only by the creator's own token. What the Graph API returns is
+// existence, timing and (when insights are permitted) reach; it does NOT expose
+// stickers or mentions, so the content check stays with a human. We capture the
+// evidence and say exactly that, rather than releasing money on "a story exists".
+router.post('/verify-story', requireAuth, requireRole('creator'), verifyLimiter, async (req, res) => {
+  try {
+    const { postId } = req.body || {}
+    if (!postId) return res.status(400).json({ message: 'postId is required.' })
+    const me = await User.findById(req.user._id).select('+igGraphToken igGraphUserId igConnected')
+    if (!me?.igConnected || !me.igGraphToken) {
+      return res.status(400).json({ message: 'Connect your Instagram first — a story can only be checked with your permission, and only while it is live.' })
+    }
+    const post = await Post.findOne({ _id: postId, creatorId: req.user._id }).populate('orderId', 'status product')
+    if (!post) return res.status(404).json({ message: 'Post not found.' })
+
+    const stories = await connect.fetchStories(me.igGraphUserId, me.igGraphToken)
+    if (!stories.length) {
+      return res.json({ verified: false, message: 'No live story found on your account right now. Post it, then check within 24 hours.' })
+    }
+
+    // Prefer the exact story they submitted; otherwise the newest live one.
+    const submitted = String(post.postUrl || '')
+    const match = stories.find(st => submitted && st.permalink && submitted.includes(String(st.id))) ||
+      stories.find(st => st.permalink && submitted && st.permalink === submitted) ||
+      stories.slice().sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]
+
+    const insights = await connect.fetchMediaInsights(match.id, me.igGraphToken)
+    const postedAt = match.timestamp ? new Date(match.timestamp) : new Date()
+    const afterOrder = post.orderId?.createdAt ? postedAt >= new Date(post.orderId.createdAt) : true
+
+    post.verification = {
+      status: 'pending',
+      checks: [
+        { key: 'story_live', label: 'Story is live on your account', passed: true, required: true, detail: `Posted ${postedAt.toLocaleString()}` },
+        { key: 'story_timing', label: 'Posted after the order', passed: afterOrder, required: true, detail: afterOrder ? 'Timing checks out' : 'This story predates the order' },
+        { key: 'story_content', label: 'Brand tag / hashtag', passed: false, required: true, detail: 'Instagram does not expose story stickers or mentions to apps — an admin confirms this one by eye.' },
+      ],
+      snapshot: {
+        mediaType: 'story', permalink: match.permalink || '', thumbnail: match.thumbnail_url || match.media_url || '',
+        takenAt: postedAt, views: insights.reach ?? insights.impressions ?? null, likes: null, comments: null,
+        owner: me.igGraphUsername,
+      },
+      checkedAt: new Date(),
+      error: '',
+      source: 'graph-connect',
+    }
+    await post.save()
+
+    res.json({
+      verified: true,
+      needsReview: true,
+      reach: insights.reach ?? null,
+      impressions: insights.impressions ?? null,
+      postedAt,
+      message: afterOrder
+        ? 'Story captured with proof it was live. An admin confirms the brand tag before the cashback releases.'
+        : 'That story was posted before your order — post a new one and check again.',
+    })
+  } catch (err) { sendIgError(req, res, err, 'verify-story') }
 })
 
 module.exports = router

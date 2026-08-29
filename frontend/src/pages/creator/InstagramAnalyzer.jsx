@@ -7,7 +7,7 @@ import {
   Activity, Clock, Camera, ShieldCheck, Lock, Globe, BadgeCheck, Briefcase, Sparkles,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { getMyInstagramAudit, runInstagramAudit, startIdentityVerification, checkIdentityVerification } from '../../services/instagram'
+import { getMyInstagramAudit, runInstagramAudit, startIdentityVerification, checkIdentityVerification, getConnectStatus, startInstagramConnect, disconnectInstagram } from '../../services/instagram'
 
 /* ── Constants ─────────────────────────────────────────────────────────────── */
 
@@ -635,6 +635,89 @@ const RunAuditCard = ({ handle, running, onRun, precheckPending }) => (
   </Panel>
 )
 
+/* ── Connect Instagram (OAuth) ─────────────────────────────────────────────── */
+
+/**
+ * The production-correct path: the creator authorises FlexTag on their own
+ * Instagram professional account. That proves ownership continuously (no bio
+ * code to copy) and is the only way stories — which vanish in 24h — can be
+ * verified at all.
+ */
+// Facebook redirects back to this page with ?connect=ok|denied|taken|error.
+// Read once, as the initial banner, so the effect stays side-effect-only.
+const connectBannerFromUrl = () => {
+  const params = new URLSearchParams(window.location.search)
+  const reason = params.get('reason')
+  switch (params.get('connect')) {
+    case 'ok':     return { tone: 'success', text: 'Instagram connected — your account is verified and stories can now be checked.' }
+    case 'denied': return { tone: 'warning', text: 'You cancelled the Instagram permission screen.' }
+    case 'taken':  return { tone: 'warning', text: reason || 'That Instagram account is already connected to another FlexTag account.' }
+    case 'error':  return { tone: 'error', text: reason || 'Could not finish the connection.' }
+    default:       return null
+  }
+}
+
+const ConnectCard = ({ onConnected }) => {
+  const [state, setState] = useState(null)   // { available, connected, username, expired }
+  const [busy, setBusy]   = useState(false)
+  const [msg, setMsg]     = useState(connectBannerFromUrl)
+
+  useEffect(() => {
+    let alive = true
+    getConnectStatus().then(d => { if (alive) setState(d) }).catch(() => {})
+    const result = new URLSearchParams(window.location.search).get('connect')
+    if (result === 'ok') onConnected?.()
+    if (result) window.history.replaceState({}, '', window.location.pathname)
+    return () => { alive = false }
+  }, [onConnected])
+
+  const connect = async () => {
+    setBusy(true); setMsg(null)
+    try {
+      const d = await startInstagramConnect()
+      window.location.href = d.url
+    } catch (err) {
+      setMsg(describeError(err))
+      setBusy(false)
+    }
+  }
+
+  const disconnect = async () => {
+    setBusy(true)
+    try {
+      await disconnectInstagram()
+      setState(s2 => ({ ...s2, connected: false }))
+      setMsg({ tone: 'info', text: 'Disconnected. Your verification badge stays.' })
+    } catch (err) { setMsg(describeError(err)) } finally { setBusy(false) }
+  }
+
+  if (!state?.available) return null   // no Meta app configured — bio code is the path
+
+  return (
+    <Panel delay={0} style={{ border: '1px solid rgba(6,182,212,0.35)', background: 'rgba(6,182,212,0.06)' }}>
+      <SectionTitle icon={ShieldCheck} color="#67e8f9" right={state.connected ? <span style={{ color: '#4ade80', fontWeight: 700 }}>Connected</span> : 'Recommended'}>
+        {state.connected ? `Connected as @${state.username}` : 'Connect your Instagram'}
+      </SectionTitle>
+      {msg && <Banner tone={msg.tone} text={msg.text} />}
+      <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.6)', margin: '0 0 14px', lineHeight: 1.6 }}>
+        {state.connected
+          ? 'FlexTag reads your posts and live stories with your permission — no bio code, and story campaigns can be verified while the story is up.'
+          : 'One tap instead of a bio code: authorise FlexTag on your Instagram professional account. It proves the account is yours, keeps your numbers current, and is the only way a story can be verified before it disappears.'}
+      </p>
+      {state.expired && <Banner tone="warning" text="That connection expired — reconnect to keep story verification working." />}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        {state.connected ? (
+          <button type="button" className="btn-ghost" disabled={busy} onClick={disconnect} style={{ padding: '9px 16px', fontSize: 12 }}>Disconnect</button>
+        ) : (
+          <button type="button" className="btn-primary" disabled={busy} onClick={connect} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <InstagramGlyph size={14} /> {busy ? 'Opening Instagram…' : 'Connect Instagram'}
+          </button>
+        )}
+      </div>
+    </Panel>
+  )
+}
+
 /* ── Ownership proof (bio code) ────────────────────────────────────────────── */
 
 const IdentityCard = ({ handle, onVerified }) => {
@@ -825,6 +908,12 @@ const InstagramAnalyzer = () => {
 
       {error && <Banner tone={error.tone} text={error.text} />}
       {notice && <Banner tone="info" text={notice} />}
+
+      {!loading && (
+        <div style={{ marginBottom: 20 }}>
+          <ConnectCard onConnected={markOwnerVerified} />
+        </div>
+      )}
 
       {!loading && identityNeeded && (
         <div style={{ marginBottom: 20 }}>
