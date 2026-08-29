@@ -17,3 +17,7 @@ export const getMyProducts = () =>
 
 export const getProductReviews = (id) =>
   api.get(`/api/products/${id}/reviews`).then(r => r.data)
+
+/** Bulk import. dryRun=true validates without writing anything. */
+export const importProducts = (csv, dryRun = false) =>
+  api.post('/api/products/import', { csv, dryRun }).then(r => r.data)

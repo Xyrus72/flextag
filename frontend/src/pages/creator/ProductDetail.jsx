@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { getProduct, getProductReviews } from '../../services/products'
 import StarRating from '../../components/StarRating'
 import WishlistButton from '../../components/WishlistButton'
+import { API_URL } from '../../config'
 import { getWishlist } from '../../services/users'
 import { getCampaigns } from '../../services/campaigns'
 import { startConversation } from '../../services/messages'
@@ -69,6 +70,15 @@ const ProductDetail = () => {
       .catch(() => {})
     return () => { alive = false }
   }, [id])
+
+  const shareProduct = async () => {
+    const url = `${API_URL}/share/p/${product._id}`
+    const payload = { title: `${product.cashbackRate}% back on ${product.name}`, url }
+    if (navigator.share) {
+      try { await navigator.share(payload); return } catch { /* dismissed — fall through to copy */ }
+    }
+    navigator.clipboard?.writeText(url).catch(() => {})
+  }
 
   const addToCart = () => {
     const cartKey = 'flextag_cart'
@@ -154,7 +164,22 @@ const ProductDetail = () => {
           <span className="text-xs text-zinc-500 uppercase tracking-wider font-medium">{product.brand}</span>
           <div className="flex items-start justify-between gap-4 mt-2">
             <h1 className="text-3xl font-bold text-white">{product.name}</h1>
-            <WishlistButton productId={product._id} saved={savedIds.includes(String(product._id))} onChange={ids => setSavedIds(ids)} />
+            <div className="flex items-center gap-2">
+              {/* Shares the crawler-friendly link, so it unfurls with the actual
+                  deal on it instead of a blank card. */}
+              <button onClick={shareProduct} title="Share this deal" aria-label="Share this deal"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36,
+                  borderRadius: 999, cursor: 'pointer', background: 'rgba(var(--ink-rgb),0.05)',
+                  border: '1px solid rgba(var(--ink-rgb),0.1)', color: 'rgba(var(--ink-rgb),0.5)',
+                }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                </svg>
+              </button>
+              <WishlistButton productId={product._id} saved={savedIds.includes(String(product._id))} onChange={ids => setSavedIds(ids)} />
+            </div>
           </div>
           {reviews.count > 0 ? (
             <div className="flex items-center gap-2 mt-3">

@@ -4,7 +4,7 @@ import { useT } from '../context/LanguageContext'
 import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, Megaphone, Package, BarChart3,
-  UserPlus, Star, Building2, PackagePlus, PackageCheck, MessageSquare, ShieldCheck, ShieldAlert, Wallet,
+  UserPlus, Star, Building2, PackagePlus, PackageCheck, MessageSquare, ShieldCheck, ShieldAlert, Wallet, Upload,
 } from 'lucide-react'
 
 const icons = {
@@ -21,12 +21,14 @@ const icons = {
   chat:        <NavIcon icon={MessageSquare}    color="#06b6d4" />,
   disputes:    <NavIcon icon={ShieldAlert}      color="#ef4444" />,
   wallet:      <NavIcon icon={Wallet}           color="#22c55e" />,
+  importCsv:   <NavIcon icon={Upload}           color="#94a3b8" />,
 }
 
 const brandLinks = (t) => [
   { path: '/brand',                  label: t('menu.dashboard'),       icon: icons.dashboard },
   { path: '/brand/post-product',     label: t('menu.postProduct'),     icon: icons.postProduct, badge: '+' },
   { path: '/brand/my-products',      label: t('menu.myProducts'),      icon: icons.myProducts },
+  { path: '/brand/import',           label: t('menu.importProducts'),  icon: icons.importCsv },
   { path: '/brand/campaign-builder', label: t('menu.createCampaign'),  icon: icons.campaign },
   { path: '/brand/orders',           label: t('menu.fulfillment'),     icon: icons.orders, badgeKey: 'orders' },
   { path: '/brand/wallet',           label: t('menu.brandWallet'),     icon: icons.wallet },
