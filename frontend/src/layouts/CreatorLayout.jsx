@@ -5,7 +5,7 @@ import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, ShoppingBag, ShoppingCart, Package,
   Upload, Wand2, Clock4, Wallet, TrendingUp,
-  Briefcase, UserCircle2, HelpCircle, Ticket, MessageSquare, ShieldAlert, Heart,
+  Briefcase, UserCircle2, HelpCircle, Ticket, MessageSquare, ShieldAlert, Heart, LineChart,
 } from 'lucide-react'
 
 /**
@@ -34,6 +34,7 @@ const icons = {
   caption:     <NavIcon icon={Wand2}            color="#ec4899" />,
   tracker:     <NavIcon icon={Clock4}           color="#06b6d4" />,
   wallet:      <NavIcon icon={Wallet}           color="#22c55e" />,
+  earnings:    <NavIcon icon={LineChart}        color="#4ade80" />,
   leaderboard: <NavIcon icon={TrendingUp}       color="#f97316" />,
   portfolio:   <NavIcon icon={Briefcase}        color="#a78bfa" />,
   profile:     <NavIcon icon={UserCircle2}      color="#7c3aed" />,
@@ -51,15 +52,16 @@ const creatorLinks = (t) => [
   { path: '/creator/cart',                label: t('menu.cart'),             icon: icons.cart },
   { path: '/creator/wishlist',            label: t('menu.wishlist'),         icon: icons.wishlist },
   { path: '/creator/orders',              label: t('menu.orders'),           icon: icons.orders },
-  { path: '/creator/submit-post',         label: t('menu.submitPost'),       icon: icons.post },
+  { path: '/creator/submit-post',         label: t('menu.submitPost'),       icon: icons.post, badgeKey: 'submitPost' },
   { path: '/creator/caption-validator',   label: t('menu.captionValidator'), icon: icons.caption, badge: 'AI' },
   { path: '/creator/campaign-tracker',    label: t('menu.campaignTracker'),  icon: icons.tracker },
   { path: '/creator/wallet',              label: t('menu.wallet'),           icon: icons.wallet },
+  { path: '/creator/earnings',            label: t('menu.earnings'),         icon: icons.earnings },
   { path: '/creator/leaderboard',         label: t('menu.leaderboard'),      icon: icons.leaderboard },
   { path: '/creator/portfolio',           label: t('menu.portfolio'),        icon: icons.portfolio },
   { path: '/creator/profile',             label: t('menu.profile'),          icon: icons.profile },
   { path: '/creator/instagram-analyzer',  label: t('menu.accountAudit'),     icon: icons.instagram, badge: 'IG' },
-  { path: '/creator/disputes',            label: t('menu.disputes'),         icon: icons.disputes },
+  { path: '/creator/disputes',            label: t('menu.disputes'),         icon: icons.disputes, badgeKey: 'disputes' },
   { path: '/support/chat',                label: t('menu.liveChat'),         icon: icons.chat, badge: '●' },
 ]
 

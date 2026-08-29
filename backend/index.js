@@ -200,3 +200,5 @@ require('./jobs/instagramJobs').start()
 require('./jobs/payoutJobs').start()
 // Daily email digest of unread notifications. No-op without mail credentials.
 require('./jobs/digestJobs').start()
+// Dispute SLA escalation, wishlist watch, rating nudges (MARKETPLACE_JOBS=off to disable).
+require('./jobs/marketplaceJobs').start()

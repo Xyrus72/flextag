@@ -52,3 +52,7 @@ export const addToWishlist = (productId) =>
 
 export const removeFromWishlist = (productId) =>
   api.delete(`/api/users/me/wishlist/${productId}`).then(r => r.data)
+
+/** Creator earnings analytics → { monthly, byBrand, lifetime, available, waitingOnPosts, … } */
+export const getMyEarnings = (months = 6) =>
+  api.get('/api/users/me/earnings', { params: { months } }).then(r => r.data)

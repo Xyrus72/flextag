@@ -4,6 +4,11 @@ const User     = require('../models/User')
 const Post     = require('../models/Post')
 const Campaign = require('../models/Campaign')
 const Transaction = require('../models/Transaction')
+const Dispute = require('../models/Dispute')
+const Product = require('../models/Product')
+const Order = require('../models/Order')
+const Notification = require('../models/Notification')
+const { requireAuth } = require('../middleware/auth')
 
 // Landing-page stats are read on every visit — cache briefly so a traffic spike
 // can't hammer Mongo. Numbers are REAL counts (no inflation): honesty is the point.
@@ -56,6 +61,45 @@ router.get('/public', async (_req, res) => {
     res.json(data)
   } catch (err) {
     console.error('[stats public]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── GET /api/stats/badges — real counts for the sidebar ────────────────────
+// The nav used to show hardcoded badges ("3" brands to verify, "2" disputes)
+// that were never true. These are the actual numbers, per role.
+router.get('/badges', requireAuth, async (req, res) => {
+  try {
+    const uid = req.user._id
+    const unread = await Notification.countDocuments({ user: uid, read: false })
+
+    if (req.user.role === 'admin') {
+      const [disputes, payouts, flagged, products, posts, brands] = await Promise.all([
+        Dispute.countDocuments({ status: { $ne: 'resolved' } }),
+        Transaction.countDocuments({ type: 'withdrawal', status: 'pending' }),
+        User.countDocuments({ role: 'creator', riskLevel: 'high', blocked: false }),
+        Product.countDocuments({ status: 'pending' }),
+        Post.countDocuments({ status: 'pending' }),
+        User.countDocuments({ role: 'brand', isVerified: false }),
+      ])
+      return res.json({ unread, disputes, payouts, flagged, products, posts, brands })
+    }
+
+    if (req.user.role === 'brand') {
+      const [disputes, orders] = await Promise.all([
+        Dispute.countDocuments({ brandId: uid, status: { $in: ['open', 'awaiting_brand'] } }),
+        Order.countDocuments({ brandId: uid, status: { $in: ['processing', 'packed'] } }),
+      ])
+      return res.json({ unread, disputes, orders })
+    }
+
+    const [disputes, toPost] = await Promise.all([
+      Dispute.countDocuments({ creatorId: uid, status: { $ne: 'resolved' } }),
+      Order.countDocuments({ creatorId: uid, status: 'delivered', cashbackReleased: false }),
+    ])
+    res.json({ unread, disputes, submitPost: toPost })
+  } catch (err) {
+    console.error('[stats badges]', err)
     res.status(500).json({ message: 'Server error.' })
   }
 })

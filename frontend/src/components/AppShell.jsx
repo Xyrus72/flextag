@@ -6,6 +6,7 @@ import NotificationBell from './NotificationBell'
 import ThemeToggle from './ThemeToggle'
 import LanguageToggle from './LanguageToggle'
 import useMediaQuery from '../hooks/useMediaQuery'
+import useBadges from '../hooks/useBadges'
 
 /**
  * Responsive dashboard shell shared by the creator / brand / admin layouts.
@@ -18,14 +19,23 @@ const isRoot = (path) => path === '/creator' || path === '/brand' || path === '/
 const AppShell = ({ links = [], children }) => {
   const isMobile = useMediaQuery('(max-width: 1023px)')
   const [open, setOpen] = useState(false)
-  const primary = links.slice(0, 4)
+  const counts = useBadges()
+
+  // A link declares WHICH count it wants (badgeKey); the number itself comes
+  // from the database, and a zero shows nothing at all.
+  const links_ = links.map(l => {
+    if (!l.badgeKey) return l
+    const n = counts[l.badgeKey] || 0
+    return { ...l, badge: n > 0 ? (n > 99 ? '99+' : String(n)) : null }
+  })
+  const primary = links_.slice(0, 4)
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative' }}>
       <div className="aurora-bg" />
       <div className="noise-overlay" />
 
-      <Sidebar links={links} mobile={isMobile} open={open} onClose={() => setOpen(false)} />
+      <Sidebar links={links_} mobile={isMobile} open={open} onClose={() => setOpen(false)} />
 
       {/* Drawer backdrop */}
       {isMobile && open && (

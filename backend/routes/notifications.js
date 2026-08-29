@@ -4,15 +4,23 @@ const Notification = require('../models/Notification')
 const User = require('../models/User')
 const { requireAuth } = require('../middleware/auth')
 
-// ── GET /api/notifications — current user's notifications + unread count ─────
+// ── GET /api/notifications — the bell (default) or the full centre ───────────
+// ?limit / ?skip page it, ?type filters, ?unread=1 narrows to what's new.
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20))
-    const [notifications, unread] = await Promise.all([
-      Notification.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(limit).lean(),
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20))
+    const skip  = Math.max(0, Number(req.query.skip) || 0)
+    const filter = { user: req.user._id }
+    if (req.query.type && req.query.type !== 'all') filter.type = req.query.type
+    if (req.query.unread === '1') filter.read = false
+
+    const [notifications, unread, total, types] = await Promise.all([
+      Notification.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       Notification.countDocuments({ user: req.user._id, read: false }),
+      Notification.countDocuments(filter),
+      Notification.distinct('type', { user: req.user._id }),
     ])
-    res.json({ notifications, unread })
+    res.json({ notifications, unread, total, types: types.filter(Boolean).sort() })
   } catch (err) {
     console.error('[notifications GET]', err)
     res.status(500).json({ message: 'Server error.' })
