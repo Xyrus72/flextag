@@ -1,135 +1,214 @@
 import React, { useState, useEffect } from 'react'
-import { getDisputes, resolveDispute, investigateDispute } from '../../services/admin'
+import { getDisputes, resolveDispute, rejectDispute } from '../../services/disputes'
 
-const typeLabels = { product_damaged: 'Product Issue', wrong_rejection: 'Wrong Rejection', shipping_delay: 'Shipping Delay', other: 'Other' }
-const typeIcon   = { product_damaged: '📦', wrong_rejection: '❌', shipping_delay: '🚚', other: '⚠' }
-const statusConfig = { open: 'bg-red-500/10 text-red-400', investigating: 'bg-yellow-500/10 text-yellow-400', resolved: 'bg-emerald-500/10 text-emerald-400' }
+const categoryLabels = {
+  damaged_product: 'Damaged Product',
+  wrongful_post_rejection: 'Wrongful Post Rejection',
+  shipping_delay: 'Shipping Delay',
+  cashback_error: 'Cashback Payout Error',
+  other: 'Other Inquiry'
+}
+
+const statusConfig = {
+  open: { label: 'Open Conflict', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
+  under_review: { label: 'Under Review', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.3)' },
+  resolved_refunded: { label: 'Resolved & Refunded', color: '#10b981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' },
+  rejected: { label: 'Dismissed', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)' }
+}
 
 const DisputePortal = () => {
   const [disputes, setDisputes] = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [filter, setFilter]     = useState('open')
-  const [expandedId, setExpandedId] = useState(null)
-  const [actioning, setActioning]   = useState({})
-  const [resolutionText, setResolutionText] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all')
 
-  const load = () => {
-    setLoading(true)
-    getDisputes({ status: 'all' })
+  const [selectedDispute, setSelectedDispute] = useState(null)
+  const [resolutionNotes, setResolutionNotes] = useState('')
+  const [refundInput, setRefundInput] = useState(0)
+  const [processing, setProcessing] = useState(false)
+  const [actionNotice, setActionNotice] = useState('')
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const fetchData = () => {
+    getDisputes()
       .then(d => setDisputes(d.disputes || []))
       .catch(console.error)
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  const openInspection = (d) => {
+    setSelectedDispute(d)
+    setRefundInput(d.refundAmount || d.orderId?.total || 1000)
+    setResolutionNotes('')
+    setActionNotice('')
+  }
+
+  const handleResolveRefund = async () => {
+    if (!selectedDispute) return
+    setProcessing(true)
+    try {
+      await resolveDispute(selectedDispute._id, {
+        resolutionNotes,
+        refundAmount: Number(refundInput)
+      })
+      setActionNotice(`Dispute ${selectedDispute.disputeId} resolved! Manual refund of ৳${refundInput} credited.`)
+      setSelectedDispute(null)
+      fetchData()
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const handleRejectDispute = async () => {
+    if (!selectedDispute) return
+    setProcessing(true)
+    try {
+      await rejectDispute(selectedDispute._id, { resolutionNotes })
+      setActionNotice(`Dispute ${selectedDispute.disputeId} dismissed.`)
+      setSelectedDispute(null)
+      fetchData()
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setProcessing(false)
+    }
+  }
 
   const filtered = filter === 'all' ? disputes : disputes.filter(d => d.status === filter)
 
-  const handleResolve = async (id) => {
-    setActioning(a => ({ ...a, [id]: true }))
-    try {
-      await resolveDispute(id, resolutionText[id] || 'Resolved by admin')
-      setDisputes(disputes.map(d => d._id === id ? { ...d, status: 'resolved', resolution: resolutionText[id] || 'Resolved by admin' } : d))
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setActioning(a => ({ ...a, [id]: false }))
-    }
-  }
-
-  const handleInvestigate = async (id) => {
-    setActioning(a => ({ ...a, [id]: true }))
-    try {
-      await investigateDispute(id)
-      setDisputes(disputes.map(d => d._id === id ? { ...d, status: 'investigating' } : d))
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setActioning(a => ({ ...a, [id]: false }))
-    }
-  }
-
   return (
     <div className="page-root">
-      <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Dispute Resolution</h1>
-      <p className="text-zinc-500 mb-6">Handle creator and brand conflicts</p>
+      <div className="page-header">
+        <div className="page-label"><span>System Administration</span></div>
+        <h1 className="page-title">Admin Dispute Resolution Portal</h1>
+        <p className="page-subtitle">Inspect order conflicts, review proof evidence, inspect transaction history, and issue manual refunds</p>
+      </div>
 
-      <div className="flex flex-wrap gap-2 mb-6">
-        {['open', 'investigating', 'resolved', 'all'].map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${filter === f ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white' : 'bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10'}`}>
-            {f} ({f === 'all' ? disputes.length : disputes.filter(d => d.status === f).length})
+      {actionNotice && (
+        <div style={{ padding: '12px 16px', borderRadius: 12, background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', color: '#34d399', fontSize: 13, marginBottom: 20 }}>
+          ✅ {actionNotice}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+        {['all', 'open', 'under_review', 'resolved_refunded', 'rejected'].map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{
+            padding: '8px 18px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            textTransform: 'capitalize', transition: 'all 0.2s', border: 'none',
+            background: filter === f ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(255,255,255,0.04)',
+            color: filter === f ? '#fff' : 'rgba(255,255,255,0.45)',
+            boxShadow: filter === f ? '0 0 16px rgba(124,58,237,0.3)' : 'none',
+          }}>
+            {f === 'all' ? `All Cases (${disputes.length})` : `${statusConfig[f]?.label || f} (${disputes.filter(d => d.status === f).length})`}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
-        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}><div className="spinner" /></div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-4xl mb-3">✅</p>
-          <p className="text-lg text-zinc-400">No {filter !== 'all' ? filter : ''} disputes</p>
-        </div>
+        <div className="empty-state"><p>🛡️</p><p>No active dispute cases in this status category.</p></div>
       ) : (
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {filtered.map(d => {
-            const expanded = expandedId === d._id
+            const st = statusConfig[d.status] || statusConfig.open
             return (
-              <div key={d._id} className="rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden">
-                <div className="flex items-center gap-4 p-5 cursor-pointer" onClick={() => setExpandedId(expanded ? null : d._id)}>
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${d.status === 'open' ? 'bg-red-500/10' : d.status === 'investigating' ? 'bg-yellow-500/10' : 'bg-emerald-500/10'}`}>
-                    <span className="text-lg">{typeIcon[d.type] || '⚠'}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${statusConfig[d.status]}`}>{d.status}</span>
-                      <span className="px-2 py-0.5 rounded-full bg-white/5 text-zinc-400 text-[10px] font-medium">{typeLabels[d.type] || d.type}</span>
+              <div key={d._id} style={{ padding: '20px', borderRadius: 18, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', transition: 'all 0.2s' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyBetween: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 260 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: '#a78bfa', fontFamily: 'monospace' }}>{d.disputeId}</span>
+                      <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: st.bg, color: st.color, border: `1px solid ${st.border}`, fontWeight: 700 }}>
+                        {st.label}
+                      </span>
+                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 6 }}>
+                        {categoryLabels[d.category] || d.category}
+                      </span>
                     </div>
-                    <p className="text-sm text-white">{d.creatorId?.name || 'Creator'} vs {d.brandId?.companyName || d.brandId?.name || 'Brand'}</p>
-                    <p className="text-xs text-zinc-500">{new Date(d.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  <span className="text-sm font-bold text-violet-400">৳{d.amount?.toLocaleString()}</span>
-                </div>
 
-                {expanded && (
-                  <div className="px-5 pb-5 pt-0 border-t border-white/5 space-y-4">
-                    <div className="grid sm:grid-cols-2 gap-4 pt-4">
-                      <div><p className="text-xs text-zinc-500 mb-1">Order</p><p className="text-sm text-blue-400 font-mono">{d.orderId?.orderId || '—'}</p></div>
-                      <div><p className="text-xs text-zinc-500 mb-1">Product</p><p className="text-sm text-zinc-300">{d.orderId?.product || '—'}</p></div>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>{d.reason}</p>
+
+                    <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'rgba(255,255,255,0.4)', flexWrap: 'wrap' }}>
+                      <span>Creator: <strong style={{ color: '#fff' }}>{d.creatorId?.name || 'Ayesha Rahman'}</strong> ({d.creatorId?.instagramHandle || '@creator'})</span>
+                      <span>Brand: <strong style={{ color: '#fff' }}>{d.brandId?.name || 'AuraGlow Beauty'}</strong></span>
+                      <span>Order: <strong style={{ color: '#67e8f9' }}>{d.orderId?.orderId || 'ORD-9910'}</strong></span>
                     </div>
-                    <div><p className="text-xs text-zinc-500 mb-1">Description</p><p className="text-sm text-zinc-300">{d.description}</p></div>
-                    {d.resolution && (
-                      <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
-                        <p className="text-xs text-zinc-500 mb-1">Resolution</p>
-                        <p className="text-sm text-emerald-400">{d.resolution}</p>
-                      </div>
-                    )}
-                    {d.status !== 'resolved' && (
-                      <div className="space-y-3">
-                        <textarea value={resolutionText[d._id] || ''} onChange={e => setResolutionText(t => ({ ...t, [d._id]: e.target.value }))}
-                          placeholder="Resolution notes..." rows={2}
-                          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none resize-none placeholder:text-zinc-600" />
-                        <div className="flex gap-2">
-                          <button onClick={() => handleResolve(d._id)} disabled={actioning[d._id]}
-                            className="px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-semibold border border-emerald-500/20 hover:bg-emerald-500/20 transition-all disabled:opacity-40">
-                            {actioning[d._id] ? '...' : '✓ Resolve'}
-                          </button>
-                          {d.status === 'open' && (
-                            <button onClick={() => handleInvestigate(d._id)} disabled={actioning[d._id]}
-                              className="px-4 py-2 rounded-lg bg-yellow-500/10 text-yellow-400 text-xs font-semibold border border-yellow-500/20 hover:bg-yellow-500/20 transition-all disabled:opacity-40">
-                              Investigate
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
-                )}
+
+                  <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                    <span style={{ fontSize: 18, fontWeight: 900, color: '#34d399' }}>৳{d.refundAmount?.toLocaleString()}</span>
+                    <button onClick={() => openInspection(d)} className="btn-primary" style={{ padding: '8px 16px', fontSize: 12 }}>
+                      Inspect & Resolve →
+                    </button>
+                  </div>
+                </div>
               </div>
             )
           })}
+        </div>
+      )}
+
+      {selectedDispute && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#0d0d20', border: '1px solid rgba(124,58,237,0.4)', borderRadius: 24, maxWidth: 540, width: '100%', padding: 28, maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div>
+                <span style={{ fontSize: 12, fontWeight: 800, color: '#a78bfa', fontFamily: 'monospace' }}>{selectedDispute.disputeId}</span>
+                <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: '2px 0 0' }}>Dispute Resolution Case</h2>
+              </div>
+              <button onClick={() => setSelectedDispute(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 20, cursor: 'pointer' }}>✕</button>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 16, marginBottom: 16 }}>
+              <p style={{ fontSize: 11, color: '#67e8f9', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Conflict Description</p>
+              <p style={{ fontSize: 13, color: '#fff', margin: 0, lineHeight: 1.5 }}>{selectedDispute.reason}</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16, fontSize: 12 }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 12 }}>
+                <span style={{ color: 'rgba(255,255,255,0.4)', display: 'block' }}>Creator Profile</span>
+                <strong style={{ color: '#fff' }}>{selectedDispute.creatorId?.name}</strong>
+                <p style={{ color: '#a78bfa', margin: '2px 0 0' }}>{selectedDispute.creatorId?.instagramHandle}</p>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 12 }}>
+                <span style={{ color: 'rgba(255,255,255,0.4)', display: 'block' }}>Order Transaction</span>
+                <strong style={{ color: '#fff' }}>{selectedDispute.orderId?.product || 'AuraGlow Serum'}</strong>
+                <p style={{ color: '#34d399', margin: '2px 0 0' }}>Paid: ৳{selectedDispute.orderId?.total || selectedDispute.refundAmount}</p>
+              </div>
+            </div>
+
+            {selectedDispute.evidenceUrl && (
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>Proof Evidence Screenshot</p>
+                <img src={selectedDispute.evidenceUrl} alt="Evidence" style={{ width: '100%', maxHeight: 180, objectFit: 'cover', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)' }} />
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ fontSize: 12, color: '#34d399', fontWeight: 700, display: 'block', marginBottom: 6 }}>Manual Refund Amount (৳ BDT)</label>
+                <input type="number" value={refundInput} onChange={e => setRefundInput(e.target.value)} className="field-input" />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, display: 'block', marginBottom: 6 }}>Admin Resolution Notes</label>
+                <textarea value={resolutionNotes} onChange={e => setResolutionNotes(e.target.value)} placeholder="State reason for manual refund approval or dismissal..." className="field-input" rows="3" />
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                <button onClick={handleRejectDispute} disabled={processing} style={{ flex: 1, padding: 12, borderRadius: 12, background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)', fontWeight: 700, cursor: 'pointer' }}>
+                  Dismiss Dispute
+                </button>
+                <button onClick={handleResolveRefund} disabled={processing} className="btn-primary" style={{ flex: 1, padding: 12 }}>
+                  {processing ? 'Processing...' : `Issue ৳${refundInput} Refund`}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
