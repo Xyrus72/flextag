@@ -32,6 +32,22 @@ const orderSchema = new mongoose.Schema({
   transactionId: { type: String, default: '', index: true },
   valId:         { type: String, default: '' },
   paymentDetails:{ type: Object, default: {} },
+  // Two-way reputation, kept on the order so a rating can never exist without
+  // the transaction that earned it (services/ratings.js recomputes averages).
+  creatorRating: {
+    quality:  { type: Number, min: 1, max: 5 },
+    shipping: { type: Number, min: 1, max: 5 },
+    support:  { type: Number, min: 1, max: 5 },
+    comment:  { type: String, default: '', maxlength: 600 },
+    at:       { type: Date },
+  },
+  brandRating: {
+    professionalism: { type: Number, min: 1, max: 5 },
+    contentQuality:  { type: Number, min: 1, max: 5 },
+    comment:         { type: String, default: '', maxlength: 600 },
+    at:              { type: Date },
+  },
+
   cashbackReleased: { type: Boolean, default: false },
   cashbackClawedBack: { type: Boolean, default: false },   // released, then order was returned
 }, { timestamps: true })

@@ -12,6 +12,7 @@ const { commitInstant, reclaimInstant, inFlightReward } = require('../utils/rewa
 const { getIgSettings } = require('../utils/settings')
 const { computeTier } = require('../utils/tier')
 const fraud = require('../services/fraud')
+const ratings = require('../services/ratings')
 
 // helper to generate order IDs
 const genOrderId = () => 'ORD-' + Math.floor(1000 + Math.random() * 9000)
@@ -253,6 +254,87 @@ router.put('/:id/status', requireAuth, requireRole('brand', 'admin'), async (req
 
     res.json({ order, message: 'Order updated.' })
   } catch (err) {
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+/* ── Two-way ratings ─────────────────────────────────────────────────────────
+ * Both sides rate the SAME order, and only after the thing they are rating has
+ * actually happened — no review farm, no rating a brand you never bought from.
+ */
+
+// POST /api/orders/:id/rate — creator rates the brand + product after delivery
+router.post('/:id/rate', requireAuth, requireRole('creator'), async (req, res) => {
+  try {
+    const { quality, shipping, support, comment } = req.body
+    const order = await Order.findOne({ _id: req.params.id, creatorId: req.user._id })
+    if (!order) return res.status(404).json({ message: 'Order not found.' })
+    if (!['delivered', 'return_requested', 'returned'].includes(order.status)) {
+      return res.status(400).json({ message: 'You can rate an order once it has been delivered.' })
+    }
+    if (!quality || !shipping || !support) {
+      return res.status(400).json({ message: 'Rate product quality, shipping and support (1-5).' })
+    }
+
+    order.creatorRating = {
+      quality:  ratings.clampStar(quality),
+      shipping: ratings.clampStar(shipping),
+      support:  ratings.clampStar(support),
+      comment:  String(comment || '').slice(0, 600),
+      at: new Date(),
+    }
+    await order.save()
+
+    const [brand, product] = await Promise.all([
+      ratings.refreshBrandRating(order.brandId),
+      ratings.refreshProductRating(order.productId),
+    ])
+    if (order.brandId) {
+      notifySafe(order.brandId, {
+        type: 'rating', icon: '⭐', title: 'New creator review',
+        body: `${req.user.name} rated ${order.product} ${ratings.orderScore(order.creatorRating)}/5.`,
+        link: '/brand/ratings',
+      })
+    }
+    res.json({ order, brand, product, message: 'Thanks — your review is live.' })
+  } catch (err) {
+    console.error('[order rate]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// POST /api/orders/:id/rate-creator — brand rates the creator after the post is approved
+router.post('/:id/rate-creator', requireAuth, requireRole('brand', 'admin'), async (req, res) => {
+  try {
+    const { professionalism, contentQuality, comment } = req.body
+    const order = await Order.findById(req.params.id)
+    if (!order) return res.status(404).json({ message: 'Order not found.' })
+    if (req.user.role === 'brand' && String(order.brandId) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Access denied.' })
+    }
+    if (!order.cashbackReleased && order.status !== 'delivered') {
+      return res.status(400).json({ message: 'Rate a creator once their order is delivered or their post has been approved.' })
+    }
+    if (!professionalism || !contentQuality) {
+      return res.status(400).json({ message: 'Rate professionalism and content quality (1-5).' })
+    }
+
+    order.brandRating = {
+      professionalism: ratings.clampStar(professionalism),
+      contentQuality:  ratings.clampStar(contentQuality),
+      comment: String(comment || '').slice(0, 600),
+      at: new Date(),
+    }
+    await order.save()
+    const creator = await ratings.refreshCreatorRating(order.creatorId)
+    notifySafe(order.creatorId, {
+      type: 'rating', icon: '⭐', title: 'A brand rated your collab',
+      body: `${order.brand} left you a review on ${order.product}.`,
+      link: '/creator/portfolio',
+    })
+    res.json({ order, creator, message: 'Review saved.' })
+  } catch (err) {
+    console.error('[order rate-creator]', err)
     res.status(500).json({ message: 'Server error.' })
   }
 })

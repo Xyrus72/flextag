@@ -27,6 +27,8 @@ const userSchema = new mongoose.Schema({
   tier:            { type: String, default: 'bronze' },
   totalEarnings:   { type: Number, default: 0 },
   completedCampaigns: { type: Number, default: 0 },
+  creatorRatingAvg:   { type: Number, default: 0 },   // how brands rate this creator
+  creatorRatingCount: { type: Number, default: 0 },
   shippingAddresses: { type: [shippingAddressSchema], default: [] },
 
   // Brand-only
@@ -37,6 +39,8 @@ const userSchema = new mongoose.Schema({
   address:         { type: String, default: '' },
   totalCampaigns:  { type: Number, default: 0 },
   totalCreators:   { type: Number, default: 0 },
+  brandRatingAvg:   { type: Number, default: 0 },     // how creators rate this brand
+  brandRatingCount: { type: Number, default: 0 },
 
   // Referrals
   referralCode:     { type: String, default: '', index: true },

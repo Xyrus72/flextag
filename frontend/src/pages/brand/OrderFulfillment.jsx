@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Check, ChevronDown, ClipboardList, Package, Printer, RotateCcw, Save, Truck, X } from 'lucide-react'
-import { getOrders, updateOrder } from '../../services/orders'
+import { getOrders, updateOrder, rateCreator } from '../../services/orders'
+import StarRating from '../../components/StarRating'
 
 const shippingStatuses = ['processing', 'packed', 'shipped', 'delivered']
 const filterStatuses = ['all', ...shippingStatuses, 'return_requested', 'returned', 'cancelled']
@@ -22,6 +23,28 @@ const OrderFulfillment = () => {
   const [trackingInputs, setTrackingInputs] = useState({})
   const [returnReasons, setReturnReasons] = useState({})
   const [saving, setSaving] = useState({})
+  const [creatorStars, setCreatorStars] = useState({})   // orderId -> { professionalism, contentQuality, comment }
+
+  const starsFor = order => creatorStars[order._id] || {
+    professionalism: order.brandRating?.professionalism || 0,
+    contentQuality: order.brandRating?.contentQuality || 0,
+    comment: order.brandRating?.comment || '',
+  }
+  const setStarsFor = (id, patch) => setCreatorStars(state => ({ ...state, [id]: { ...(state[id] || {}), ...patch } }))
+
+  const submitCreatorRating = async order => {
+    const stars = starsFor(order)
+    if (!stars.professionalism || !stars.contentQuality) return
+    setSaving(state => ({ ...state, [order._id]: true }))
+    try {
+      const { order: updated } = await rateCreator(order._id, stars)
+      setOrders(current => current.map(item => item._id === order._id ? { ...item, brandRating: updated.brandRating } : item))
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setSaving(state => ({ ...state, [order._id]: false }))
+    }
+  }
 
   const load = () => {
     setLoading(true)
@@ -85,6 +108,28 @@ const OrderFulfillment = () => {
             <div className="flex items-center gap-1">{shippingStatuses.map((item, index) => <React.Fragment key={item}><div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${index <= shippingStatuses.indexOf(order.status) ? 'bg-emerald-500 text-white' : 'bg-white/5 text-zinc-600'}`}>{index < shippingStatuses.indexOf(order.status) ? <Check size={13} /> : index + 1}</div>{index < 3 && <div className={`flex-1 h-0.5 ${index < shippingStatuses.indexOf(order.status) ? 'bg-emerald-500' : 'bg-white/5'}`} />}</React.Fragment>)}</div>
             <div className="flex flex-wrap gap-2"><button className="btn-ghost" onClick={() => printSlip(order)}><Printer size={15} /> Print slip</button>{nextStatus && <button className="btn-primary" onClick={() => saveOrder(order, { status: nextStatus, tracking: trackingInputs[id] || order.tracking || undefined })} disabled={saving[id]}>{saving[id] ? 'Saving...' : `Mark as ${statusConfig[nextStatus].label}`}</button>}{!['cancelled', 'returned', 'return_requested'].includes(order.status) && <><button className="btn-danger" onClick={() => updateStatus(order, 'cancelled')} disabled={saving[id]}><X size={15} /> Cancel</button><button className="btn-ghost" onClick={() => updateStatus(order, 'return_requested')} disabled={saving[id]}><RotateCcw size={15} /> Request return</button></>}</div>
             {order.status === 'return_requested' && <button className="btn-primary" onClick={() => updateStatus(order, 'returned')} disabled={saving[id]}><Check size={15} /> Approve return</button>}
+            {/* Two-way reputation: rate the creator once the order landed. */}
+            {(order.status === 'delivered' || order.cashbackReleased) && (
+              <div className="rounded-xl bg-white/[0.02] border border-white/5 p-4">
+                <p className="field-label">Rate {order.creatorId?.name || 'this creator'}</p>
+                {order.brandRating?.professionalism && !creatorStars[id] ? (
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <StarRating value={(order.brandRating.professionalism + order.brandRating.contentQuality) / 2} />
+                    <span className="text-xs text-zinc-500">You rated this collab</span>
+                    <button className="text-xs font-semibold text-cyan-400" onClick={() => setStarsFor(id, {})}>Edit</button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <StarRating label="Professional" size={19} value={starsFor(order).professionalism} onChange={v => setStarsFor(id, { professionalism: v })} />
+                    <StarRating label="Content" size={19} value={starsFor(order).contentQuality} onChange={v => setStarsFor(id, { contentQuality: v })} />
+                    <input className="field-input" placeholder="Optional note for your own records" value={starsFor(order).comment} onChange={event => setStarsFor(id, { comment: event.target.value })} />
+                    <button className="btn-primary" disabled={saving[id] || !starsFor(order).professionalism || !starsFor(order).contentQuality} onClick={() => submitCreatorRating(order)}>
+                      {saving[id] ? 'Saving...' : 'Save rating'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>}
         </div>
       })}</div>}

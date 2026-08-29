@@ -14,3 +14,6 @@ export const updateProduct = (id, data) =>
 
 export const getMyProducts = () =>
   api.get('/api/products/my').then(r => r.data)
+
+export const getProductReviews = (id) =>
+  api.get(`/api/products/${id}/reviews`).then(r => r.data)
