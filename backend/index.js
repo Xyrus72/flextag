@@ -164,6 +164,9 @@ app.use('/api/stats',        require('./routes/stats'))
 app.use('/api/notifications', require('./routes/notifications'))
 app.use('/api/checkout',     require('./routes/checkout'))
 
+// ─── Public share pages (crawler meta + OG images; NOT under /api) ───────────
+app.use('/share', require('./routes/share'))
+
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))
 

@@ -15,6 +15,7 @@
   "type": "commonjs",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
+    "@resvg/resvg-js": "^2.6.2",
     "bcryptjs": "^3.0.3",
     "connect-mongo": "^5.1.0",
     "cors": "^2.8.6",

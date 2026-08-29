@@ -2,6 +2,23 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ShieldCheck, Users, TrendingUp, Activity, ExternalLink, Star } from 'lucide-react'
 import { getPortfolio } from '../../services/users'
+import { API_URL } from '../../config'
+
+/**
+ * Crawlers do not run React, so the meta tags a shared link unfurls with come
+ * from the server (`/share/u/:handle` on the API). These client-side tags are
+ * for the tools that DO execute JS — Google, and the in-app browsers that
+ * re-read the head after load.
+ */
+const setMeta = (attr, key, content) => {
+  let el = document.head.querySelector(`meta[${attr}="${key}"]`)
+  if (!el) {
+    el = document.createElement('meta')
+    el.setAttribute(attr, key)
+    document.head.appendChild(el)
+  }
+  el.setAttribute('content', content)
+}
 
 const isNum = (n) => n != null && n !== '' && !Number.isNaN(Number(n))
 const compact = (n) => {
@@ -36,12 +53,45 @@ const CreatorPortfolio = () => {
     return () => { ok = false }
   }, [handle])
 
+  // Title + meta for JS-executing crawlers and for the browser tab / history.
+  useEffect(() => {
+    const c = data?.creator
+    if (!c) return undefined
+    const previousTitle = document.title
+    const posts = data?.posts?.length || 0
+    const title = `${c.name} (@${String(c.instagramHandle || handle).replace(/^@/, '')}) — verified creator on FlexTag`
+    const description = `${Number(c.followersCount || 0).toLocaleString()} followers · ${posts} verified post${posts === 1 ? '' : 's'} · ${c.completedCampaigns || 0} completed campaigns. Real posts, machine-verified by FlexTag.`
+    document.title = title
+    setMeta('name', 'description', description)
+    setMeta('property', 'og:title', title)
+    setMeta('property', 'og:description', description)
+    setMeta('property', 'og:type', 'profile')
+    setMeta('property', 'og:url', window.location.href)
+    setMeta('property', 'og:image', `${API_URL}/share/u/${encodeURIComponent(String(c.instagramHandle || handle).replace(/^@/, ''))}/og.png`)
+    setMeta('name', 'twitter:card', 'summary_large_image')
+    return () => { document.title = previousTitle }
+  }, [data, handle])
+
+  const shareUrl = `${API_URL}/share/u/${encodeURIComponent(String(handle).replace(/^@/, ''))}`
+  const share = async () => {
+    const payload = { title: `@${String(handle).replace(/^@/, '')} on FlexTag`, url: shareUrl }
+    if (navigator.share) {
+      try { await navigator.share(payload); return } catch { /* user dismissed — fall through to copy */ }
+    }
+    navigator.clipboard?.writeText(shareUrl).catch(() => {})
+  }
+
   const shell = (children) => (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative' }}>
       <div className="aurora-bg" />
       <header style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', maxWidth: 960, margin: '0 auto' }}>
         <Link to="/"><img src="/products/flextag-logo.png" alt="FlexTag" style={{ height: 30 }} /></Link>
-        <Link to="/register?role=creator" className="btn-primary" style={{ textDecoration: 'none', padding: '8px 16px', fontSize: 13 }}>Join FlexTag</Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {data && (
+            <button onClick={share} className="btn-ghost" style={{ padding: '8px 14px', fontSize: 13 }}>Share</button>
+          )}
+          <Link to="/register?role=creator" className="btn-primary" style={{ textDecoration: 'none', padding: '8px 16px', fontSize: 13 }}>Join FlexTag</Link>
+        </div>
       </header>
       <main style={{ position: 'relative', zIndex: 10, maxWidth: 960, margin: '0 auto', padding: '20px 24px 60px' }}>{children}</main>
     </div>
