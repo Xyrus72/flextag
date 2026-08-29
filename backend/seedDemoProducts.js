@@ -1,11 +1,20 @@
-const express = require('express')
-const router = express.Router()
-const Product = require('../models/Product')
-const { requireAuth, requireRole } = require('../middleware/auth')
+require('dotenv').config()
+
+process.on('unhandledRejection', (reason) => {
+  if (reason && (reason.code === 'ESERVFAIL' || reason.code === 'ECONNREFUSED')) {
+    return
+  }
+})
+
+const mongoose = require('mongoose')
+const Product = require('./models/Product')
+const User = require('./models/User')
+
+const PRIMARY_URI = process.env.MONGO_URI || 'mongodb+srv://flextag:refath123@flextag.4gw70zg.mongodb.net/flextag'
+const LOCAL_URI = 'mongodb://127.0.0.1:27017/flextag'
 
 const DEMO_PRODUCTS = [
   {
-    _id: 'p-101',
     name: 'AuraGlow Vitamin C Glow Serum',
     brand: 'AuraGlow Beauty',
     price: 1200,
@@ -24,7 +33,6 @@ const DEMO_PRODUCTS = [
     postingRules: { hashtags: ['#FlexTag', '#AuraGlow', '#SkinGlow'], taggingHandles: ['@flextag.official', '@auraglow.bd'] }
   },
   {
-    _id: 'p-102',
     name: 'SoundPulse Wireless Earbuds Pro',
     brand: 'SoundPulse Tech',
     price: 3500,
@@ -43,7 +51,6 @@ const DEMO_PRODUCTS = [
     postingRules: { hashtags: ['#FlexTag', '#SoundPulse', '#TechReview'], taggingHandles: ['@flextag.official', '@soundpulse'] }
   },
   {
-    _id: 'p-103',
     name: 'PureBotanika Hydrating Rose Toner',
     brand: 'PureBotanika',
     price: 850,
@@ -62,7 +69,6 @@ const DEMO_PRODUCTS = [
     postingRules: { hashtags: ['#FlexTag', '#PureBotanika'], taggingHandles: ['@flextag.official'] }
   },
   {
-    _id: 'p-104',
     name: 'UrbanStep Minimalist Sneakers',
     brand: 'UrbanStep Footwear',
     price: 4200,
@@ -81,7 +87,6 @@ const DEMO_PRODUCTS = [
     postingRules: { hashtags: ['#FlexTag', '#UrbanStep', '#StreetStyle'], taggingHandles: ['@flextag.official', '@urbanstep'] }
   },
   {
-    _id: 'p-105',
     name: 'GlowBrew Organic Matcha Green Tea',
     brand: 'GlowBrew Organics',
     price: 950,
@@ -100,7 +105,6 @@ const DEMO_PRODUCTS = [
     postingRules: { hashtags: ['#FlexTag', '#GlowBrewMatcha'], taggingHandles: ['@flextag.official'] }
   },
   {
-    _id: 'p-106',
     name: 'FlexFit Seamless Gym Set',
     brand: 'FlexFit Active',
     price: 2800,
@@ -120,96 +124,44 @@ const DEMO_PRODUCTS = [
   }
 ]
 
-router.get('/', async (req, res) => {
+async function seedProducts() {
+  let connected = false
   try {
-    const { category, q, brand, minPrice, maxPrice, minCashback, maxCashback, sort, brandId } = req.query
-    const filter = { isActive: true, status: 'approved' }
-
-    if (category && category !== 'All') filter.category = category
-    if (brand && brand !== 'All') filter.brand = brand
-    if (brandId) filter.brandId = brandId
-
-    if (q) {
-      filter.$or = [
-        { name: { $regex: q, $options: 'i' } },
-        { brand: { $regex: q, $options: 'i' } },
-        { description: { $regex: q, $options: 'i' } }
-      ]
-    }
-
-    if (minPrice || maxPrice) {
-      filter.price = {}
-      if (minPrice) filter.price.$gte = Number(minPrice)
-      if (maxPrice) filter.price.$lte = Number(maxPrice)
-    }
-
-    if (minCashback || maxCashback) {
-      filter.cashbackRate = {}
-      if (minCashback) filter.cashbackRate.$gte = Number(minCashback)
-      if (maxCashback) filter.cashbackRate.$lte = Number(maxCashback)
-    }
-
-    let query = Product.find(filter).populate('brandId', 'name companyName logoUrl avatar email productCategory isVerified')
-
-    if (sort === 'cashback') query = query.sort({ cashbackRate: -1 })
-    else if (sort === 'price_low') query = query.sort({ price: 1 })
-    else if (sort === 'price_high') query = query.sort({ price: -1 })
-    else if (sort === 'rating') query = query.sort({ rating: -1, reviews: -1 })
-    else query = query.sort({ createdAt: -1 })
-
-    const products = await query
-    res.json({ products: products.length > 0 ? products : DEMO_PRODUCTS })
+    await mongoose.connect(PRIMARY_URI, { serverSelectionTimeoutMS: 3000 })
+    connected = true
+    console.log('✅ Connected to Atlas MongoDB')
   } catch (err) {
-    res.json({ products: DEMO_PRODUCTS })
+    try {
+      await mongoose.connect(LOCAL_URI, { serverSelectionTimeoutMS: 3000 })
+      connected = true
+      console.log('✅ Connected to Local MongoDB')
+    } catch (e) {
+      console.warn('⚠️ Could not connect to MongoDB server.')
+    }
   }
-})
 
-router.get('/:id', async (req, res) => {
+  if (!connected) return
+
   try {
-    const product = await Product.findById(req.params.id).populate('brandId', 'name companyName logoUrl avatar email productCategory isVerified')
-    if (!product) {
-      const demo = DEMO_PRODUCTS.find(p => p._id === req.params.id) || DEMO_PRODUCTS[0]
-      return res.json({ product: demo })
-    }
-    res.json({ product })
+    const brandUser = await User.findOne({ role: 'brand' })
+    const brandId = brandUser ? brandUser._id : new mongoose.Types.ObjectId()
+
+    await Product.deleteMany({})
+    console.log('Cleared existing product catalog.')
+
+    const productsToInsert = DEMO_PRODUCTS.map(p => ({
+      ...p,
+      brandId
+    }))
+
+    const inserted = await Product.insertMany(productsToInsert)
+    console.log(`🚀 Successfully seeded ${inserted.length} demo products into MongoDB!`)
   } catch (err) {
-    const demo = DEMO_PRODUCTS.find(p => p._id === req.params.id) || DEMO_PRODUCTS[0]
-    res.json({ product: demo })
+    console.error('Error seeding products:', err)
+  } finally {
+    await mongoose.disconnect()
+    console.log('👋 Disconnected from MongoDB.')
   }
-})
+}
 
-router.post('/', requireAuth, requireRole('brand'), async (req, res) => {
-  try {
-    const { name, price, cashbackRate, category, image, stock, description, campaignBudget, minFollowers, hashtags, taggingHandles } = req.body
-
-    if (!name || !price || !cashbackRate || !category) {
-      return res.status(400).json({ message: 'Name, price, cashback rate and category are required.' })
-    }
-
-    const product = await Product.create({
-      name,
-      brand: req.user.companyName || req.user.name,
-      brandId: req.user._id,
-      price: Number(price),
-      cashbackRate: Number(cashbackRate),
-      category,
-      image: image || '',
-      stock: Number(stock || 10),
-      description: description || '',
-      campaignBudget: Number(campaignBudget || 50000),
-      creatorCriteria: { minFollowers: Number(minFollowers || 1000) },
-      postingRules: {
-        hashtags: hashtags ? hashtags.split(',').map(h => h.trim()) : ['#FlexTag', '#BrandPartner'],
-        taggingHandles: taggingHandles ? taggingHandles.split(',').map(t => t.trim()) : ['@flextag.official']
-      },
-      status: 'approved'
-    })
-
-    res.status(201).json({ message: 'Product published to catalog successfully!', product })
-  } catch (err) {
-    console.error('[products POST]', err)
-    res.status(500).json({ message: 'Server error creating product.' })
-  }
-})
-
-module.exports = router
+seedProducts()
