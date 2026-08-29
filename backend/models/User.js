@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema({
   creatorRatingAvg:   { type: Number, default: 0 },   // how brands rate this creator
   creatorRatingCount: { type: Number, default: 0 },
   shippingAddresses: { type: [shippingAddressSchema], default: [] },
+  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
 
   // Brand-only
   companyName:     { type: String, default: '' },

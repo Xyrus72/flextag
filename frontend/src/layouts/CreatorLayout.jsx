@@ -4,7 +4,7 @@ import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, ShoppingBag, ShoppingCart, Package,
   Upload, Wand2, Clock4, Wallet, TrendingUp,
-  Briefcase, UserCircle2, HelpCircle, Ticket, MessageSquare, ShieldAlert,
+  Briefcase, UserCircle2, HelpCircle, Ticket, MessageSquare, ShieldAlert, Heart,
 } from 'lucide-react'
 
 /**
@@ -27,6 +27,7 @@ const icons = {
   dashboard:   <NavIcon icon={LayoutDashboard} color="#7c3aed" />,
   catalog:     <NavIcon icon={ShoppingBag}      color="#06b6d4" />,
   cart:        <NavIcon icon={ShoppingCart}     color="#f59e0b" />,
+  wishlist:    <NavIcon icon={Heart}            color="#ec4899" />,
   orders:      <NavIcon icon={Package}          color="#10b981" />,
   post:        <NavIcon icon={Upload}           color="#8b5cf6" />,
   caption:     <NavIcon icon={Wand2}            color="#ec4899" />,
@@ -46,6 +47,7 @@ const creatorLinks = [
   { path: '/creator',                  label: 'Dashboard',        icon: icons.dashboard },
   { path: '/creator/catalog',          label: 'Shop Catalog',     icon: icons.catalog },
   { path: '/creator/cart',             label: 'Cart',             icon: icons.cart },
+  { path: '/creator/wishlist',         label: 'Wishlist',         icon: icons.wishlist },
   { path: '/creator/orders',           label: 'My Orders',        icon: icons.orders },
   { path: '/creator/submit-post',      label: 'Submit Post',      icon: icons.post },
   { path: '/creator/caption-validator',label: 'Caption Validator',icon: icons.caption, badge: 'AI' },

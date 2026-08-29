@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { getProduct, getProductReviews } from '../../services/products'
 import StarRating from '../../components/StarRating'
+import WishlistButton from '../../components/WishlistButton'
+import { getWishlist } from '../../services/users'
 import { getCampaigns } from '../../services/campaigns'
 import { startConversation } from '../../services/messages'
 
@@ -13,6 +15,7 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true)
   const [qty, setQty] = useState(1)
   const [reviews, setReviews] = useState({ reviews: [], average: 0, count: 0 })
+  const [savedIds, setSavedIds] = useState([])
 
   useEffect(() => {
     const load = async () => {
@@ -51,6 +54,12 @@ const ProductDetail = () => {
     }
     load()
   }, [id])
+
+  useEffect(() => {
+    let alive = true
+    getWishlist().then(d => { if (alive) setSavedIds(d.ids || []) }).catch(() => {})
+    return () => { alive = false }
+  }, [])
 
   // Reviews are creators rating the product after delivery — only real ones.
   useEffect(() => {
@@ -143,7 +152,10 @@ const ProductDetail = () => {
 
         <div>
           <span className="text-xs text-zinc-500 uppercase tracking-wider font-medium">{product.brand}</span>
-          <h1 className="text-3xl font-bold text-white mt-2">{product.name}</h1>
+          <div className="flex items-start justify-between gap-4 mt-2">
+            <h1 className="text-3xl font-bold text-white">{product.name}</h1>
+            <WishlistButton productId={product._id} saved={savedIds.includes(String(product._id))} onChange={ids => setSavedIds(ids)} />
+          </div>
           {reviews.count > 0 ? (
             <div className="flex items-center gap-2 mt-3">
               <StarRating value={reviews.average} />
