@@ -427,4 +427,53 @@ router.put('/:id/addresses/:addrId/default', requireAuth, async (req, res) => {
   }
 })
 
+/* ── Wishlist ────────────────────────────────────────────────────────────────
+ * Creators shop on a budget and campaigns come and go — a saved product is how
+ * they come back when the cashback is right. Stored on the user (a short list
+ * per person), deduped with $addToSet so a double tap is harmless.
+ */
+
+// GET /api/users/me/wishlist
+router.get('/me/wishlist', requireAuth, async (req, res) => {
+  try {
+    const me = await User.findById(req.user._id)
+      .select('wishlist')
+      .populate('wishlist', 'name brand brandId price cashbackRate instantSplitPct image category rating reviews inStock stock isActive status campaignBudget totalCashbackSpent creatorCriteria')
+      .lean()
+    // Products that were deleted or pulled from the catalog simply drop out.
+    const products = (me?.wishlist || []).filter(p => p && p.isActive !== false && p.status !== 'rejected')
+    res.json({ products, ids: products.map(p => String(p._id)) })
+  } catch (err) {
+    console.error('[wishlist GET]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// POST /api/users/me/wishlist/:productId
+router.post('/me/wishlist/:productId', requireAuth, async (req, res) => {
+  try {
+    const Product = require('../models/Product')
+    const exists = await Product.exists({ _id: req.params.productId })
+    if (!exists) return res.status(404).json({ message: 'Product not found.' })
+    await User.updateOne({ _id: req.user._id }, { $addToSet: { wishlist: req.params.productId } })
+    const me = await User.findById(req.user._id).select('wishlist').lean()
+    res.json({ ids: (me?.wishlist || []).map(String), message: 'Saved to your wishlist.' })
+  } catch (err) {
+    console.error('[wishlist POST]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// DELETE /api/users/me/wishlist/:productId
+router.delete('/me/wishlist/:productId', requireAuth, async (req, res) => {
+  try {
+    await User.updateOne({ _id: req.user._id }, { $pull: { wishlist: req.params.productId } })
+    const me = await User.findById(req.user._id).select('wishlist').lean()
+    res.json({ ids: (me?.wishlist || []).map(String), message: 'Removed from your wishlist.' })
+  } catch (err) {
+    console.error('[wishlist DELETE]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
 module.exports = router

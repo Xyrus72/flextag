@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getProducts } from '../../services/products'
 import StarRating from '../../components/StarRating'
+import WishlistButton from '../../components/WishlistButton'
+import { getWishlist } from '../../services/users'
 
 const Catalog = () => {
   const [products, setProducts] = useState([])
@@ -14,6 +16,15 @@ const Catalog = () => {
   const [sortBy, setSortBy] = useState('cashback')
   const categories = ['All', 'Beauty', 'Skincare', 'Fashion', 'Tech', 'Lifestyle']
   const [brands, setBrands] = useState(['All'])
+  const [savedIds, setSavedIds] = useState([])
+
+  useEffect(() => {
+    let alive = true
+    getWishlist()
+      .then(d => { if (alive) setSavedIds(d.ids || []) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => fetchProducts(), search ? 350 : 0)
@@ -175,6 +186,9 @@ const Catalog = () => {
                     )}
                     <div style={{ position: 'absolute', top: 10, right: 10, padding: '4px 10px', borderRadius: 8, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', fontSize: 11, fontWeight: 800 }}>
                       {cashbackRate}% back
+                    </div>
+                    <div style={{ position: 'absolute', bottom: 10, left: 10 }}>
+                      <WishlistButton productId={p._id} saved={savedIds.includes(String(p._id))} onChange={ids => setSavedIds(ids)} size={16} floating />
                     </div>
                     {capReached && (
                       <div style={{ position: 'absolute', top: 10, left: 10, padding: '4px 10px', borderRadius: 8, background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.4)', color: '#f87171', fontSize: 10, fontWeight: 800 }}>

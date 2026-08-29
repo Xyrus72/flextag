@@ -33,6 +33,7 @@ const InstagramAnalyzer = lazy(() => import('./pages/creator/InstagramAnalyzer')
 const CheckoutSuccess   = lazy(() => import('./pages/creator/CheckoutSuccess'))
 const CheckoutFail      = lazy(() => import('./pages/creator/CheckoutFail'))
 const Disputes          = lazy(() => import('./pages/shared/Disputes'))
+const Wishlist          = lazy(() => import('./pages/creator/Wishlist'))
 
 const BrandDashboard    = lazy(() => import('./pages/brand/BrandDashboard'))
 const BrandProfile      = lazy(() => import('./pages/brand/BrandProfile'))
@@ -95,6 +96,7 @@ const AppRoutes = () => (
         <Route path="/creator/catalog" element={<Catalog />} />
         <Route path="/creator/product/:id" element={<ProductDetail />} />
         <Route path="/creator/cart" element={<Cart />} />
+        <Route path="/creator/wishlist" element={<Wishlist />} />
         <Route path="/creator/orders" element={<MyOrders />} />
         <Route path="/creator/submit-post" element={<PostSubmission />} />
         <Route path="/creator/caption-validator" element={<CaptionValidator />} />

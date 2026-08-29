@@ -42,3 +42,13 @@ export const getPortfolio = (handle) =>
 
 export const getMyReferrals = () =>
   api.get('/api/users/me/referrals').then(r => r.data)
+
+// ── Wishlist ─────────────────────────────────────────────────────────────────
+export const getWishlist = () =>
+  api.get('/api/users/me/wishlist').then(r => r.data)
+
+export const addToWishlist = (productId) =>
+  api.post(`/api/users/me/wishlist/${productId}`).then(r => r.data)
+
+export const removeFromWishlist = (productId) =>
+  api.delete(`/api/users/me/wishlist/${productId}`).then(r => r.data)
