@@ -45,3 +45,20 @@ export const startIdentityVerification = () => api.post('/api/instagram/verify-i
 
 /** Creator: confirm the code is in the bio → { verified, handle, message, code? } */
 export const checkIdentityVerification = () => api.post('/api/instagram/verify-identity/check', {}, { timeout: 45000 }).then(r => r.data)
+
+// ── Connect Instagram (OAuth) ────────────────────────────────────────────────
+
+/** → { available, connected, username, connectedAt, expiresAt, expired } */
+export const getConnectStatus = () => api.get('/api/instagram/connect/status').then(r => r.data)
+
+/** → { url } — send the browser there; Facebook redirects back to the API callback. */
+export const startInstagramConnect = () => api.post('/api/instagram/connect/start').then(r => r.data)
+
+export const disconnectInstagram = () => api.post('/api/instagram/connect/disconnect').then(r => r.data)
+
+/** Live stories (24h window, connected accounts only) → { stories, count } */
+export const getMyStories = () => api.get('/api/instagram/stories/me').then(r => r.data)
+
+/** Capture proof that a story was live → { verified, needsReview, reach, postedAt, message } */
+export const verifyInstagramStory = (postId) =>
+  api.post('/api/instagram/verify-story', { postId }, { timeout: 45000 }).then(r => r.data)
