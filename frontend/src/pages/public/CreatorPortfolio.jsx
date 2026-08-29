@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ShieldCheck, Users, TrendingUp, Activity, ExternalLink } from 'lucide-react'
+import { ShieldCheck, Users, TrendingUp, Activity, ExternalLink, Star } from 'lucide-react'
 import { getPortfolio } from '../../services/users'
 
 const isNum = (n) => n != null && n !== '' && !Number.isNaN(Number(n))
@@ -87,6 +87,9 @@ const CreatorPortfolio = () => {
         <Stat icon={TrendingUp} label="Engagement" value={isNum(creator.engagementRate) ? creator.engagementRate + '%' : '—'} color="#ec4899" />
         {isNum(creator.healthScore) && <Stat icon={Activity} label="Health Score" value={Math.round(creator.healthScore)} color="#22c55e" />}
         <Stat icon={ShieldCheck} label="Campaigns" value={compact(creator.completedCampaigns)} color="#7c3aed" />
+        {creator.creatorRatingCount > 0 && (
+          <Stat icon={Star} label={`Brand rating (${creator.creatorRatingCount})`} value={`${creator.creatorRatingAvg}/5`} color="#fbbf24" />
+        )}
       </div>
 
       {/* Verified work */}

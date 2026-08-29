@@ -14,3 +14,10 @@ export const updateOrderStatus = (id, data) =>
 
 export const updateOrder = (id, data) =>
   updateOrderStatus(id, data)
+
+// ── Two-way ratings ──────────────────────────────────────────────────────────
+export const rateOrder = (id, data) =>
+  api.post(`/api/orders/${id}/rate`, data).then(r => r.data)
+
+export const rateCreator = (id, data) =>
+  api.post(`/api/orders/${id}/rate-creator`, data).then(r => r.data)

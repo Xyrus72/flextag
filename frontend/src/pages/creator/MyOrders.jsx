@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getOrders } from '../../services/orders'
+import { getOrders, rateOrder } from '../../services/orders'
+import StarRating from '../../components/StarRating'
 
 const statusConfig = {
   processing: { label: 'Processing', bg: 'bg-yellow-500/10', text: 'text-yellow-400', dot: 'bg-yellow-400' },
@@ -18,6 +19,38 @@ const MyOrders = () => {
   const [orders, setOrders]   = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter]   = useState('all')
+  const [ratingFor, setRatingFor] = useState(null)   // order id whose form is open
+  const [stars, setStars]     = useState({ quality: 0, shipping: 0, support: 0, comment: '' })
+  const [savingRating, setSavingRating] = useState(false)
+  const [rateError, setRateError] = useState('')
+
+  const openRating = (order) => {
+    setRatingFor(order._id)
+    setRateError('')
+    setStars({
+      quality:  order.creatorRating?.quality  || 0,
+      shipping: order.creatorRating?.shipping || 0,
+      support:  order.creatorRating?.support  || 0,
+      comment:  order.creatorRating?.comment  || '',
+    })
+  }
+
+  const submitRating = async (orderId) => {
+    if (!stars.quality || !stars.shipping || !stars.support) {
+      setRateError('Give all three a score first.')
+      return
+    }
+    setSavingRating(true); setRateError('')
+    try {
+      const d = await rateOrder(orderId, stars)
+      setOrders(prev => prev.map(o => (o._id === orderId ? { ...o, creatorRating: d.order.creatorRating } : o)))
+      setRatingFor(null)
+    } catch (err) {
+      setRateError(err.response?.data?.message || 'Could not save your review.')
+    } finally {
+      setSavingRating(false)
+    }
+  }
 
   useEffect(() => {
     getOrders({ status: 'all' })
@@ -85,6 +118,37 @@ const MyOrders = () => {
                     )}
                     {o.cashbackReleased && (
                       <div style={{ marginTop:12 }}><span className="badge badge-success">✓ Cashback Released</span></div>
+                    )}
+                    {['delivered', 'return_requested', 'returned'].includes(o.status) && (
+                      o.creatorRating?.quality && ratingFor !== o._id ? (
+                        <div style={{ marginTop:12, display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
+                          <StarRating value={o.creatorRating.quality} />
+                          <span style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.35)' }}>You reviewed this order</span>
+                          <button onClick={() => openRating(o)} style={{ background:'none', border:'none', padding:0, cursor:'pointer', fontFamily:'inherit', fontSize:12, fontWeight:600, color:'#67e8f9' }}>Edit</button>
+                        </div>
+                      ) : ratingFor === o._id ? (
+                        <div style={{ marginTop:14, padding:16, borderRadius:14, background:'rgba(var(--ink-rgb),0.02)', border:'1px solid rgba(var(--ink-rgb),0.06)' }}>
+                          <p style={{ fontSize:13, fontWeight:700, color:'var(--text)', margin:'0 0 12px' }}>How was it?</p>
+                          <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:12 }}>
+                            <StarRating label="Product" value={stars.quality} onChange={v => setStars(s2 => ({ ...s2, quality: v }))} size={20} />
+                            <StarRating label="Shipping" value={stars.shipping} onChange={v => setStars(s2 => ({ ...s2, shipping: v }))} size={20} />
+                            <StarRating label="Support" value={stars.support} onChange={v => setStars(s2 => ({ ...s2, support: v }))} size={20} />
+                          </div>
+                          <textarea value={stars.comment} onChange={e => setStars(s2 => ({ ...s2, comment: e.target.value }))}
+                            rows={2} className="field-input" placeholder="Anything the next creator should know? (optional)" />
+                          {rateError && <p style={{ fontSize:12, color:'#f87171', margin:'8px 0 0' }}>{rateError}</p>}
+                          <div style={{ display:'flex', gap:8, marginTop:12 }}>
+                            <button onClick={() => submitRating(o._id)} disabled={savingRating} className="btn-primary" style={{ padding:'8px 18px', fontSize:12 }}>
+                              {savingRating ? 'Saving…' : 'Post review'}
+                            </button>
+                            <button onClick={() => setRatingFor(null)} style={{ padding:'8px 18px', fontSize:12, fontWeight:700, borderRadius:10, cursor:'pointer', fontFamily:'inherit', background:'rgba(var(--ink-rgb),0.05)', color:'rgba(var(--ink-rgb),0.6)', border:'1px solid rgba(var(--ink-rgb),0.1)' }}>Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button onClick={() => openRating(o)} className="btn-primary" style={{ marginTop:12, padding:'8px 18px', fontSize:12, background:'rgba(251,191,36,0.15)', color:'#fbbf24', border:'1px solid rgba(251,191,36,0.3)', boxShadow:'none' }}>
+                          ⭐ Rate this order
+                        </button>
+                      )
                     )}
                     {o.status !== 'cancelled' && (
                       <button onClick={() => navigate('/creator/disputes', { state: { orderId: o._id } })} style={{

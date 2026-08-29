@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const Product = require('../models/Product')
+const Order   = require('../models/Order')
 const { requireAuth, requireRole } = require('../middleware/auth')
 
 router.get('/', async (req, res) => {
@@ -64,6 +65,40 @@ router.get('/:id', async (req, res) => {
     if (!product) return res.status(404).json({ message: 'Product not found.' })
     res.json({ product })
   } catch (err) {
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// ── GET /api/products/:id/reviews — creator reviews of this product ────────
+// Public: the reviews are the whole point of the stars on the card. Only the
+// product-quality score and comment are shown; shipping/support belong to the
+// brand's reputation, not the product's.
+router.get('/:id/reviews', async (req, res) => {
+  try {
+    const orders = await Order.find({ productId: req.params.id, 'creatorRating.quality': { $gt: 0 } })
+      .populate('creatorId', 'name instagramHandle avatar tier')
+      .select('creatorRating creatorId createdAt')
+      .sort({ 'creatorRating.at': -1 })
+      .limit(30)
+      .lean()
+    const reviews = orders.map(o => ({
+      id: String(o._id),
+      creator: o.creatorId?.name || 'Creator',
+      handle: o.creatorId?.instagramHandle || '',
+      avatar: o.creatorId?.avatar || null,
+      tier: o.creatorId?.tier || 'bronze',
+      quality: o.creatorRating.quality,
+      shipping: o.creatorRating.shipping,
+      support: o.creatorRating.support,
+      comment: o.creatorRating.comment || '',
+      at: o.creatorRating.at || o.createdAt,
+    }))
+    const average = reviews.length
+      ? Number((reviews.reduce((sum, r) => sum + r.quality, 0) / reviews.length).toFixed(2))
+      : 0
+    res.json({ reviews, average, count: reviews.length })
+  } catch (err) {
+    console.error('[product reviews]', err)
     res.status(500).json({ message: 'Server error.' })
   }
 })

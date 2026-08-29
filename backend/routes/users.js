@@ -29,7 +29,7 @@ router.get('/brand/ratings', requireAuth, requireRole('brand'), async (req, res)
       createdAt: o.createdAt,
     }))
 
-    res.json({ ratings })
+    res.json({ ratings, average: req.user.brandRatingAvg || 0, count: req.user.brandRatingCount || 0 })
   } catch (err) {
     console.error('[brand ratings]', err)
     res.status(500).json({ message: 'Server error.' })
@@ -40,7 +40,7 @@ router.get('/brand/ratings', requireAuth, requireRole('brand'), async (req, res)
 router.get('/leaderboard', async (req, res) => {
   try {
     const creators = await User.find({ role: 'creator' })
-      .select('name instagramHandle followersCount engagementRate tier totalEarnings completedCampaigns avatar')
+      .select('name instagramHandle followersCount engagementRate tier totalEarnings completedCampaigns avatar creatorRatingAvg creatorRatingCount')
       .sort({ totalEarnings: -1 })
       .limit(50)
 
@@ -57,7 +57,7 @@ router.get('/portfolio/:handle', async (req, res) => {
     const handle = normalizeHandle(req.params.handle)
     if (!handle) return res.status(400).json({ message: 'Invalid handle.' })
     const creator = await User.findOne({ role: 'creator', instagramHandle: handleRegex(handle) })
-      .select('name instagramHandle avatar tier followersCount engagementRate igHealthScore igVerified completedCampaigns createdAt')
+      .select('name instagramHandle avatar tier followersCount engagementRate igHealthScore igVerified completedCampaigns createdAt creatorRatingAvg creatorRatingCount')
       .lean()
     if (!creator) return res.status(404).json({ message: 'Creator not found.' })
 

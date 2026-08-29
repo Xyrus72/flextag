@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { getProduct } from '../../services/products'
+import { getProduct, getProductReviews } from '../../services/products'
+import StarRating from '../../components/StarRating'
 import { getCampaigns } from '../../services/campaigns'
 import { startConversation } from '../../services/messages'
 
@@ -11,6 +12,7 @@ const ProductDetail = () => {
   const [campaign, setCampaign] = useState(null)
   const [loading, setLoading] = useState(true)
   const [qty, setQty] = useState(1)
+  const [reviews, setReviews] = useState({ reviews: [], average: 0, count: 0 })
 
   useEffect(() => {
     const load = async () => {
@@ -34,8 +36,8 @@ const ProductDetail = () => {
               cashbackRate: camp.cashbackRate,
               instantSplitPct: camp.instantSplitPct || 0,
               image: '📦',
-              rating: 4.8,
-              reviews: 12,
+              rating: 0,
+              reviews: 0,
               inStock: camp.stockLeft > 0,
               description: 'Campaign product available for creator cashback rewards.',
             })
@@ -48,6 +50,15 @@ const ProductDetail = () => {
       }
     }
     load()
+  }, [id])
+
+  // Reviews are creators rating the product after delivery — only real ones.
+  useEffect(() => {
+    let alive = true
+    getProductReviews(id)
+      .then(d => { if (alive) setReviews(d) })
+      .catch(() => {})
+    return () => { alive = false }
   }, [id])
 
   const addToCart = () => {
@@ -133,15 +144,13 @@ const ProductDetail = () => {
         <div>
           <span className="text-xs text-zinc-500 uppercase tracking-wider font-medium">{product.brand}</span>
           <h1 className="text-3xl font-bold text-white mt-2">{product.name}</h1>
-          {product.rating > 0 && (
+          {reviews.count > 0 ? (
             <div className="flex items-center gap-2 mt-3">
-              <div className="flex gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill={i < Math.floor(product.rating) ? '#fbbf24' : '#27272a'} stroke={i < Math.floor(product.rating) ? '#fbbf24' : '#3f3f46'} strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                ))}
-              </div>
-              <span className="text-sm text-zinc-400">{product.rating} · {product.reviews} reviews</span>
+              <StarRating value={reviews.average} />
+              <span className="text-sm text-zinc-400">{reviews.average} · {reviews.count} creator review{reviews.count === 1 ? '' : 's'}</span>
             </div>
+          ) : (
+            <p className="text-sm text-zinc-500 mt-3">No reviews yet — be the first creator to try it.</p>
           )}
 
           {product.description && <p className="text-zinc-400 mt-4 leading-relaxed">{product.description}</p>}
@@ -207,6 +216,31 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Creator reviews — written by people who actually received the product */}
+      {reviews.count > 0 && (
+        <div style={{ marginTop: 40 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 16 }}>
+            What creators said ({reviews.count})
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 14 }}>
+            {reviews.reviews.map(r => (
+              <div key={r.id} style={{ padding: 18, borderRadius: 16, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
+                    {r.creator}{r.handle ? <span style={{ color: 'rgba(var(--ink-rgb),0.35)', fontWeight: 400 }}> · @{String(r.handle).replace(/^@/, '')}</span> : null}
+                  </p>
+                  <StarRating value={r.quality} size={13} />
+                </div>
+                {r.comment && <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.6)', margin: '0 0 8px' }}>{r.comment}</p>}
+                <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.3)', margin: 0 }}>
+                  Shipping {r.shipping}/5 · Support {r.support}/5 · {new Date(r.at).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

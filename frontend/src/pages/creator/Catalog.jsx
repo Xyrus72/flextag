@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getProducts } from '../../services/products'
+import StarRating from '../../components/StarRating'
 
 const Catalog = () => {
   const [products, setProducts] = useState([])
@@ -11,7 +12,7 @@ const Catalog = () => {
   const [maxPrice, setMaxPrice] = useState(10000)
   const [brand, setBrand] = useState('All')
   const [sortBy, setSortBy] = useState('cashback')
-  const [categories, setCategories] = useState(['All', 'Beauty', 'Skincare', 'Fashion', 'Tech', 'Lifestyle'])
+  const categories = ['All', 'Beauty', 'Skincare', 'Fashion', 'Tech', 'Lifestyle']
   const [brands, setBrands] = useState(['All'])
 
   useEffect(() => {
@@ -186,6 +187,13 @@ const Catalog = () => {
                     <div>
                       <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>{p.brand}</p>
                       <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 8, lineHeight: 1.3 }}>{p.name}</p>
+
+                      {p.reviews > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                          <StarRating value={p.rating} size={12} />
+                          <span style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)' }}>{p.rating} ({p.reviews})</span>
+                        </div>
+                      )}
                       
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
                         <span style={{ fontSize: 11, color: '#a78bfa', background: 'rgba(124,58,237,0.15)', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>
