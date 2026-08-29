@@ -40,13 +40,42 @@ const en = {
 
   // ── Auth ───────────────────────────────────────────────────────────────
   'auth.welcomeBack': 'Welcome back',
-  'auth.email': 'Email',
+  'auth.tagline': 'Sign in to your account',
+  'auth.email': 'Email Address',
   'auth.password': 'Password',
-  'auth.login': 'Log in',
-  'auth.loggingIn': 'Logging in…',
+  'auth.login': 'Sign In →',
+  'auth.loggingIn': 'Signing in…',
   'auth.noAccount': "Don't have an account?",
-  'auth.createAccount': 'Create one',
+  'auth.createAccount': 'Sign up free',
   'auth.haveAccount': 'Already have an account?',
+  'auth.loginFailed': 'Login failed. Please try again.',
+  'auth.headline1': 'Turn influence into',
+  'auth.headline2': 'real income.',
+  'auth.blurb': 'The creator-commerce platform trusted by nano & micro-influencers across Bangladesh. Shop products, share authentic content, earn cashback.',
+  'auth.perk1.title': '30–70% cashback',
+  'auth.perk1.desc': 'Real money back on every approved post',
+  'auth.perk2.title': 'Escrow-protected',
+  'auth.perk2.desc': 'Funds locked before campaigns go live',
+  'auth.perk3.title': '48h payouts',
+  'auth.perk3.desc': 'bKash & Nagad withdrawals, no hassle',
+
+  // ── Footer ─────────────────────────────────────────────────────────────
+  'footer.platform': 'Platform',
+  'footer.forBrands': 'For Brands',
+  'footer.support': 'Support',
+  'footer.howItWorks': 'How It Works',
+  'footer.catalog': 'Shop Catalog',
+  'footer.leaderboard': 'Leaderboard',
+  'footer.creatorSignup': 'Creator Signup',
+  'footer.launchCampaign': 'Launch a Campaign',
+  'footer.brandDashboard': 'Brand Dashboard',
+  'footer.pricing': 'Pricing & Fees',
+  'footer.stories': 'Success Stories',
+  'footer.faq': 'Help Center / FAQ',
+  'footer.liveChat': 'Live Chat',
+  'footer.ticket': 'Submit a Ticket',
+  'footer.contact': 'Contact Us',
+  'footer.tagline': 'Shop · Share · Earn',
 
   // ── Dashboard navigation ───────────────────────────────────────────────
   'menu.dashboard': 'Dashboard',
@@ -134,13 +163,41 @@ const bn = {
   'hero.brandPartners': 'ব্র্যান্ড পার্টনার',
 
   'auth.welcomeBack': 'আবার স্বাগতম',
-  'auth.email': 'ইমেইল',
+  'auth.tagline': 'আপনার অ্যাকাউন্টে সাইন ইন করুন',
+  'auth.email': 'ইমেইল ঠিকানা',
   'auth.password': 'পাসওয়ার্ড',
-  'auth.login': 'লগ ইন',
-  'auth.loggingIn': 'লগ ইন হচ্ছে…',
+  'auth.login': 'সাইন ইন →',
+  'auth.loggingIn': 'সাইন ইন হচ্ছে…',
   'auth.noAccount': 'অ্যাকাউন্ট নেই?',
-  'auth.createAccount': 'নতুন অ্যাকাউন্ট খুলুন',
+  'auth.createAccount': 'ফ্রিতে সাইন আপ করুন',
   'auth.haveAccount': 'আগে থেকেই অ্যাকাউন্ট আছে?',
+  'auth.loginFailed': 'লগ ইন হয়নি। আবার চেষ্টা করুন।',
+  'auth.headline1': 'প্রভাবকে বদলে ফেলুন',
+  'auth.headline2': 'সত্যিকারের আয়ে।',
+  'auth.blurb': 'বাংলাদেশের ন্যানো ও মাইক্রো-ইনফ্লুয়েন্সারদের ভরসার ক্রিয়েটর-কমার্স প্ল্যাটফর্ম। পণ্য কিনুন, নিজের কনটেন্ট শেয়ার করুন, ক্যাশব্যাক আয় করুন।',
+  'auth.perk1.title': '৩০–৭০% ক্যাশব্যাক',
+  'auth.perk1.desc': 'প্রতিটি অনুমোদিত পোস্টে সত্যিকারের টাকা ফেরত',
+  'auth.perk2.title': 'এসক্রো-সুরক্ষিত',
+  'auth.perk2.desc': 'ক্যাম্পেইন শুরুর আগেই টাকা জমা রাখা হয়',
+  'auth.perk3.title': '৪৮ ঘণ্টায় পেমেন্ট',
+  'auth.perk3.desc': 'বিকাশ ও নগদে ঝামেলা ছাড়াই উত্তোলন',
+
+  'footer.platform': 'প্ল্যাটফর্ম',
+  'footer.forBrands': 'ব্র্যান্ডদের জন্য',
+  'footer.support': 'সহায়তা',
+  'footer.howItWorks': 'কীভাবে কাজ করে',
+  'footer.catalog': 'শপ ক্যাটালগ',
+  'footer.leaderboard': 'লিডারবোর্ড',
+  'footer.creatorSignup': 'ক্রিয়েটর সাইন আপ',
+  'footer.launchCampaign': 'ক্যাম্পেইন চালু করুন',
+  'footer.brandDashboard': 'ব্র্যান্ড ড্যাশবোর্ড',
+  'footer.pricing': 'মূল্য ও ফি',
+  'footer.stories': 'সফলতার গল্প',
+  'footer.faq': 'হেল্প সেন্টার / প্রশ্নোত্তর',
+  'footer.liveChat': 'লাইভ চ্যাট',
+  'footer.ticket': 'টিকিট জমা দিন',
+  'footer.contact': 'যোগাযোগ করুন',
+  'footer.tagline': 'কিনুন · শেয়ার করুন · আয় করুন',
 
   'menu.dashboard': 'ড্যাশবোর্ড',
   'menu.catalog': 'শপ ক্যাটালগ',
@@ -203,8 +260,16 @@ const bn = {
 
 export const DICTIONARIES = { en, bn }
 
+const warned = new Set()
+
 /** Look a key up with an English fallback, then fill {placeholders}. */
 export function translate(lang, key, vars) {
+  // In development, say out loud when a key is missing entirely — a silent
+  // fallback to the key name is how half-translated screens ship.
+  if (import.meta.env?.DEV && !DICTIONARIES.en[key] && !warned.has(key)) {
+    warned.add(key)
+    console.warn(`[i18n] no string for "${key}" — add it to i18n/strings.js`)
+  }
   const raw = DICTIONARIES[lang]?.[key] ?? DICTIONARIES.en[key] ?? key
   if (!vars) return raw
   return Object.entries(vars).reduce((out, [k, v]) => out.replaceAll(`{${k}}`, String(v)), raw)

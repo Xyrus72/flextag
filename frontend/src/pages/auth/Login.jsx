@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import AuthShell from '../../components/AuthShell'
+import { useT } from '../../context/LanguageContext'
 
 const Login = () => {
+  const t = useT()
   const { login } = useAuth()
   const navigate  = useNavigate()
 
@@ -23,14 +25,14 @@ const Login = () => {
       const dest = { creator: '/creator', brand: '/brand', admin: '/admin' }[user.role] || '/'
       navigate(dest, { replace: true })
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.')
+      setError(err.response?.data?.message || t('auth.loginFailed'))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <AuthShell tagline="Sign in to your account">
+    <AuthShell tagline={t('auth.tagline')}>
         {/* Card */}
         <div style={{
           background: 'rgba(var(--ink-rgb),0.04)',
@@ -46,7 +48,7 @@ const Login = () => {
 
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div>
-              <label className="field-label">Email Address</label>
+              <label className="field-label">{t('auth.email')}</label>
               <input
                 id="login-email" type="email" value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -56,7 +58,7 @@ const Login = () => {
               />
             </div>
             <div>
-              <label className="field-label">Password</label>
+              <label className="field-label">{t('auth.password')}</label>
               <div style={{ position: 'relative' }}>
                 <input
                   id="login-password"
@@ -90,18 +92,18 @@ const Login = () => {
 
             <button id="login-submit" type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', padding: '14px', fontSize: 13, marginTop: 4 }}>
               {loading ? (
-                <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> Signing in…</>
-              ) : 'Sign In →'}
+                <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> {t('auth.loggingIn')}</>
+              ) : t('auth.login')}
             </button>
           </form>
 
           <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(var(--ink-rgb),0.06)', textAlign: 'center' }}>
             <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.3)' }}>
-              Don't have an account?{' '}
+              {t('auth.noAccount')}{' '}
               <Link to="/register" style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: 600 }}
                 onMouseEnter={e => e.target.style.color = '#7c3aed'}
                 onMouseLeave={e => e.target.style.color = '#a78bfa'}
-              >Sign up free</Link>
+              >{t('auth.createAccount')}</Link>
             </p>
           </div>
 
