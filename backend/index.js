@@ -27,6 +27,16 @@ const app    = express()
 const server = http.createServer(app)
 const PORT   = process.env.PORT || 1643
 const IS_PROD = process.env.NODE_ENV === 'production'
+const mongoUri = process.env.MONGO_URI?.trim()
+
+if (!mongoUri) {
+  const message = '❌  MONGO_URI is not set. Database-backed features are unavailable.'
+  if (IS_PROD) {
+    console.error(`${message} Refusing to start in production.`)
+    process.exit(1)
+  }
+  console.warn(`⚠️   ${message} Using the in-memory session store for development.`)
+}
 
 // Render/Railway/etc terminate TLS at a proxy in front of the app, so Express
 // sees a plain HTTP connection unless told to trust the proxy's X-Forwarded-*
@@ -70,24 +80,26 @@ app.use((req, _res, next) => {
 
 
 // ─── Connect to MongoDB ───────────────────────────────────────────────────────
-mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 30000,
-  socketTimeoutMS: 60000,
-})
-  .then(() => console.log('✅  MongoDB connected'))
-  .catch((err) => {
-    console.error('❌  MongoDB connection error:', err.message)
-    console.log('\n======================================================')
-    console.log('⚠️  DATABASE CONNECTION TIMED OUT / REJECTED!')
-    console.log('This is 100% because your IP address is not whitelisted in MongoDB Atlas.')
-    console.log('Please follow these steps to fix it in 2 minutes:')
-    console.log('1. Go to https://cloud.mongodb.com and log in.')
-    console.log('2. Click "Network Access" in the left sidebar under "Security".')
-    console.log('3. Click "+ Add IP Address" and select "Allow Access From Anywhere" (0.0.0.0/0).')
-    console.log('4. Click "Confirm" and wait 1 minute, then try running this again.')
-    console.log('======================================================\n')
-    process.exit(1)
+if (mongoUri) {
+  mongoose.connect(mongoUri, {
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 60000,
   })
+    .then(() => console.log('✅  MongoDB connected'))
+    .catch((err) => {
+      console.error('❌  MongoDB connection error:', err.message)
+      console.log('\n======================================================')
+      console.log('⚠️  DATABASE CONNECTION TIMED OUT / REJECTED!')
+      console.log('This is 100% because your IP address is not whitelisted in MongoDB Atlas.')
+      console.log('Please follow these steps to fix it in 2 minutes:')
+      console.log('1. Go to https://cloud.mongodb.com and log in.')
+      console.log('2. Click "Network Access" in the left sidebar under "Security".')
+      console.log('3. Click "+ Add IP Address" and select "Allow Access From Anywhere" (0.0.0.0/0).')
+      console.log('4. Click "Confirm" and wait 1 minute, then try running this again.')
+      console.log('======================================================\n')
+      process.exit(1)
+    })
+}
 
 // ─── Session ──────────────────────────────────────────────────────────────────
 // A predictable secret lets anyone forge a session cookie, so refuse to boot
@@ -104,15 +116,17 @@ const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'flextag_dev_only_secret',
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URI,
-    collectionName: 'sessions',
-    ttl: 7 * 24 * 60 * 60,
-    mongoOptions: {
-      serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 60000,
-    },
-  }),
+  ...(mongoUri ? {
+    store: MongoStore.create({
+      mongoUrl: mongoUri,
+      collectionName: 'sessions',
+      ttl: 7 * 24 * 60 * 60,
+      mongoOptions: {
+        serverSelectionTimeoutMS: 30000,
+        socketTimeoutMS: 60000,
+      },
+    }),
+  } : {}),
   cookie: {
     // Cross-domain deploy (frontend on vercel.app, API on onrender.com) needs
     // SameSite=None + Secure for the browser to send the cookie at all; local
@@ -176,5 +190,8 @@ app.use((err, req, res, _next) => {
 // ─── Start ────────────────────────────────────────────────────────────────────
 server.listen(PORT, () => console.log(`🚀  FlexTag API running on http://localhost:${PORT}`))
 
-// Background Instagram jobs (retention re-checks, stale re-audits). No-op without a session.
-require('./jobs/instagramJobs').start()
+// Background jobs require the database-backed models.
+if (mongoUri) {
+  require('./jobs/instagramJobs').start()
+  require('./jobs/deadlineReminders').start()
+}

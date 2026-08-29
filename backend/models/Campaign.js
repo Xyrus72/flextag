@@ -26,6 +26,8 @@ const campaignSchema = new mongoose.Schema({
   status:       { type: String, enum: ['active', 'paused', 'closed'], default: 'active' },
   totalOrders:  { type: Number, default: 0 },
   totalCreators:{ type: Number, default: 0 },
+  // Reminder tracking: which reminder emails have been sent (48h, 24h, 6h)
+  remindersSent: { type: [String], default: [] }, // ['48h', '24h', '6h']
 }, { timestamps: true })
 
 module.exports = mongoose.model('Campaign', campaignSchema)
