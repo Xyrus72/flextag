@@ -21,6 +21,12 @@ async function notify(userId, payload) {
     const io = getIo && getIo()
     if (io) io.to(`user_${String(userId)}`).emit('notification', { notification: doc })
   } catch { /* socket optional — the DB row is the source of truth */ }
+  try {
+    // Money and dispute events also go to the inbox — the bell only reaches
+    // people who happen to be on the site. Never blocks or throws.
+    const { emailNotification } = require('./email')
+    emailNotification(userId, payload).catch(err => console.warn('[notify email]', err.message))
+  } catch { /* email optional */ }
   return doc
 }
 

@@ -61,6 +61,16 @@ const userSchema = new mongoose.Schema({
   blocked:     { type: Boolean, default: false },
   blockReason: { type: String, default: '' },
 
+  // Email preferences. Transactional = money + disputes (opt-out), digest =
+  // the daily catch-up of everything else.
+  notificationPrefs: {
+    email: {
+      transactional: { type: Boolean, default: true },
+      digest:        { type: Boolean, default: true },
+    },
+  },
+  unsubscribeToken: { type: String, default: '', index: true },
+
   // Shared
   isVerified:  { type: Boolean, default: false },
   igVerified:  { type: Boolean, default: false },   // admin-verified Instagram identity
