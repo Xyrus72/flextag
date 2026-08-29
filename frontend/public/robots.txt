@@ -1,0 +1,20 @@
+# FlexTag — https://flextag.com.bd
+# Public surface: the landing page and creator portfolios (/u/<handle>).
+# Everything behind a login is noise for a crawler and private for a user.
+
+User-agent: *
+Allow: /$
+Allow: /u/
+Disallow: /admin
+Disallow: /brand
+Disallow: /creator/wallet
+Disallow: /creator/earnings
+Disallow: /creator/orders
+Disallow: /creator/cart
+Disallow: /creator/notifications
+Disallow: /login
+Disallow: /register
+
+# The live sitemap is generated from the database by the API:
+#   <your-api-domain>/share/sitemap.xml
+# Point Search Console at that URL, or proxy it here once the domains are fixed.

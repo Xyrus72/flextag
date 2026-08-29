@@ -2,6 +2,8 @@ const express = require('express')
 const router = express.Router()
 const Product = require('../models/Product')
 const Order   = require('../models/Order')
+const { parseCsvObjects } = require('../utils/csv')
+const audit = require('../services/audit')
 const { requireAuth, requireRole } = require('../middleware/auth')
 
 router.get('/', async (req, res) => {
@@ -149,6 +151,102 @@ router.put('/:id', requireAuth, requireRole('brand', 'admin'), async (req, res) 
     res.json({ product })
   } catch (err) {
     res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+/* ── Bulk import ─────────────────────────────────────────────────────────────
+ * A D2C brand with 40 SKUs is not going to fill in 40 forms. This takes the
+ * spreadsheet they already have.
+ *
+ * Validation is per-row and non-fatal: good rows import, bad rows come back
+ * with the line number and what was wrong, so nobody has to guess which of the
+ * forty lines broke. Nothing is written until the whole file has been checked
+ * (dryRun tells them what WOULD happen first).
+ */
+const IMPORT_COLUMNS = ['name', 'price', 'cashbackrate', 'category', 'stock', 'description', 'image', 'instantsplitpct', 'minfollowers', 'hashtags', 'taghandles', 'campaignbudget']
+
+router.get('/import/template.csv', requireAuth, requireRole('brand', 'admin'), (_req, res) => {
+  const header = 'name,price,cashbackRate,category,stock,description,image,instantSplitPct,minFollowers,hashtags,tagHandles,campaignBudget'
+  const example = 'Glow Serum 50ml,2200,55,Skincare,40,"Vitamin C serum, 50ml",,30,1000,"#glowserum #flextag",@rimonbeauty,50000'
+  res.set('Content-Type', 'text/csv; charset=utf-8')
+  res.set('Content-Disposition', 'attachment; filename="flextag-product-import-template.csv"')
+  res.send([header, example, ''].join('\r\n'))
+})
+
+router.post('/import', requireAuth, requireRole('brand', 'admin'), async (req, res) => {
+  try {
+    const { csv, dryRun } = req.body || {}
+    if (!csv || typeof csv !== 'string') return res.status(400).json({ message: 'Paste or upload a CSV first.' })
+    if (csv.length > 500_000) return res.status(413).json({ message: 'That file is too big — split it into batches of a few hundred rows.' })
+
+    const { headers, rows } = parseCsvObjects(csv)
+    if (!rows.length) return res.status(400).json({ message: 'No data rows found under the header.' })
+    if (rows.length > 500) return res.status(413).json({ message: 'Import up to 500 rows at a time.' })
+    const missing = ['name', 'price', 'cashbackrate', 'category'].filter(c => !headers.includes(c))
+    if (missing.length) {
+      return res.status(400).json({ message: `Missing required column${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}. Download the template to see the format.` })
+    }
+
+    const num = (v, fallback = 0) => {
+      const n = Number(String(v).replace(/[,৳\s]/g, ''))
+      return Number.isFinite(n) ? n : fallback
+    }
+    const list = (v) => String(v || '').split(/[\s,]+/).map(x => x.trim()).filter(Boolean)
+
+    const valid = []
+    const errors = []
+    rows.forEach((r, i) => {
+      const line = i + 2   // +1 for the header, +1 because humans count from one
+      const name = r.name
+      const price = num(r.price, NaN)
+      const rate = num(r.cashbackrate, NaN)
+      const problems = []
+      if (!name) problems.push('name is empty')
+      if (!Number.isFinite(price) || price <= 0) problems.push('price must be a positive number')
+      if (!Number.isFinite(rate) || rate < 0 || rate > 100) problems.push('cashbackRate must be between 0 and 100')
+      if (!r.category) problems.push('category is empty')
+      if (problems.length) { errors.push({ line, name: name || '(no name)', problems }); return }
+
+      valid.push({
+        name,
+        price,
+        cashbackRate: rate,
+        category: r.category,
+        stock: num(r.stock, 0),
+        description: r.description || '',
+        image: r.image || '',
+        instantSplitPct: Math.min(100, Math.max(0, num(r.instantsplitpct, 0))),
+        campaignBudget: num(r.campaignbudget, 50000),
+        creatorCriteria: { minFollowers: num(r.minfollowers, 1000) },
+        postingRules: { hashtags: list(r.hashtags), taggingHandles: list(r.taghandles) },
+        brand: req.user.companyName || req.user.name,
+        brandId: req.user._id,
+        status: 'pending',   // bulk import does not bypass approval
+        totalCashbackSpent: 0,
+      })
+    })
+
+    if (dryRun) {
+      return res.json({
+        dryRun: true, wouldImport: valid.length, errors,
+        preview: valid.slice(0, 5).map(v => ({ name: v.name, price: v.price, cashbackRate: v.cashbackRate, category: v.category })),
+        message: `${valid.length} row${valid.length === 1 ? '' : 's'} ready${errors.length ? `, ${errors.length} to fix` : ''}.`,
+      })
+    }
+
+    const created = valid.length ? await Product.insertMany(valid, { ordered: false }) : []
+    audit.record({
+      actor: req.user, action: 'product.imported', targetType: 'product', targetName: `${created.length} products`,
+      summary: `Bulk-imported ${created.length} product${created.length === 1 ? '' : 's'}${errors.length ? ` (${errors.length} row(s) skipped)` : ''}`, req,
+    })
+    res.status(201).json({
+      imported: created.length, errors,
+      products: created.map(p => ({ _id: p._id, name: p.name })),
+      message: `${created.length} product${created.length === 1 ? '' : 's'} imported and queued for approval${errors.length ? `; ${errors.length} row(s) skipped` : ''}.`,
+    })
+  } catch (err) {
+    console.error('[products import]', err)
+    res.status(500).json({ message: 'Server error while importing.' })
   }
 })
 

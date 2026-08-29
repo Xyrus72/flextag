@@ -101,4 +101,61 @@ function renderPng(svg) {
   }
 }
 
-module.exports = { buildPortfolioSvg, renderPng, WIDTH, HEIGHT }
+/**
+ * @param {{ name:string, brand:string, price:number, cashbackRate:number, netPrice:number, category:string, rating:number|null, reviews:number }} p
+ */
+function buildProductSvg(p) {
+  const stats = [
+    { label: 'RETAIL', value: `${esc(Math.round(p.price).toLocaleString())} BDT` },
+    { label: 'CASHBACK', value: `${Math.round(p.cashbackRate)}%` },
+    { label: 'YOUR NET COST', value: `${esc(Math.round(p.netPrice).toLocaleString())} BDT` },
+  ]
+  const cardW = 330
+  const gap = 28
+  const totalW = stats.length * cardW + (stats.length - 1) * gap
+  const startX = (WIDTH - totalW) / 2
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" font-family="Segoe UI, Arial, Helvetica, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="${BRAND.bg0}"/><stop offset="100%" stop-color="${BRAND.bg1}"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="${BRAND.violet}"/><stop offset="100%" stop-color="${BRAND.cyan}"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="0%" r="70%">
+      <stop offset="0%" stop-color="${BRAND.cyan}" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="${BRAND.cyan}" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#bg)"/>
+  <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#glow)"/>
+  <rect width="${WIDTH}" height="6" fill="url(#accent)"/>
+
+  <text x="60" y="82" fill="${BRAND.ink}" font-size="30" font-weight="700" font-style="italic" opacity="0.9">FlexTag</text>
+  <text x="${WIDTH - 60}" y="82" fill="${BRAND.ink}" font-size="20" font-weight="600" opacity="0.45" text-anchor="end">${esc(p.category || 'Creator campaign')}</text>
+
+  <text x="${WIDTH / 2}" y="228" fill="${BRAND.ink}" font-size="60" font-weight="800" text-anchor="middle">${esc(p.name).slice(0, 30)}</text>
+  <text x="${WIDTH / 2}" y="286" fill="${BRAND.cyan}" font-size="30" font-weight="600" text-anchor="middle">by ${esc(p.brand).slice(0, 34)}</text>
+
+  <g transform="translate(${WIDTH / 2 - 150}, 322)">
+    <rect width="300" height="44" rx="22" fill="${BRAND.violet}" fill-opacity="0.22" stroke="${BRAND.violet}" stroke-opacity="0.6"/>
+    <text x="150" y="29" fill="#c4b5fd" font-size="19" font-weight="700" text-anchor="middle">EARN ${Math.round(p.cashbackRate)}% BACK BY POSTING</text>
+  </g>
+
+  ${stats.map((s, i) => {
+    const x = startX + i * (cardW + gap)
+    const highlight = i === stats.length - 1
+    return `<g transform="translate(${x}, 424)">
+      <rect width="${cardW}" height="122" rx="20" fill="#ffffff" fill-opacity="${highlight ? '0.09' : '0.05'}" stroke="${highlight ? BRAND.cyan : '#ffffff'}" stroke-opacity="${highlight ? '0.5' : '0.1'}"/>
+      <text x="${cardW / 2}" y="60" fill="${highlight ? BRAND.cyan : BRAND.ink}" font-size="38" font-weight="800" text-anchor="middle">${esc(s.value)}</text>
+      <text x="${cardW / 2}" y="92" fill="${BRAND.ink}" font-size="16" font-weight="600" opacity="0.45" text-anchor="middle">${esc(s.label)}</text>
+    </g>`
+  }).join('\n  ')}
+
+  <text x="${WIDTH / 2}" y="596" fill="${BRAND.ink}" font-size="18" opacity="0.4" text-anchor="middle">${p.reviews > 0 ? `Rated ${p.rating}/5 by ${p.reviews} creator${p.reviews === 1 ? '' : 's'}` : 'Verified creator cashback on FlexTag'}</text>
+</svg>`
+}
+
+module.exports = { buildPortfolioSvg, buildProductSvg, renderPng, WIDTH, HEIGHT }

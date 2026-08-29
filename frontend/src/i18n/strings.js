@@ -77,6 +77,7 @@ const en = {
   'menu.fraud': 'Fraud Review',
   'menu.audit': 'Audit Trail',
   'menu.brandWallet': 'Campaign Balance',
+  'menu.importProducts': 'Import Products',
   'menu.notifications': 'Notifications',
   'menu.earnings': 'My Earnings',
 
@@ -169,6 +170,7 @@ const bn = {
   'menu.fraud': 'ফ্রড রিভিউ',
   'menu.audit': 'অডিট ট্রেইল',
   'menu.brandWallet': 'ক্যাম্পেইন ব্যালেন্স',
+  'menu.importProducts': 'পণ্য ইমপোর্ট',
   'menu.notifications': 'নোটিফিকেশন',
   'menu.earnings': 'আমার আয়',
 

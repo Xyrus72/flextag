@@ -117,6 +117,23 @@ async function fetchStories(igUserId, token) {
   return json.data || []
 }
 
+/**
+ * Extend a long-lived token before it dies.
+ *
+ * Facebook's long-lived user tokens last ~60 days and are refreshed by
+ * exchanging them for a new one — but ONLY while still valid. Miss the window
+ * and the creator has to reconnect, which in practice means story verification
+ * quietly stops working for everyone who connected two months ago.
+ */
+async function refreshToken(token) {
+  const res = await graphGet('oauth/access_token', {
+    grant_type: 'fb_exchange_token', client_id: APP_ID(), client_secret: APP_SECRET(), fb_exchange_token: token,
+  })
+  if (!res.access_token) throw new IgError('SESSION_INVALID', 'Facebook would not extend that token — the creator has to reconnect.')
+  const expiresIn = Number(res.expires_in || 0)
+  return { token: res.access_token, expiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000) : null }
+}
+
 /** Reach / impressions for one media item, when the account allows insights. */
 async function fetchMediaInsights(mediaId, token) {
   try {
@@ -127,4 +144,4 @@ async function fetchMediaInsights(mediaId, token) {
   }
 }
 
-module.exports = { configured, authUrl, exchangeCode, resolveAccount, fetchOwnMedia, fetchStories, fetchMediaInsights, SCOPES, REDIRECT }
+module.exports = { configured, authUrl, exchangeCode, refreshToken, resolveAccount, fetchOwnMedia, fetchStories, fetchMediaInsights, SCOPES, REDIRECT }

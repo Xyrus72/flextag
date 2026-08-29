@@ -11,12 +11,13 @@ const { anyConfigured } = require('../services/instagram/provider')
 const { runAudit } = require('../services/instagram/audit')
 const { retentionCheck } = require('../services/instagram/postCheck')
 const { getIgSettings } = require('../utils/settings')
+const { notifySafe } = require('../services/notifications')
 
 const DAY = 86_400_000
 const HOUR = 3_600_000
 const timers = []
 const FATAL = new Set(['NO_SESSION', 'SESSION_INVALID', 'RATE_LIMITED'])
-const running = { retention: false, reaudit: false }
+const running = { retention: false, reaudit: false, tokens: false }
 
 /** Posts whose retention deadline passed: confirm they are still live. */
 async function runRetentionChecks({ limit = 20 } = {}) {
@@ -69,6 +70,52 @@ async function runStaleReaudits({ limit = 25 } = {}) {
   }
 }
 
+/**
+ * Keep connected accounts connected.
+ *
+ * A Facebook long-lived token lasts ~60 days and can only be extended WHILE it
+ * is still valid. Without this, everyone who connected two months ago silently
+ * loses story verification and nobody finds out until a story cannot be checked.
+ * Refreshed at 15 days left; at 3 days left the creator is told to reconnect.
+ */
+async function refreshConnectedTokens() {
+  if (running.tokens) return null
+  const connect = require('../services/instagram/connect')
+  if (!connect.configured()) return null
+  running.tokens = true
+  try {
+    const soon = new Date(Date.now() + 15 * DAY)
+    const users = await User.find({ igConnected: true, igTokenExpiresAt: { $lte: soon } })
+      .select('+igGraphToken name igTokenExpiresAt igGraphUsername').limit(50)
+
+    let refreshed = 0, lost = 0
+    for (const u of users) {
+      if (!u.igGraphToken) continue
+      try {
+        const { token, expiresAt } = await connect.refreshToken(u.igGraphToken)
+        await User.updateOne({ _id: u._id }, { $set: { igGraphToken: token, igTokenExpiresAt: expiresAt } })
+        refreshed += 1
+      } catch (err) {
+        lost += 1
+        const daysLeft = u.igTokenExpiresAt ? (new Date(u.igTokenExpiresAt) - Date.now()) / DAY : 0
+        // Only nag when it is actually about to break, not on the first failed try.
+        if (daysLeft <= 3) {
+          await User.updateOne({ _id: u._id }, { $set: { igConnected: false } }).catch(() => {})
+          notifySafe(u._id, {
+            type: 'system', icon: '🔌', title: 'Reconnect your Instagram',
+            body: 'Your Instagram connection expired. Reconnect to keep story verification and automatic approval working.',
+            link: '/creator/instagram-analyzer',
+          })
+        }
+        console.warn(`[instagram jobs] token refresh failed for @${u.igGraphUsername}: ${err.message}`)
+      }
+    }
+    return users.length ? { candidates: users.length, refreshed, lost } : null
+  } finally {
+    running.tokens = false
+  }
+}
+
 const log = (name) => (r) => r && console.log(`[instagram jobs] ${name}:`, JSON.stringify(r))
 const warn = (name) => (e) => console.warn(`[instagram jobs] ${name} errored: ${e.message}`)
 
@@ -78,10 +125,12 @@ function start() {
   const t2 = setInterval(() => runStaleReaudits().then(log('re-audit')).catch(warn('re-audit')), DAY)
   const t3 = setTimeout(() => runRetentionChecks().then(log('retention')).catch(warn('retention')), 2 * 60_000)
   const t4 = setTimeout(() => runStaleReaudits().then(log('re-audit')).catch(warn('re-audit')), 10 * 60_000)
-  for (const t of [t1, t2, t3, t4]) { t.unref?.(); timers.push(t) }
-  console.log('[instagram jobs] scheduled: retention checks hourly, stale re-audits daily')
+  const t5 = setInterval(() => refreshConnectedTokens().then(log('token refresh')).catch(warn('token refresh')), 12 * HOUR)
+  const t6 = setTimeout(() => refreshConnectedTokens().then(log('token refresh')).catch(warn('token refresh')), 5 * 60_000)
+  for (const t of [t1, t2, t3, t4, t5, t6]) { t.unref?.(); timers.push(t) }
+  console.log('[instagram jobs] scheduled: retention hourly, re-audits daily, token refresh twice daily')
 }
 
 function stop() { for (const t of timers.splice(0)) clearTimeout(t) }
 
-module.exports = { start, stop, runRetentionChecks, runStaleReaudits }
+module.exports = { start, stop, runRetentionChecks, runStaleReaudits, refreshConnectedTokens }
