@@ -476,4 +476,72 @@ router.delete('/me/wishlist/:productId', requireAuth, async (req, res) => {
   }
 })
 
+/* ── Creator earnings analytics ──────────────────────────────────────────────
+ * "How much have I actually made, and where from?" — answered from the ledger
+ * and the orders, never from a stored aggregate that could drift.
+ */
+router.get('/me/earnings', requireAuth, requireRole('creator'), async (req, res) => {
+  try {
+    const Transaction = require('../models/Transaction')
+    const Order = require('../models/Order')
+    const { computeBalance } = require('../utils/balance')
+    const months = Math.min(24, Math.max(3, Number(req.query.months) || 6))
+    const since = new Date()
+    since.setMonth(since.getMonth() - (months - 1))
+    since.setDate(1); since.setHours(0, 0, 0, 0)
+
+    const [rows, series, byBrand, pendingOrders] = await Promise.all([
+      Transaction.find({ userId: req.user._id }).select('type status amount').lean(),
+      Transaction.aggregate([
+        { $match: { userId: req.user._id, status: 'completed', type: { $in: ['cashback', 'clawback', 'refund'] }, createdAt: { $gte: since } } },
+        { $group: {
+          _id: { y: { $year: '$createdAt' }, m: { $month: '$createdAt' } },
+          cashback:  { $sum: { $cond: [{ $eq: ['$type', 'cashback'] }, '$amount', 0] } },
+          clawback:  { $sum: { $cond: [{ $eq: ['$type', 'clawback'] }, '$amount', 0] } },
+          refunds:   { $sum: { $cond: [{ $eq: ['$type', 'refund'] }, '$amount', 0] } },
+        } },
+        { $sort: { '_id.y': 1, '_id.m': 1 } },
+      ]),
+      Order.aggregate([
+        { $match: { creatorId: req.user._id, cashbackReleased: true } },
+        { $group: { _id: '$brand', earned: { $sum: '$cashbackAmount' }, discounts: { $sum: '$instantDiscount' }, orders: { $sum: 1 } } },
+        { $sort: { earned: -1 } },
+        { $limit: 10 },
+      ]),
+      Order.aggregate([
+        { $match: { creatorId: req.user._id, cashbackReleased: false, status: { $nin: ['cancelled', 'returned'] } } },
+        { $group: { _id: null, waiting: { $sum: '$cashbackAmount' }, orders: { $sum: 1 } } },
+      ]),
+    ])
+
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    // Fill the gaps: a month with no earnings must still appear, or the chart lies.
+    const monthly = []
+    const cursor = new Date(since)
+    for (let i = 0; i < months; i += 1) {
+      const y = cursor.getFullYear(); const m = cursor.getMonth() + 1
+      const hit = series.find(s => s._id.y === y && s._id.m === m)
+      monthly.push({
+        label: `${MONTHS[m - 1]} ${String(y).slice(2)}`,
+        earned: Math.max(0, (hit?.cashback || 0) - (hit?.clawback || 0)),
+        refunds: hit?.refunds || 0,
+      })
+      cursor.setMonth(cursor.getMonth() + 1)
+    }
+
+    const balance = computeBalance(rows)
+    res.json({
+      ...balance,
+      monthly,
+      byBrand: byBrand.map(b => ({ brand: b._id || 'Unknown', earned: b.earned, discounts: b.discounts, orders: b.orders })),
+      waitingOnPosts: pendingOrders[0]?.waiting || 0,
+      openOrders: pendingOrders[0]?.orders || 0,
+      lifetime: balance.totalEarnings,
+    })
+  } catch (err) {
+    console.error('[me earnings]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
 module.exports = router

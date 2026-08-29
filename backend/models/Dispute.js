@@ -2,7 +2,8 @@ const mongoose = require('mongoose')
 
 /** One message in the dispute thread — creator, brand and admin all post here. */
 const disputeMessageSchema = new mongoose.Schema({
-  from: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  // null = written by FlexTag itself (e.g. the SLA escalation notice)
+  from: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   role: { type: String, enum: ['creator', 'brand', 'admin'], required: true },
   text: { type: String, required: true, maxlength: 2000 },
   at:   { type: Date, default: Date.now },

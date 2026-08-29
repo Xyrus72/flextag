@@ -1,7 +1,7 @@
 import api from './api'
 
-/** → { notifications: [...], unread } */
-export const getNotifications = () => api.get('/api/notifications').then(r => r.data)
+/** → { notifications, unread, total, types }. Params: { type, limit, skip, unread } */
+export const getNotifications = (params = {}) => api.get('/api/notifications', { params }).then(r => r.data)
 
 /** Mark all (or one, by id) as read → { unread } */
 export const markNotificationsRead = (id) =>

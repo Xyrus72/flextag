@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { useSocket } from '../context/SocketContext'
 import { getNotifications, markNotificationsRead } from '../services/notifications'
@@ -21,7 +21,13 @@ const NotificationBell = () => {
   const [open, setOpen]     = useState(false)
   const { socket } = useSocket()
   const navigate = useNavigate()
+  const location = useLocation()
   const ref = useRef(null)
+  // The centre lives under whichever dashboard you are in, so the link keeps
+  // you inside your own shell instead of bouncing you to another role's.
+  const centre = location.pathname.startsWith('/brand') ? '/brand/notifications'
+    : location.pathname.startsWith('/admin') ? '/admin/notifications'
+    : '/creator/notifications'
 
   const load = () => getNotifications()
     .then(d => { setItems(d.notifications || []); setUnread(d.unread || 0) })
@@ -104,6 +110,11 @@ const NotificationBell = () => {
               <span style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.3)', flexShrink: 0 }}>{relative(n.createdAt)}</span>
             </button>
           ))}
+          <button type="button" onClick={() => { setOpen(false); navigate(centre) }} style={{
+            width: '100%', marginTop: 4, padding: '10px 0', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
+            background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)',
+            color: '#67e8f9', fontSize: 12, fontWeight: 700,
+          }}>See all notifications</button>
         </div>
       )}
     </div>

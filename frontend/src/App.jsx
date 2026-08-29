@@ -36,6 +36,8 @@ const CheckoutSuccess   = lazy(() => import('./pages/creator/CheckoutSuccess'))
 const CheckoutFail      = lazy(() => import('./pages/creator/CheckoutFail'))
 const Disputes          = lazy(() => import('./pages/shared/Disputes'))
 const Wishlist          = lazy(() => import('./pages/creator/Wishlist'))
+const Earnings          = lazy(() => import('./pages/creator/Earnings'))
+const Notifications     = lazy(() => import('./pages/shared/Notifications'))
 
 const BrandDashboard    = lazy(() => import('./pages/brand/BrandDashboard'))
 const BrandProfile      = lazy(() => import('./pages/brand/BrandProfile'))
@@ -114,6 +116,8 @@ const AppRoutes = () => (
         <Route path="/creator/checkout/success" element={<CheckoutSuccess />} />
         <Route path="/creator/checkout/fail" element={<CheckoutFail />} />
         <Route path="/creator/disputes" element={<Disputes />} />
+        <Route path="/creator/earnings" element={<Earnings />} />
+        <Route path="/creator/notifications" element={<Notifications />} />
         <Route path="/support/faq" element={<FAQ />} />
         <Route path="/support/tickets" element={<Tickets />} />
         <Route path="/support/chat" element={<Chat />} />
@@ -132,6 +136,7 @@ const AppRoutes = () => (
         <Route path="/brand/ratings" element={<BrandRatings />} />
         <Route path="/brand/disputes" element={<Disputes />} />
         <Route path="/brand/wallet" element={<BrandWallet />} />
+        <Route path="/brand/notifications" element={<Notifications />} />
         <Route path="/brand/profile" element={<BrandProfile />} />
         <Route path="/brand/chat" element={<Chat />} />
       </Route>
@@ -150,6 +155,7 @@ const AppRoutes = () => (
         <Route path="/admin/payouts" element={<Payouts />} />
         <Route path="/admin/fraud" element={<FraudReview />} />
         <Route path="/admin/audit" element={<AuditLog />} />
+        <Route path="/admin/notifications" element={<Notifications />} />
         <Route path="/admin/analytics" element={<PlatformAnalytics />} />
         <Route path="/admin/chat" element={<AdminChat />} />
       </Route>
