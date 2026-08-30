@@ -5,6 +5,7 @@ import { getMyStats } from '../../services/users'
 import { getOrders } from '../../services/orders'
 import ReferralCard from '../../components/ReferralCard'
 import DetectedPosts from '../../components/DetectedPosts'
+import ActivationChecklist from '../../components/ActivationChecklist'
 
 const CreatorDashboard = () => {
   const { user } = useAuth()
@@ -55,6 +56,8 @@ const CreatorDashboard = () => {
 
       {/* Posts FlexTag spotted on Instagram before the creator told us */}
       <DetectedPosts />
+      {/* The road to the first cashback — disappears once they get there */}
+      <ActivationChecklist />
         <h1 className="page-title">Welcome back, {user?.name?.split(' ')[0]} 👋</h1>
         <p className="page-subtitle">Here's your earning overview</p>
       </div>

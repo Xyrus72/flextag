@@ -16,6 +16,7 @@ import Landing from './pages/Landing'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 const CreatorPortfolio = lazy(() => import('./pages/public/CreatorPortfolio'))
+const Explore           = lazy(() => import('./pages/public/Explore'))
 
 // Dashboard pages are lazy-loaded per route so a landing visitor doesn't download
 // the entire creator/brand/admin app up front.
@@ -49,6 +50,7 @@ const CreatorAudit      = lazy(() => import('./pages/brand/CreatorAudit'))
 const BrandRatings      = lazy(() => import('./pages/brand/BrandRatings'))
 const BrandWallet       = lazy(() => import('./pages/brand/BrandWallet'))
 const ImportProducts    = lazy(() => import('./pages/brand/ImportProducts'))
+const CampaignReport    = lazy(() => import('./pages/brand/CampaignReport'))
 const PostProduct       = lazy(() => import('./pages/brand/PostProduct'))
 const MyProducts        = lazy(() => import('./pages/brand/MyProducts'))
 
@@ -97,6 +99,7 @@ const AppRoutes = () => (
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/u/:handle" element={<CreatorPortfolio />} />{/* public creator portfolio */}
+      <Route path="/explore" element={<Explore />} />{/* public shop window — no login wall */}
 
       {/* ── Creator Routes ──────────────────────── */}
       <Route element={<ProtectedRoute allowedRoles={['creator']}><CreatorLayout /></ProtectedRoute>}>
@@ -133,6 +136,7 @@ const AppRoutes = () => (
         <Route path="/brand/campaign-builder" element={<CampaignBuilder />} />
         <Route path="/brand/orders" element={<OrderFulfillment />} />
         <Route path="/brand/analytics" element={<Analytics />} />
+        <Route path="/brand/report" element={<CampaignReport />} />
         <Route path="/brand/invite" element={<InviteCampaign />} />
         <Route path="/brand/creator-audit" element={<CreatorAudit />} />
         <Route path="/brand/ratings" element={<BrandRatings />} />

@@ -26,6 +26,10 @@ const campaignSchema = new mongoose.Schema({
   status:       { type: String, enum: ['active', 'paused', 'closed'], default: 'active' },
   totalOrders:  { type: Number, default: 0 },
   totalCreators:{ type: Number, default: 0 },
+  // Unguessable token that makes the campaign's performance report publicly
+  // shareable — the case-study link a brand (or FlexTag itself) sends around.
+  // null = private; generated on the brand's explicit "share" action.
+  reportToken:  { type: String, default: null, index: true },
 }, { timestamps: true })
 
 module.exports = mongoose.model('Campaign', campaignSchema)

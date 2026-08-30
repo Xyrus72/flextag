@@ -107,6 +107,17 @@ const en = {
   'menu.audit': 'Audit Trail',
   'menu.brandWallet': 'Campaign Balance',
   'menu.importProducts': 'Import Products',
+  'menu.report': 'Campaign Report',
+
+  // ── Public explore ─────────────────────────────────────────────────────
+  'explore.title': 'Shop. Post. Get up to 70% back.',
+  'explore.subtitle': 'These are real campaigns running right now. Buy at the price shown, post about it on Instagram, and the cashback lands in your bKash once FlexTag verifies the post.',
+  'explore.retail': 'Retail',
+  'explore.yourCost': 'Your cost',
+  'explore.cta': 'Join free to claim',
+  'explore.empty': 'No campaigns in this category right now — check back soon.',
+  'explore.bottomTitle': 'Your followers are worth real money',
+  'explore.bottomSubtitle': 'From 1,000 followers up. Verified payouts, no invoicing, no negotiating.',
   'menu.notifications': 'Notifications',
   'menu.earnings': 'My Earnings',
 
@@ -228,6 +239,16 @@ const bn = {
   'menu.audit': 'অডিট ট্রেইল',
   'menu.brandWallet': 'ক্যাম্পেইন ব্যালেন্স',
   'menu.importProducts': 'পণ্য ইমপোর্ট',
+  'menu.report': 'ক্যাম্পেইন রিপোর্ট',
+
+  'explore.title': 'কিনুন। পোস্ট করুন। ৭০% পর্যন্ত ফেরত পান।',
+  'explore.subtitle': 'এগুলো এখনই চলা আসল ক্যাম্পেইন। দেখানো দামে কিনুন, ইনস্টাগ্রামে পোস্ট করুন — ফ্লেক্সট্যাগ পোস্ট যাচাই করলেই ক্যাশব্যাক আপনার বিকাশে।',
+  'explore.retail': 'খুচরা মূল্য',
+  'explore.yourCost': 'আপনার খরচ',
+  'explore.cta': 'ফ্রিতে যোগ দিন',
+  'explore.empty': 'এই ক্যাটাগরিতে এখন কোনো ক্যাম্পেইন নেই — একটু পরে দেখুন।',
+  'explore.bottomTitle': 'আপনার ফলোয়াররা সত্যিকারের টাকার মতো মূল্যবান',
+  'explore.bottomSubtitle': '১,০০০ ফলোয়ার থেকেই শুরু। যাচাইকৃত পেমেন্ট, কোনো দর কষাকষি নেই।',
   'menu.notifications': 'নোটিফিকেশন',
   'menu.earnings': 'আমার আয়',
 

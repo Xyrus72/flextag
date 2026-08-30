@@ -14,3 +14,13 @@ export const updateCampaign = (id, data) =>
 
 export const deleteCampaign = (id) =>
   api.delete(`/api/campaigns/${id}`).then(r => r.data)
+
+// ── Campaign report card ─────────────────────────────────────────────────────
+export const getCampaignReport = (id) =>
+  api.get(`/api/campaigns/${id}/report`).then(r => r.data)
+
+export const shareCampaignReport = (id) =>
+  api.post(`/api/campaigns/${id}/report/share`).then(r => r.data)
+
+export const unshareCampaignReport = (id) =>
+  api.delete(`/api/campaigns/${id}/report/share`).then(r => r.data)

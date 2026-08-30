@@ -4,6 +4,8 @@ const User    = require('../models/User')
 const Post    = require('../models/Post')
 const { normalizeHandle, handleRegex } = require('../services/instagram/endpoints')
 const Product = require('../models/Product')
+const Campaign = require('../models/Campaign')
+const { buildReport } = require('../services/campaignReport')
 const { buildPortfolioSvg, buildProductSvg, renderPng } = require('../services/ogImage')
 
 /**
@@ -234,6 +236,7 @@ router.get('/sitemap.xml', async (_req, res) => {
 
     const body = [
       url(`${FRONTEND}/`, new Date(), '1.0'),
+      url(`${FRONTEND}/explore`, new Date(), '0.9'),
       url(`${FRONTEND}/register`, null, '0.8'),
       ...creators.map(c => url(`${FRONTEND}/u/${String(c.instagramHandle).replace(/^@/, '')}`, c.updatedAt, '0.7')),
       ...products.map(p => url(`${FRONTEND}/creator/product/${p._id}`, p.updatedAt, '0.6')),
@@ -262,6 +265,115 @@ router.get('/robots.txt', (_req, res) => {
     `Sitemap: ${BACKEND}/share/sitemap.xml`,
     '',
   ].join('\n'))
+})
+
+/* ── Public campaign report — the case study ─────────────────────────────────
+ * Tokenized (unguessable, brand-revocable), server-rendered so it reads
+ * perfectly in a WhatsApp preview or a boss's browser with no login. This is
+ * the page FlexTag closes the next brand with.
+ */
+router.get('/report/:token', async (req, res) => {
+  try {
+    const token = String(req.params.token || '')
+    if (!/^[a-f0-9]{32}$/.test(token)) return res.status(404).type('html').send('<h1>Not found</h1>')
+    const campaign = await Campaign.findOne({ reportToken: token }).select('_id').lean()
+    if (!campaign) return res.status(404).type('html').send('<h1>This report link has been revoked.</h1>')
+    const r = await buildReport(campaign._id)
+    if (!r) return res.status(404).type('html').send('<h1>Not found</h1>')
+
+    const n = (v) => Number(v || 0).toLocaleString('en-US')
+    const stat = (value, label, accent = false) => `
+      <div class="stat${accent ? ' accent' : ''}"><p class="v">${value}</p><p class="l">${esc(label)}</p></div>`
+    const rows = r.topPosts.map(p => `
+      <tr>
+        <td>${esc(p.creator)}${p.handle ? ` <span class="dim">@${esc(String(p.handle).replace(/^@/, ''))}</span>` : ''}${p.verified ? ' <span class="chip">verified</span>' : ''}</td>
+        <td>${esc(p.mediaType || 'post')}</td>
+        <td class="num">${p.likes == null ? '—' : n(p.likes)}</td>
+        <td class="num">${p.comments == null ? '—' : n(p.comments)}</td>
+        <td class="num">${p.views == null ? '—' : n(p.views)}</td>
+        <td>${p.permalink ? `<a href="${esc(p.permalink)}" target="_blank" rel="noreferrer">view ↗</a>` : '—'}</td>
+      </tr>`).join('')
+
+    res.set('Cache-Control', 'public, max-age=300').type('html').send(`<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${esc(r.campaign.product)} — campaign report | FlexTag</title>
+<meta name="robots" content="noindex" />
+<meta property="og:title" content="${esc(r.campaign.product)} — ${r.posts.verified} verified posts, ${n(r.engagement.engagements)} engagements" />
+<meta property="og:description" content="Machine-verified creator campaign on FlexTag. Every number checkable." />
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; background:#0a0616; color:#fff; font-family:'Segoe UI',system-ui,sans-serif; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 40px 20px 60px; }
+  .bar { height:5px; background:linear-gradient(90deg,#7c3aed,#06b6d4); }
+  h1 { font-size: 30px; margin: 24px 0 4px; } h2 { font-size:17px; margin:34px 0 12px; }
+  .sub { color: rgba(255,255,255,0.45); margin: 0 0 26px; }
+  .brandline { display:flex; justify-content:space-between; align-items:center; padding-top:26px; }
+  .logo { font-weight:900; font-style:italic; font-size:22px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  .stat { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09); border-radius:16px; padding:18px; }
+  .stat.accent { border-color:rgba(6,182,212,0.5); background:rgba(6,182,212,0.08); }
+  .stat .v { font-size:26px; font-weight:800; margin:0; } .stat .l { font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.45); margin:6px 0 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; color:rgba(255,255,255,0.4); font-size:11px; text-transform:uppercase; letter-spacing:0.08em; padding:8px 10px; }
+  td { padding:10px; border-top:1px solid rgba(255,255,255,0.07); } .num { text-align:right; font-variant-numeric:tabular-nums; }
+  .dim { color:rgba(255,255,255,0.4); } a { color:#67e8f9; text-decoration:none; }
+  .chip { font-size:10px; font-weight:700; color:#4ade80; border:1px solid rgba(74,222,128,0.4); border-radius:99px; padding:1px 8px; margin-left:4px; }
+  .foot { margin-top:40px; padding-top:18px; border-top:1px solid rgba(255,255,255,0.08); color:rgba(255,255,255,0.35); font-size:12px; line-height:1.7; }
+  .cta { display:inline-block; margin-top:10px; padding:12px 24px; border-radius:99px; background:linear-gradient(135deg,#7c3aed,#06b6d4); color:#fff; font-weight:800; font-size:13px; }
+  @media print { body { background:#fff; color:#111; } .stat { border-color:#ddd; background:#fafafa; } }
+</style>
+</head>
+<body>
+<div class="bar"></div>
+<div class="wrap">
+  <div class="brandline"><span class="logo">FlexTag</span><span class="dim">Campaign performance report</span></div>
+  <h1>${esc(r.campaign.product)}</h1>
+  <p class="sub">by ${esc(r.campaign.brand)} · ${r.campaign.cashbackRate}% creator cashback · started ${new Date(r.campaign.startedAt).toLocaleDateString('en-GB')} · generated ${new Date(r.generatedAt).toLocaleDateString('en-GB')}</p>
+
+  <div class="grid">
+    ${stat(n(r.posts.verified), 'Verified posts', true)}
+    ${stat(n(r.engagement.engagements), 'Engagements')}
+    ${stat(n(r.engagement.audienceReached), 'Audience reached')}
+    ${stat(r.money.costPerEngagement == null ? '—' : '৳' + r.money.costPerEngagement, 'Cost per engagement', true)}
+  </div>
+
+  <h2>Orders</h2>
+  <div class="grid">
+    ${stat(n(r.orders.total), 'Orders placed')}
+    ${stat('৳' + n(r.orders.gmv), 'Product sales (GMV)')}
+    ${stat(n(r.orders.uniqueCreators), 'Creators')}
+    ${stat(n(r.orders.returned), 'Returns')}
+  </div>
+
+  <h2>Content quality</h2>
+  <div class="grid">
+    ${stat(n(r.posts.stillLive) + ' / ' + n(r.posts.verified), 'Posts still live')}
+    ${stat(n(r.posts.fromVerifiedCreators), 'From identity-verified creators')}
+    ${stat(n(r.posts.autoApproved), 'Machine-verified automatically')}
+    ${stat(r.money.costPerPost == null ? '—' : '৳' + n(r.money.costPerPost), 'Cost per verified post')}
+  </div>
+
+  ${r.topPosts.length ? `<h2>Top posts</h2>
+  <table>
+    <thead><tr><th>Creator</th><th>Type</th><th class="num">Likes</th><th class="num">Comments</th><th class="num">Views</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>` : ''}
+
+  <div class="foot">
+    Every post above was fetched from Instagram and checked by FlexTag — required hashtags, brand mentions,
+    content type and account ownership — before a single taka of reward was released. Engagement numbers are
+    the snapshots taken at verification time. Nothing on this page is self-reported.
+    <br /><a class="cta" href="${esc(FRONTEND)}/register?role=brand">Run a campaign like this →</a>
+  </div>
+</div>
+</body>
+</html>`)
+  } catch (err) {
+    console.error('[share report]', err)
+    res.status(500).type('html').send('<h1>Something went wrong.</h1>')
+  }
 })
 
 module.exports = router
