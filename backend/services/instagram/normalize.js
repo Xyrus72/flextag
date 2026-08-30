@@ -14,7 +14,7 @@ const str = (v) => (typeof v === 'string' ? v : '')
 const dateFromUnix = (secs) => (typeof secs === 'number' && secs > 0 ? new Date(secs * 1000) : null)
 
 function extractHashtags(caption) {
-  return [...new Set((str(caption).match(/#[\p{L}\p{N}_]+/gu) || []).map((t) => t.slice(1).toLowerCase()))]
+  return [...new Set((str(caption).match(/#[\p{L}\p{M}\p{N}_]+/gu) || []).map((t) => t.slice(1).toLowerCase()))]
 }
 
 function extractMentions(caption) {

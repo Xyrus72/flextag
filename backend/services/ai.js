@@ -31,7 +31,7 @@ function getClient() {
 const norm = (s) => String(s || '').trim()
 const tagList = (arr) => [...new Set((arr || []).map((t) => norm(t).replace(/^#/, '').toLowerCase()).filter(Boolean))]
 const handleList = (arr) => [...new Set((arr || []).map((h) => norm(h).replace(/^@/, '').toLowerCase()).filter(Boolean))]
-const extractTags = (text) => new Set((String(text || '').match(/#[\p{L}\p{N}_]+/gu) || []).map((t) => t.slice(1).toLowerCase()))
+const extractTags = (text) => new Set((String(text || '').match(/#[\p{L}\p{M}\p{N}_]+/gu) || []).map((t) => t.slice(1).toLowerCase()))
 const extractMentions = (text) => new Set((String(text || '').match(/@[a-z0-9._]{1,30}/gi) || []).map((t) => t.slice(1).toLowerCase().replace(/\.+$/, '')))
 
 const LANG_RULES = {

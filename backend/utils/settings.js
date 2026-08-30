@@ -23,6 +23,10 @@ const IG_SETTING_DEFAULTS = [
   { key: 'igFollowerSample',   value: envNum('IG_FOLLOWER_SAMPLE', 200), label: 'IG Follower Sample Size',     desc: 'How many followers to sample for the fake-follower estimate (max 500)' },
   { key: 'igPostsToFetch',     value: envNum('IG_POSTS_TO_FETCH', 30),  label: 'IG Posts to Analyze',          desc: 'How many recent posts to pull per audit (max 60)' },
   { key: 'igUnverifiedRewardCap', value: envNum('IG_UNVERIFIED_REWARD_CAP', 500), label: 'Unverified Reward Cap (৳/order)', desc: 'Max reward per order for creators who have not bio-verified their Instagram (0 = no cap; higher tiers multiply it)' },
+  // Post auto-detection (services/instagram/postWatch.js)
+  { key: 'igAutoDetectPosts',    value: 1, label: 'IG Auto-Detect New Posts',       desc: '1 = watch connected creators accounts and flag new posts the moment they appear, 0 = off' },
+  { key: 'igWatchUnconnected',   value: 0, label: 'IG Watch Unconnected Creators',  desc: '1 = also poll creators who never connected Instagram (uses provider credits; only those with cashback waiting on a post), 0 = connected accounts only' },
+  { key: 'igAutoSubmitDetected', value: 0, label: 'IG Auto-Submit Detected Posts',  desc: '1 = when a spotted post matches a campaign, file it and start verification automatically, 0 = just notify the creator' },
 ]
 
 // Fraud thresholds — admin-tunable so a launch-week false positive can be

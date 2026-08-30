@@ -92,6 +92,7 @@ const userSchema = new mongoose.Schema({
   igGraphToken:      { type: String, default: '', select: false },
   igTokenExpiresAt:  { type: Date, default: null },
   igConnectedAt:     { type: Date, default: null },
+  igWatchLastAt:     { type: Date, default: null },   // post-watch: when we last looked at their media
   avatar:      { type: String, default: null },
   isSuper:     { type: Boolean, default: false },
 }, { timestamps: true })
