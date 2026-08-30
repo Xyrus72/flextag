@@ -544,4 +544,69 @@ router.get('/me/earnings', requireAuth, requireRole('creator'), async (req, res)
   }
 })
 
+/* ── Activation checklist ────────────────────────────────────────────────────
+ * The first-transaction funnel, made visible. Every step is DERIVED from data
+ * that already exists — nothing to store, nothing to drift: the checklist is
+ * simply the truth about how far this creator has actually got.
+ */
+router.get('/me/checklist', requireAuth, requireRole('creator'), async (req, res) => {
+  try {
+    const Transaction = require('../models/Transaction')
+    const Post = require('../models/Post')
+    const Order = require('../models/Order')
+    const u = req.user
+
+    const [hasOrder, deliveredWaiting, hasPost, firstCashback] = await Promise.all([
+      Order.exists({ creatorId: u._id }),
+      Order.exists({ creatorId: u._id, status: 'delivered', cashbackReleased: false }),
+      Post.exists({ creatorId: u._id }),
+      Transaction.exists({ userId: u._id, type: 'cashback', status: 'completed' }),
+    ])
+
+    const steps = [
+      {
+        key: 'verify',
+        title: 'Verify your Instagram',
+        detail: u.igVerified
+          ? 'Done — your posts can be approved automatically.'
+          : 'Prove the account is yours (bio code, or one tap with Connect). Verified creators get cashback released automatically.',
+        done: !!u.igVerified,
+        link: '/creator/instagram-analyzer',
+      },
+      {
+        key: 'order',
+        title: 'Place your first order',
+        detail: hasOrder ? 'Done.' : 'Pick a product — you pay the discounted price, the rest comes back as cashback.',
+        done: !!hasOrder,
+        link: '/creator/catalog',
+      },
+      {
+        key: 'post',
+        title: 'Post about it and submit',
+        detail: hasPost
+          ? 'Done.'
+          : deliveredWaiting
+            ? 'Your order arrived — post the reel and claim the cashback waiting on it.'
+            : 'Once your order is delivered, post with the campaign hashtags. FlexTag usually spots it by itself.',
+        done: !!hasPost,
+        urgent: !hasPost && !!deliveredWaiting,
+        link: '/creator/submit-post',
+      },
+      {
+        key: 'earn',
+        title: 'Get your first cashback',
+        detail: firstCashback ? 'Done — you are a paid creator now.' : 'Released automatically when your post passes verification.',
+        done: !!firstCashback,
+        link: '/creator/wallet',
+      },
+    ]
+
+    const completed = steps.filter(s => s.done).length
+    res.json({ steps, completed, total: steps.length, finished: completed === steps.length })
+  } catch (err) {
+    console.error('[checklist]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
 module.exports = router

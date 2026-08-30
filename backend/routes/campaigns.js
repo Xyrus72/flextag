@@ -2,6 +2,9 @@ const express = require('express')
 const router  = express.Router()
 const Campaign = require('../models/Campaign')
 const { requireAuth, requireRole } = require('../middleware/auth')
+const crypto = require('crypto')
+const { buildReport } = require('../services/campaignReport')
+const audit = require('../services/audit')
 
 // ── GET /api/campaigns  — public catalog (active, non-private) ─────────────
 router.get('/', async (req, res) => {
@@ -117,6 +120,65 @@ router.delete('/:id', requireAuth, requireRole('brand', 'admin'), async (req, re
     }
     await campaign.deleteOne()
     res.json({ message: 'Campaign deleted.' })
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+/* ── Campaign report card ────────────────────────────────────────────────────
+ * The numbers a brand shows their boss — and, via the share token, the case
+ * study FlexTag shows the next brand. Everything computed from real rows.
+ */
+
+// GET /api/campaigns/:id/report — the brand that owns it, or an admin
+router.get('/:id/report', requireAuth, requireRole('brand', 'admin'), async (req, res) => {
+  try {
+    const campaign = await Campaign.findById(req.params.id).select('brandId reportToken').lean()
+    if (!campaign) return res.status(404).json({ message: 'Campaign not found.' })
+    if (req.user.role === 'brand' && String(campaign.brandId) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Access denied.' })
+    }
+    const report = await buildReport(req.params.id)
+    res.json({ report, shareToken: campaign.reportToken || null })
+  } catch (err) {
+    console.error('[campaign report]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// POST /api/campaigns/:id/report/share — mint (or return) the public link.
+// Sharing performance numbers is a deliberate act, so the token exists only
+// after the brand asks for it; DELETE revokes it and the old link goes dead.
+router.post('/:id/report/share', requireAuth, requireRole('brand', 'admin'), async (req, res) => {
+  try {
+    const campaign = await Campaign.findById(req.params.id)
+    if (!campaign) return res.status(404).json({ message: 'Campaign not found.' })
+    if (req.user.role === 'brand' && String(campaign.brandId) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Access denied.' })
+    }
+    if (!campaign.reportToken) {
+      campaign.reportToken = crypto.randomBytes(16).toString('hex')
+      await campaign.save()
+      audit.record({ actor: req.user, action: 'campaign.report_shared', targetType: 'campaign', targetId: campaign._id, targetName: campaign.title, summary: 'Made the campaign report publicly shareable', req })
+    }
+    res.json({ shareToken: campaign.reportToken, message: 'Anyone with this link can see the report. Revoke it any time.' })
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// DELETE /api/campaigns/:id/report/share — kill the public link
+router.delete('/:id/report/share', requireAuth, requireRole('brand', 'admin'), async (req, res) => {
+  try {
+    const campaign = await Campaign.findById(req.params.id)
+    if (!campaign) return res.status(404).json({ message: 'Campaign not found.' })
+    if (req.user.role === 'brand' && String(campaign.brandId) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Access denied.' })
+    }
+    campaign.reportToken = null
+    await campaign.save()
+    audit.record({ actor: req.user, action: 'campaign.report_unshared', targetType: 'campaign', targetId: campaign._id, targetName: campaign.title, summary: 'Revoked the public report link', req })
+    res.json({ message: 'Link revoked — the old URL is dead.' })
   } catch (err) {
     res.status(500).json({ message: 'Server error.' })
   }

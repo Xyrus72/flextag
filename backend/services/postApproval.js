@@ -19,6 +19,7 @@ const { notifySafe } = require('./notifications')
 const { onCampaignCompleted } = require('./referrals')
 const brandWallet = require('./brandWallet')
 const audit = require('./audit')
+const commission = require('./commission')
 
 const DAY = 86_400_000
 
@@ -88,6 +89,8 @@ async function approvePost(post, { approvedBy = null, auto = false } = {}) {
           brandId: order.brandId, amount, orderId: order._id, campaignId,
           ref: `spend:bonus:${order._id}`, desc: `Cashback bonus on ${order.product}`,
         }).catch(() => {})
+        // The success fee: FlexTag only earns on rewards it actually delivered.
+        await commission.chargeCommission(order)
       }
       audit.record({
         actor: approvedBy || null, action: audit.ACTIONS.CASHBACK_RELEASED,

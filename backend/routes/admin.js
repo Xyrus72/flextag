@@ -10,6 +10,7 @@ const { requireAuth, requireRole } = require('../middleware/auth')
 const { runAudit } = require('../services/instagram/audit')
 const fraud = require('../services/fraud')
 const audit = require('../services/audit')
+const commission = require('../services/commission')
 const igClient = require('../services/instagram/client')
 
 // ── GET /api/admin/stats — platform-wide KPIs ─────────────────────────────
@@ -39,10 +40,8 @@ router.get('/stats', requireAuth, requireRole('admin'), async (req, res) => {
         { $match: { type: 'cashback', status: 'pending' } },
         { $group: { _id: null, total: { $sum: '$amount' } } },
       ]),
-      Transaction.aggregate([
-        { $match: { type: 'cashback', status: 'completed' } },
-        { $group: { _id: null, total: { $sum: { $multiply: ['$amount', 0.10] } } } },
-      ]),
+      // REAL revenue: actual fee rows in the brand ledger, not an estimate.
+      commission.platformRevenue(),
       Transaction.aggregate([
         { $match: { type: 'clawback', status: 'completed' } },
         { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -58,7 +57,7 @@ router.get('/stats', requireAuth, requireRole('admin'), async (req, res) => {
       pendingPosts,
       totalGMV:          Math.max(0, (txResult[0]?.total || 0) - clawed),           // net of clawbacks
       cashbackLiability: escrowResult[0]?.total  || 0,
-      commissionRevenue: Math.max(0, (commissionResult[0]?.total || 0) - clawed * 0.10),
+      commissionRevenue: commissionResult.revenue,
     })
   } catch (err) {
     console.error('[admin stats]', err)
@@ -175,21 +174,13 @@ router.get('/financial', requireAuth, requireRole('admin'), async (req, res) => 
     ])
 
     const totalEscrow = enriched.reduce((s, e) => s + e.escrow, 0)
-    const [commissionTx, clawbackTx] = await Promise.all([
-      Transaction.aggregate([
-        { $match: { type: 'cashback', status: 'completed' } },
-        { $group: { _id: null, total: { $sum: { $multiply: ['$amount', 0.10] } } } },
-      ]),
-      Transaction.aggregate([
-        { $match: { type: 'clawback', status: 'completed' } },
-        { $group: { _id: null, total: { $sum: { $multiply: ['$amount', 0.10] } } } },
-      ]),
-    ])
+    const platformBooks = await commission.platformRevenue()
 
     res.json({
       campaignEscrow: enriched,
       totalEscrow,
-      commissionRevenue: Math.max(0, (commissionTx[0]?.total || 0) - (clawbackTx[0]?.total || 0)),
+      commissionRevenue: platformBooks.revenue,
+      commissionDetail: platformBooks,
       upcomingPayouts,
     })
   } catch (err) {

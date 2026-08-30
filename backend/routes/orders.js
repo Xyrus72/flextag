@@ -15,6 +15,7 @@ const fraud = require('../services/fraud')
 const ratings = require('../services/ratings')
 const brandWallet = require('../services/brandWallet')
 const audit = require('../services/audit')
+const commission = require('../services/commission')
 
 // helper to generate order IDs
 const genOrderId = () => 'ORD-' + Math.floor(1000 + Math.random() * 9000)
@@ -213,12 +214,14 @@ async function clawbackCashback(order) {
     }
     if (claimed.campaignId) await Campaign.updateOne({ _id: claimed.campaignId }, { $inc: { budgetUsed: -amount } }).catch(() => {})
     if (claimed.productId) await Product.updateOne({ _id: claimed.productId }, { $inc: { totalCashbackSpent: -amount } }).catch(() => {})
-    // The brand paid for a post that is now void — give it back to their balance.
+    // The brand paid for a post that is now void — give it back to their balance,
+    // and hand back FlexTag's own fee too: no success fee on a failed transaction.
     if (claimed.brandId) {
       await brandWallet.credit({
         brandId: claimed.brandId, amount, orderId: claimed._id, campaignId: claimed.campaignId,
         ref: `refund:bonus:${claimed._id}`, desc: `Cashback reversed — ${claimed.product} was returned`,
       }).catch(() => {})
+      await commission.refundCommission(claimed)
     }
     audit.record({
       action: audit.ACTIONS.CASHBACK_CLAWED_BACK, targetType: 'order', targetId: claimed._id, targetName: claimed.orderId,

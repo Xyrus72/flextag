@@ -4,7 +4,7 @@ import { useT } from '../context/LanguageContext'
 import NavIcon from '../components/NavIcon'
 import {
   LayoutDashboard, Megaphone, Package, BarChart3,
-  UserPlus, Star, Building2, PackagePlus, PackageCheck, MessageSquare, ShieldCheck, ShieldAlert, Wallet, Upload,
+  UserPlus, Star, Building2, PackagePlus, PackageCheck, MessageSquare, ShieldCheck, ShieldAlert, Wallet, Upload, FileBarChart,
 } from 'lucide-react'
 
 const icons = {
@@ -22,6 +22,7 @@ const icons = {
   disputes:    <NavIcon icon={ShieldAlert}      color="#ef4444" />,
   wallet:      <NavIcon icon={Wallet}           color="#22c55e" />,
   importCsv:   <NavIcon icon={Upload}           color="#94a3b8" />,
+  report:      <NavIcon icon={FileBarChart}     color="#67e8f9" />,
 }
 
 const brandLinks = (t) => [
@@ -33,6 +34,7 @@ const brandLinks = (t) => [
   { path: '/brand/orders',           label: t('menu.fulfillment'),     icon: icons.orders, badgeKey: 'orders' },
   { path: '/brand/wallet',           label: t('menu.brandWallet'),     icon: icons.wallet },
   { path: '/brand/analytics',        label: t('menu.analytics'),       icon: icons.analytics },
+  { path: '/brand/report',           label: t('menu.report'),          icon: icons.report },
   { path: '/brand/invite',           label: t('menu.inviteCreators'),  icon: icons.invite },
   { path: '/brand/creator-audit',    label: t('menu.creatorAudit'),    icon: icons.audit },
   { path: '/brand/ratings',          label: t('menu.brandReputation'), icon: icons.ratings },

@@ -26,7 +26,8 @@ const Navbar = () => {
     { label: t('nav.home'),        href: '/' },
     { label: t('nav.howItWorks'),  href: '/#how-it-works' },
     { label: t('nav.forBrands'),   href: '/#for-brands' },
-    { label: t('nav.catalog'),     href: '/creator/catalog' },
+    // Visitors get the public shop window; a logged-in creator goes straight to the real catalog.
+    { label: t('nav.catalog'),     href: isAuthenticated && user?.role === 'creator' ? '/creator/catalog' : '/explore' },
     { label: t('nav.contact'),     href: '/#contact' },
   ]
 

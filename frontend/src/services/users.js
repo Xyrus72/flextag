@@ -56,3 +56,7 @@ export const removeFromWishlist = (productId) =>
 /** Creator earnings analytics → { monthly, byBrand, lifetime, available, waitingOnPosts, … } */
 export const getMyEarnings = (months = 6) =>
   api.get('/api/users/me/earnings', { params: { months } }).then(r => r.data)
+
+/** Activation checklist, derived from real data → { steps, completed, total, finished } */
+export const getMyChecklist = () =>
+  api.get('/api/users/me/checklist').then(r => r.data)
