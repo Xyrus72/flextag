@@ -84,7 +84,7 @@ const en = {
   'menu.wishlist': 'Wishlist',
   'menu.orders': 'My Orders',
   'menu.submitPost': 'Submit Post',
-  'menu.captionValidator': 'Caption Validator',
+  'menu.captionValidator': 'Caption checker',
   'menu.campaignTracker': 'Campaign Tracker',
   'menu.wallet': 'Wallet',
   'menu.leaderboard': 'Leaderboard',

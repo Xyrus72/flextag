@@ -8,6 +8,7 @@
 const Post = require('../../models/Post')
 const Product = require('../../models/Product')
 const ep = require('./endpoints')
+const { extractHashtags, extractMentions } = require('./normalize')
 const { getProvider, withFallback } = require('./provider')
 const { embedToPost } = require('./providers/session')
 const { approvePost } = require('../postApproval')
@@ -20,6 +21,18 @@ const RETENTION_FATAL = new Set(['NO_SESSION', 'SESSION_INVALID', 'RATE_LIMITED'
 /** "#GlowUp, #FlexTag" → ['glowup','flextag'] ; "@brand, @other" → ['brand','other'] */
 function splitList(value, stripRe) {
   return [...new Set(String(value || '').split(/[,\s]+/).map((x) => x.trim().replace(stripRe, '').toLowerCase()).filter(Boolean))]
+}
+
+/**
+ * The campaign's required hashtags/mentions, merged from both places rules can
+ * live: the Campaign's comma-separated strings and a module-2 Product's
+ * postingRules arrays. Single source for verification AND the caption tools.
+ */
+function requiredLists(campaign) {
+  return {
+    hashtags: [...new Set([...splitList(campaign?.hashtags, /^#/), ...splitList((campaign?.postingRules?.hashtags || []).join(','), /^#/)])],
+    mentions: [...new Set([...splitList(campaign?.handles, /^@/), ...splitList((campaign?.postingRules?.taggingHandles || []).join(','), /^@/)])],
+  }
 }
 
 /**
@@ -52,7 +65,7 @@ function buildChecks({ campaign, order, creator, fetched }) {
   }
 
   // Rules may live on a Campaign (comma-separated strings) or a module-2 Product (postingRules arrays).
-  const reqTags = [...new Set([...splitList(campaign?.hashtags, /^#/), ...splitList((campaign?.postingRules?.hashtags || []).join(','), /^#/)])]
+  const { hashtags: reqTags, mentions: reqMentions } = requiredLists(campaign)
   if (reqTags.length) {
     if (fetched.hashtags == null) add('hashtags', 'Required hashtags present', null, true, 'Caption unavailable — needs manual review')
     else {
@@ -62,7 +75,6 @@ function buildChecks({ campaign, order, creator, fetched }) {
     }
   }
 
-  const reqMentions = [...new Set([...splitList(campaign?.handles, /^@/), ...splitList((campaign?.postingRules?.taggingHandles || []).join(','), /^@/)])]
   if (reqMentions.length) {
     if (fetched.mentions == null) add('mentions', 'Brand mentioned', null, true, 'Caption unavailable — needs manual review')
     else {
@@ -128,6 +140,70 @@ async function resolveRules(campaign) {
     console.warn('[instagram verify] product rules lookup failed:', err.message)
   }
   return campaign
+}
+
+/* ── Draft preview (the caption tools) ───────────────────────────────────── */
+
+// Forward-looking wording for the checks a draft can't answer yet.
+const POST_TIME_DETAIL = {
+  exists: 'Checked the moment you submit the link',
+  public: 'Your account must be public when we check',
+  postedAfterOrder: 'The post date must be after your order date',
+}
+
+/**
+ * Run the REAL verification rules against a draft caption. Builds a synthetic
+ * "fetched post" from the draft and feeds it through the same buildChecks +
+ * resolveRules + hashtag/mention extraction as live verification — so what this
+ * predicts is, by construction, what verifyPost will conclude about the caption.
+ *
+ * Checks that only a live post can answer (is it up, who posted it, when) come
+ * back under postTimeChecks with passed = null, never as failures.
+ * `mediaType` is the creator's planned format; without it the content-type rule
+ * is also deferred to post time.
+ */
+async function previewDraft({ caption, campaign, order = null, creator = null, mediaType = null }) {
+  const resolved = await resolveRules(campaign)
+  const handle = String(creator?.instagramHandle || '').replace(/^@/, '').trim().toLowerCase()
+  const draft = {
+    shortcode: 'draft',
+    mediaType: mediaType || null,
+    owner: handle,
+    ownerIsPrivate: false,
+    takenAt: new Date(),
+    caption: String(caption || ''),
+    hashtags: extractHashtags(caption),
+    mentions: extractMentions(caption),
+  }
+
+  const checks = []
+  const postTimeChecks = []
+  for (const c of buildChecks({ campaign: resolved, order, creator, fetched: draft })) {
+    if (c.key === 'owner') {
+      postTimeChecks.push({ ...c, passed: null, detail: handle ? `Must be posted from @${handle}` : 'Add your Instagram handle to your profile — the post must come from your registered account' })
+    } else if (POST_TIME_DETAIL[c.key]) {
+      postTimeChecks.push({ ...c, passed: null, detail: POST_TIME_DETAIL[c.key] })
+    } else if (c.key === 'contentType' && !mediaType) {
+      postTimeChecks.push({ ...c, passed: null, detail: 'Checked from the live post' })
+    } else {
+      checks.push(c)
+    }
+  }
+
+  const required = requiredLists(resolved)
+  const have = { hashtags: new Set(draft.hashtags), mentions: new Set(draft.mentions) }
+  return {
+    // "would the caption-side checks pass" — post-time checks can still fail later.
+    wouldPass: !checks.some((c) => c.required && c.passed === false),
+    checks,
+    postTimeChecks,
+    found: { hashtags: draft.hashtags.map((t) => '#' + t), mentions: draft.mentions.map((h) => '@' + h) },
+    required: { hashtags: required.hashtags.map((t) => '#' + t), mentions: required.mentions.map((h) => '@' + h) },
+    missing: {
+      hashtags: required.hashtags.filter((t) => !have.hashtags.has(t)).map((t) => '#' + t),
+      mentions: required.mentions.filter((h) => !have.mentions.has(h)).map((h) => '@' + h),
+    },
+  }
 }
 
 async function loadPost(postOrId) {
@@ -249,4 +325,4 @@ async function retentionCheck(postOrId) {
   return post
 }
 
-module.exports = { verifyPost, retentionCheck, buildChecks, statusFromChecks, splitList, embedToPost }
+module.exports = { verifyPost, retentionCheck, buildChecks, statusFromChecks, splitList, requiredLists, previewDraft, embedToPost }
