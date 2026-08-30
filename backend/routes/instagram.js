@@ -8,6 +8,8 @@ const { precheck, runAudit, fetchProfile } = require('../services/instagram/audi
 const { getProvider, providers } = require('../services/instagram/provider')
 const { verifyPost } = require('../services/instagram/postCheck')
 const connect = require('../services/instagram/connect')
+const postWatch = require('../services/instagram/postWatch')
+const DetectedPost = require('../models/DetectedPost')
 const IgAudit = require('../models/IgAudit')
 const Post    = require('../models/Post')
 const User    = require('../models/User')
@@ -344,6 +346,97 @@ router.post('/verify-story', requireAuth, requireRole('creator'), verifyLimiter,
         : 'That story was posted before your order — post a new one and check again.',
     })
   } catch (err) { sendIgError(req, res, err, 'verify-story') }
+})
+
+/* ── Auto-detected posts ─────────────────────────────────────────────────────
+ * FlexTag spots new Instagram posts on its own (webhook or polling — see
+ * services/instagram/postWatch.js). These routes are the creator's side of it:
+ * see what was spotted, claim it in one tap, or dismiss it.
+ */
+
+// GET /api/instagram/detected — my spotted posts (new first)
+router.get('/detected', requireAuth, requireRole('creator'), async (req, res) => {
+  try {
+    const filter = { creatorId: req.user._id }
+    if (req.query.status && req.query.status !== 'all') filter.status = req.query.status
+    const detected = await DetectedPost.find(filter)
+      .populate('matchedOrderId', 'orderId product cashbackAmount status')
+      .populate('matchedCampaignId', 'title product brand')
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean()
+    res.json({ detected })
+  } catch (err) {
+    console.error('[detected GET]', err)
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+// POST /api/instagram/detected/:id/submit — one tap: file the post + verify
+router.post('/detected/:id/submit', requireAuth, requireRole('creator'), verifyLimiter, async (req, res) => {
+  try {
+    const detected = await DetectedPost.findOne({ _id: req.params.id, creatorId: req.user._id })
+    if (!detected) return res.status(404).json({ message: 'Not found.' })
+    if (detected.status !== 'new') return res.status(409).json({ message: 'This post has already been handled.' })
+    const { post, detected: updated } = await postWatch.submitDetected(detected)
+    res.status(201).json({ post, detected: updated, message: 'Submitted — verification is running. Cashback follows automatically if it passes.' })
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message || 'Server error.' })
+  }
+})
+
+// POST /api/instagram/detected/:id/dismiss — "that one wasn't for a campaign"
+router.post('/detected/:id/dismiss', requireAuth, requireRole('creator'), async (req, res) => {
+  try {
+    const detected = await DetectedPost.findOneAndUpdate(
+      { _id: req.params.id, creatorId: req.user._id, status: 'new' },
+      { $set: { status: 'dismissed' } },
+      { new: true },
+    )
+    if (!detected) return res.status(404).json({ message: 'Not found or already handled.' })
+    res.json({ detected, message: 'Dismissed.' })
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' })
+  }
+})
+
+/* ── Meta webhook — Instagram pushes "new media" the moment it exists ────────
+ * Setup (Meta app dashboard → Webhooks → Instagram): callback URL is
+ * <BACKEND_URL>/api/instagram/webhook, verify token is IG_WEBHOOK_VERIFY_TOKEN,
+ * subscribe to the `media` field. Without that setup these endpoints simply
+ * never receive anything — polling still covers detection.
+ */
+
+// GET — Meta's one-time subscription handshake
+router.get('/webhook', (req, res) => {
+  const token = process.env.IG_WEBHOOK_VERIFY_TOKEN || ''
+  if (token && req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === token) {
+    return res.status(200).send(req.query['hub.challenge'])
+  }
+  res.sendStatus(403)
+})
+
+// POST — the pushes. Answer 200 immediately; verify the signature; work async.
+router.post('/webhook', async (req, res) => {
+  // Meta retries on non-200 and disables flaky subscriptions — never block here.
+  res.sendStatus(200)
+  try {
+    const ok = postWatch.verifyWebhookSignature(req.rawBody, req.headers['x-hub-signature-256'], process.env.IG_APP_SECRET)
+    if (!ok) {
+      console.warn('[ig webhook] dropped a push with a bad signature')
+      return
+    }
+    const entries = Array.isArray(req.body?.entry) ? req.body.entry : []
+    for (const entry of entries) {
+      const mediaChange = (entry.changes || []).some(c => c.field === 'media')
+      if (!mediaChange || !entry.id) continue
+      postWatch.onWebhookMediaChange(entry.id)
+        .then(r => r && console.log(`[ig webhook] ${entry.id}: ${r.detected} new post(s) spotted`))
+        .catch(err => console.warn('[ig webhook] check failed:', err.message))
+    }
+  } catch (err) {
+    console.warn('[ig webhook]', err.message)
+  }
 })
 
 module.exports = router

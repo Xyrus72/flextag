@@ -17,7 +17,7 @@ const DAY = 86_400_000
 const HOUR = 3_600_000
 const timers = []
 const FATAL = new Set(['NO_SESSION', 'SESSION_INVALID', 'RATE_LIMITED'])
-const running = { retention: false, reaudit: false, tokens: false }
+const running = { retention: false, reaudit: false, tokens: false, watch: false }
 
 /** Posts whose retention deadline passed: confirm they are still live. */
 async function runRetentionChecks({ limit = 20 } = {}) {
@@ -116,6 +116,22 @@ async function refreshConnectedTokens() {
   }
 }
 
+/**
+ * Post watch: spot new posts on connected creators' accounts (their own token,
+ * free) and — if the admin opted in — on unconnected creators with cashback
+ * waiting. Webhooks make this instant when the Meta app is configured; this
+ * poll is the floor that works with nothing but a connected account.
+ */
+async function runPostWatch() {
+  if (running.watch) return null
+  running.watch = true
+  try {
+    return await require('../services/instagram/postWatch').runWatch()
+  } finally {
+    running.watch = false
+  }
+}
+
 const log = (name) => (r) => r && console.log(`[instagram jobs] ${name}:`, JSON.stringify(r))
 const warn = (name) => (e) => console.warn(`[instagram jobs] ${name} errored: ${e.message}`)
 
@@ -127,10 +143,13 @@ function start() {
   const t4 = setTimeout(() => runStaleReaudits().then(log('re-audit')).catch(warn('re-audit')), 10 * 60_000)
   const t5 = setInterval(() => refreshConnectedTokens().then(log('token refresh')).catch(warn('token refresh')), 12 * HOUR)
   const t6 = setTimeout(() => refreshConnectedTokens().then(log('token refresh')).catch(warn('token refresh')), 5 * 60_000)
-  for (const t of [t1, t2, t3, t4, t5, t6]) { t.unref?.(); timers.push(t) }
-  console.log('[instagram jobs] scheduled: retention hourly, re-audits daily, token refresh twice daily')
+  const watchMinutes = Math.max(5, Number(process.env.IG_WATCH_INTERVAL_MIN) || 30)
+  const t7 = setInterval(() => runPostWatch().then(log('post watch')).catch(warn('post watch')), watchMinutes * 60_000)
+  const t8 = setTimeout(() => runPostWatch().then(log('post watch')).catch(warn('post watch')), 3 * 60_000)
+  for (const t of [t1, t2, t3, t4, t5, t6, t7, t8]) { t.unref?.(); timers.push(t) }
+  console.log(`[instagram jobs] scheduled: retention hourly, re-audits daily, token refresh twice daily, post watch every ${watchMinutes} min`)
 }
 
 function stop() { for (const t of timers.splice(0)) clearTimeout(t) }
 
-module.exports = { start, stop, runRetentionChecks, runStaleReaudits, refreshConnectedTokens }
+module.exports = { start, stop, runRetentionChecks, runStaleReaudits, refreshConnectedTokens, runPostWatch }

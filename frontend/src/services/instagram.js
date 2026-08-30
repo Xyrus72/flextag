@@ -62,3 +62,18 @@ export const getMyStories = () => api.get('/api/instagram/stories/me').then(r =>
 /** Capture proof that a story was live → { verified, needsReview, reach, postedAt, message } */
 export const verifyInstagramStory = (postId) =>
   api.post('/api/instagram/verify-story', { postId }, { timeout: 45000 }).then(r => r.data)
+
+// ── Auto-detected posts ──────────────────────────────────────────────────────
+// FlexTag spots new Instagram posts on its own (webhook / polling) and offers
+// them back as one-tap submissions.
+
+/** → { detected: [...] } — status: 'new' | 'submitted' | 'auto_submitted' | 'dismissed' | 'all' */
+export const getDetectedPosts = (status = 'new') =>
+  api.get('/api/instagram/detected', { params: { status } }).then(r => r.data)
+
+/** One tap: file the spotted post against its matched order and start verification. */
+export const submitDetectedPost = (id) =>
+  api.post(`/api/instagram/detected/${id}/submit`).then(r => r.data)
+
+export const dismissDetectedPost = (id) =>
+  api.post(`/api/instagram/detected/${id}/dismiss`).then(r => r.data)

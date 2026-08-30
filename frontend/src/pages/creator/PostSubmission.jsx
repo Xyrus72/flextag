@@ -4,6 +4,7 @@ import { getOrders } from '../../services/orders'
 import { getPosts, submitPost } from '../../services/posts'
 import { generateCaptions } from '../../services/ai'
 import { verifyInstagramPost } from '../../services/instagram'
+import DetectedPosts from '../../components/DetectedPosts'
 
 // instagram.com/p/…, /reel/…, /reels/…, /tv/… — optionally prefixed by a username segment
 const IG_POST_RE = /instagram\.com\/(?:[a-z0-9._]+\/)?(?:p|reel|reels|tv)\/[A-Za-z0-9_-]{5,}/i
@@ -181,7 +182,7 @@ const PostSubmission = () => {
 
   const preOrderId = preState.orderId || ''
 
-  const [postUrl, setPostUrl]               = useState('')
+  const [postUrl, setPostUrl]               = useState(preState.postUrl || '')
   const [selectedOrderId, setSelectedOrderId] = useState(preOrderId)
   const [orderQuery, setOrderQuery]         = useState('')       // searchable picker text
   const [dropdownOpen, setDropdownOpen]     = useState(false)
@@ -353,6 +354,9 @@ const PostSubmission = () => {
     <div className="page-root">
       <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Submit Post</h1>
       <p className="text-zinc-500 mb-8">Submit your post URL for cashback verification</p>
+
+      {/* Posts FlexTag already spotted — one tap instead of the form below */}
+      <DetectedPosts />
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Submission form */}

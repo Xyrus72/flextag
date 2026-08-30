@@ -56,7 +56,9 @@ const corsOptions = {
 app.use(cors(corsOptions))
 
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
-app.use(express.json())
+// Keep the raw bytes: Meta signs webhook pushes over the exact body it sent,
+// and re-serialising parsed JSON does not reproduce them.
+app.use(express.json({ verify: (req, _res, buf) => { req.rawBody = buf } }))
 app.use(express.urlencoded({ extended: true }))
 
 // ─── Request Logger ───────────────────────────────────────────────────────────

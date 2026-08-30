@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { getMyStats } from '../../services/users'
 import { getOrders } from '../../services/orders'
 import ReferralCard from '../../components/ReferralCard'
+import DetectedPosts from '../../components/DetectedPosts'
 
 const CreatorDashboard = () => {
   const { user } = useAuth()
@@ -51,6 +52,9 @@ const CreatorDashboard = () => {
       {/* Header */}
       <div className="page-header">
         <div className="page-label"><span>Creator Dashboard</span></div>
+
+      {/* Posts FlexTag spotted on Instagram before the creator told us */}
+      <DetectedPosts />
         <h1 className="page-title">Welcome back, {user?.name?.split(' ')[0]} 👋</h1>
         <p className="page-subtitle">Here's your earning overview</p>
       </div>

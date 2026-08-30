@@ -26,7 +26,7 @@ const state = { valid: null, checkedAt: null, lastError: null }
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0)
 const str = (v) => (typeof v === 'string' ? v : '')
 const shortcodeFromPermalink = (url) => { const m = String(url || '').match(/\/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/); return m ? m[1] : '' }
-const extractTags = (t) => [...new Set((String(t || '').match(/#[\p{L}\p{N}_]+/gu) || []).map((x) => x.slice(1).toLowerCase()))]
+const extractTags = (t) => [...new Set((String(t || '').match(/#[\p{L}\p{M}\p{N}_]+/gu) || []).map((x) => x.slice(1).toLowerCase()))]
 const extractMentions = (t) => [...new Set((String(t || '').match(/@[a-z0-9._]{1,30}/gi) || []).map((x) => x.slice(1).toLowerCase().replace(/\.+$/, '')))]
 
 async function gget(params) {
