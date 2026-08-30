@@ -13,17 +13,15 @@ const LanguageToggle = () => {
       onClick={toggleLang}
       aria-label={`${t('common.language')}: ${next}`}
       title={next}
+      className="icon-toggle"
       style={{
         height: 38, minWidth: 44, padding: '0 10px', borderRadius: 10, flexShrink: 0,
         border: '1px solid rgba(var(--ink-rgb),0.12)',
         background: 'rgba(var(--ink-rgb),0.05)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer', color: 'var(--text-muted)',
-        fontSize: 12, fontWeight: 800, fontFamily: 'inherit', letterSpacing: '0.02em',
-        transition: 'all 0.25s ease',
+        fontSize: 12, fontWeight: 700, fontFamily: 'inherit', letterSpacing: '0.02em',
       }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.45)'; e.currentTarget.style.color = 'var(--text)' }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(var(--ink-rgb),0.12)'; e.currentTarget.style.color = 'var(--text-muted)' }}
     >
       {lang === 'en' ? 'বাং' : 'EN'}
     </button>

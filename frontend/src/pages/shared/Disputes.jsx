@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
+import { Scale } from 'lucide-react'
 import { getDisputes, fileDispute, replyToDispute } from '../../services/disputes'
 import { getOrders } from '../../services/orders'
 import { useAuth } from '../../context/AuthContext'
@@ -14,10 +15,10 @@ import { useAuth } from '../../context/AuthContext'
  */
 
 const STATUS_STYLE = {
-  open:           { label: 'Open',            color: '#fbbf24', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
-  awaiting_brand: { label: 'Awaiting brand',  color: '#fbbf24', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
-  investigating:  { label: 'Under review',    color: '#67e8f9', bg: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.3)' },
-  resolved:       { label: 'Resolved',        color: '#4ade80', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)' },
+  open:           { label: 'Open',            color: 'var(--amber-ink)', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
+  awaiting_brand: { label: 'Awaiting brand',  color: 'var(--amber-ink)', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
+  investigating:  { label: 'Under review',    color: 'var(--cyan-ink)', bg: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.3)' },
+  resolved:       { label: 'Resolved',        color: 'var(--green-ink)', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)' },
 }
 
 const Disputes = () => {
@@ -113,7 +114,7 @@ const Disputes = () => {
           padding: '10px 14px', borderRadius: 12, marginBottom: 16, fontSize: 13,
           background: banner.kind === 'ok' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
           border: `1px solid ${banner.kind === 'ok' ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`,
-          color: banner.kind === 'ok' ? '#4ade80' : '#f87171',
+          color: banner.kind === 'ok' ? 'var(--green-ink)' : '#f87171',
         }}>{banner.text}</div>
       )}
 
@@ -179,7 +180,7 @@ const Disputes = () => {
         <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}><div className="spinner" /></div>
       ) : disputes.length === 0 ? (
         <div className="empty-state">
-          <p style={{ fontSize: 28, marginBottom: 8 }}>🤝</p>
+          <Scale size={28} strokeWidth={1.5} style={{ opacity: 0.4, marginBottom: 10 }} />
           <p>No disputes{isCreator ? ' — that is the way it should be.' : '. Your creators are happy.'}</p>
         </div>
       ) : (
@@ -209,7 +210,7 @@ const Disputes = () => {
 
                   {d.status === 'resolved' && (
                     <div style={{ marginTop: 14, padding: 14, borderRadius: 12, background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)' }}>
-                      <p style={{ fontSize: 12, fontWeight: 800, color: '#4ade80', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      <p style={{ fontSize: 12, fontWeight: 800, color: 'var(--green-ink)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                         Resolved{d.refundAmount > 0 ? ` · ৳${d.refundAmount.toLocaleString()} refunded` : ''}
                       </p>
                       <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.6)', margin: 0 }}>{d.resolution}</p>
@@ -249,7 +250,7 @@ const Disputes = () => {
                     {(d.evidence || []).length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
                         {d.evidence.map((url, i) => (
-                          <a key={url} href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#67e8f9' }}>Evidence {i + 1} ↗</a>
+                          <a key={url} href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--cyan-ink)' }}>Evidence {i + 1} ↗</a>
                         ))}
                       </div>
                     )}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { getCampaigns } from '../../services/campaigns'
 import { getOrders } from '../../services/orders'
 import { getPosts, getShowcase } from '../../services/posts'
+import { FileText, Megaphone, Banknote, Heart, MessageCircle, Play, Image as ImageIcon } from 'lucide-react'
 
 const compact = (n) => {
   const v = Number(n) || 0
@@ -11,7 +12,6 @@ const compact = (n) => {
 }
 
 const Analytics = () => {
-  const [period, setPeriod]         = useState('month')
   const [campaigns, setCampaigns]   = useState([])
   const [kpis, setKpis]             = useState({ posts: 0, reach: 0, engagement: 0, cashbackPaid: 0, roi: 0 })
   const [monthlyData, setMonthlyData] = useState([])
@@ -77,33 +77,26 @@ const Analytics = () => {
 
   return (
     <div className="page-root">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">Campaign Analytics</h1>
-          <p className="text-zinc-500 mt-1">Real-time performance metrics & ROI</p>
-        </div>
-        <div className="flex bg-white/5 rounded-xl p-1">
-          {['week', 'month', 'year'].map(p => (
-            <button key={p} onClick={() => setPeriod(p)}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all ${period === p ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
-              {p}
-            </button>
-          ))}
-        </div>
+      <div className="page-header">
+        <div className="page-label"><span>Brand · Analytics</span></div>
+        <h1 className="page-title">Campaign analytics</h1>
+        <p className="page-subtitle">Campaign performance and verified engagement</p>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: 'Total Posts',        value: loading ? '...' : String(kpis.posts),                          icon: '📝' },
-          { label: 'Campaigns',          value: loading ? '...' : String(campaigns.length),                    icon: '📢' },
-          { label: 'Active Campaigns',   value: loading ? '...' : String(campaigns.filter(c => c.status === 'active').length), icon: '🟢' },
-          { label: 'Total Cashback Paid',value: loading ? '...' : `৳${(kpis.cashbackPaid || 0).toLocaleString()}`, icon: '💸' },
+          { label: 'Total posts',         value: loading ? '—' : String(kpis.posts),       Icon: FileText },
+          { label: 'Campaigns',           value: loading ? '—' : String(campaigns.length), Icon: Megaphone },
+          { label: 'Active campaigns',    value: loading ? '—' : String(campaigns.filter(c => c.status === 'active').length), dot: true },
+          { label: 'Total cashback paid', value: loading ? '—' : `৳${(kpis.cashbackPaid || 0).toLocaleString()}`, Icon: Banknote },
         ].map(k => (
-          <div key={k.label} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:-translate-y-1 transition-all">
-            <span className="text-xl block mb-2">{k.icon}</span>
-            <p className="text-2xl font-extrabold text-white">{k.value}</p>
-            <p className="text-xs text-zinc-500 mt-1">{k.label}</p>
+          <div key={k.label} className="stat-card">
+            {k.dot
+              ? <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--green-ink)', marginBottom: 14 }} />
+              : <k.Icon size={18} strokeWidth={1.75} style={{ color: 'var(--text-muted)', marginBottom: 14 }} />}
+            <p className="tnum" style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)' }}>{k.value}</p>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{k.label}</p>
           </div>
         ))}
       </div>
@@ -112,47 +105,47 @@ const Analytics = () => {
       {showcase.summary && showcase.summary.posts > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Reach (views)',      value: compact(showcase.summary.reach),      hint: 'across verified reels/videos', color: '#06b6d4' },
-            { label: 'Engagement',         value: compact(showcase.summary.engagement), hint: 'likes + comments on UGC',       color: '#ec4899' },
-            { label: 'Verified UGC',       value: String(showcase.summary.posts),       hint: `${showcase.summary.creators} creators`, color: '#7c3aed' },
-            { label: 'Cost / engagement',  value: `৳${showcase.summary.costPerEngagement}`, hint: 'cashback ÷ engagement',     color: '#22c55e' },
+            { label: 'Reach (views)',     value: compact(showcase.summary.reach),      hint: 'across verified reels/videos', color: '#06b6d4' },
+            { label: 'Engagement',        value: compact(showcase.summary.engagement), hint: 'likes + comments on UGC',       color: '#ec4899' },
+            { label: 'Verified UGC',      value: String(showcase.summary.posts),       hint: `${showcase.summary.creators} creators`, color: '#7c3aed' },
+            { label: 'Cost / engagement', value: `৳${showcase.summary.costPerEngagement}`, hint: 'cashback ÷ engagement',     color: '#22c55e' },
           ].map(k => (
-            <div key={k.label} className="p-4 rounded-2xl border" style={{ background: `${k.color}0d`, borderColor: `${k.color}33` }}>
-              <p className="text-2xl font-extrabold text-white">{k.value}</p>
-              <p className="text-xs font-semibold mt-1" style={{ color: k.color }}>{k.label}</p>
-              <p className="text-[11px] text-zinc-500 mt-0.5">{k.hint}</p>
+            <div key={k.label} style={{ padding: 16, borderRadius: 16, border: '1px solid', background: `${k.color}0d`, borderColor: `${k.color}33` }}>
+              <p className="tnum" style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)' }}>{k.value}</p>
+              <p style={{ fontSize: 12, fontWeight: 600, marginTop: 4, color: k.color }}>{k.label}</p>
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{k.hint}</p>
             </div>
           ))}
         </div>
       )}
 
       {/* UGC gallery — the verified posts brands paid for */}
-      <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6 mb-8">
-        <h2 className="text-lg font-bold text-white mb-1">Your Campaign UGC</h2>
-        <p className="text-xs text-zinc-500 mb-5">Verified creator posts with live engagement — proof of what your budget produced</p>
+      <div style={{ borderRadius: 16, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)', padding: 24, marginBottom: 32 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Your campaign UGC</h2>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 20 }}>Verified creator posts with live engagement — proof of what your budget produced</p>
         {loading ? (
-          <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
+          <div className="flex justify-center py-10"><div className="spinner" /></div>
         ) : showcase.posts.length === 0 ? (
-          <div className="text-center py-10 text-zinc-500 text-sm">No verified posts yet — they appear here once creators post and pass verification.</div>
+          <div className="text-center py-10 text-sm" style={{ color: 'var(--text-muted)' }}>No verified posts yet — they appear here once creators post and pass verification.</div>
         ) : (
           <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))' }}>
             {showcase.posts.map(p => (
-              <a key={p._id} href={p.snapshot.permalink} target="_blank" rel="noreferrer"
-                className="group rounded-xl overflow-hidden border border-white/5 bg-white/[0.02] hover:border-violet-500/30 transition-all">
-                <div className="relative" style={{ aspectRatio: '1 / 1', background: 'var(--bg-2)' }}>
+              <a key={p._id} href={p.snapshot.permalink} target="_blank" rel="noreferrer" className="card-hover"
+                style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(var(--ink-rgb),0.07)', background: 'rgba(var(--ink-rgb),0.02)', textDecoration: 'none', display: 'block' }}>
+                <div style={{ position: 'relative', aspectRatio: '1 / 1', background: 'var(--bg-2)' }}>
                   {p.snapshot.thumbnail
-                    ? <img src={p.snapshot.thumbnail} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = 'none' }} />
-                    : <div className="w-full h-full flex items-center justify-center text-3xl opacity-40">📸</div>}
-                  {p.snapshot.mediaType && <span className="absolute top-2 left-2 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-black/60 text-white">{p.snapshot.mediaType}</span>}
-                  {p.autoApproved && <span className="absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-violet-600/80 text-white">AUTO ✓</span>}
+                    ? <img src={p.snapshot.thumbnail} alt="" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.currentTarget.style.display = 'none' }} />
+                    : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={28} strokeWidth={1.5} style={{ opacity: 0.35, color: 'var(--text-muted)' }} /></div>}
+                  {p.snapshot.mediaType && <span style={{ position: 'absolute', top: 8, left: 8, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: 'rgba(0,0,0,0.6)', color: '#fff' }}>{p.snapshot.mediaType}</span>}
+                  {p.autoApproved && <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(124,58,237,0.8)', color: '#fff' }}>Auto</span>}
                 </div>
-                <div className="p-3">
-                  <p className="text-xs font-semibold text-white truncate">@{String(p.creator?.instagramHandle || '').replace(/^@/, '') || p.creator?.name}</p>
-                  <p className="text-[11px] text-zinc-500 truncate mb-2">{p.campaign?.product || p.campaign?.title}</p>
-                  <div className="flex items-center gap-3 text-[11px] text-zinc-400">
-                    <span>❤ {p.snapshot.likes == null ? '—' : compact(p.snapshot.likes)}</span>
-                    <span>💬 {compact(p.snapshot.comments)}</span>
-                    {p.snapshot.views != null && <span>▶ {compact(p.snapshot.views)}</span>}
+                <div style={{ padding: 12 }}>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.creator?.instagramHandle || '').replace(/^@/, '') || p.creator?.name}</p>
+                  <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '2px 0 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.campaign?.product || p.campaign?.title}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, color: 'rgba(var(--ink-rgb),0.5)' }}>
+                    <span className="tnum" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Heart size={12} strokeWidth={1.75} /> {p.snapshot.likes == null ? '—' : compact(p.snapshot.likes)}</span>
+                    <span className="tnum" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><MessageCircle size={12} strokeWidth={1.75} /> {compact(p.snapshot.comments)}</span>
+                    {p.snapshot.views != null && <span className="tnum" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Play size={12} strokeWidth={1.75} /> {compact(p.snapshot.views)}</span>}
                   </div>
                 </div>
               </a>
@@ -162,20 +155,20 @@ const Analytics = () => {
       </div>
 
       {/* Chart */}
-      <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6 mb-8">
-        <h2 className="text-lg font-bold text-white mb-6">Monthly Orders</h2>
+      <div style={{ borderRadius: 16, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)', padding: 24, marginBottom: 32 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 20 }}>Monthly orders</h2>
         {loading ? (
-          <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
+          <div className="flex justify-center py-10"><div className="spinner" /></div>
         ) : monthlyData.length === 0 ? (
-          <div className="text-center py-10 text-zinc-500 text-sm">No data yet — place orders to see analytics</div>
+          <div className="text-center py-10 text-sm" style={{ color: 'var(--text-muted)' }}>No data yet — place orders to see analytics</div>
         ) : (
           <div className="flex items-end gap-3 h-48">
             {monthlyData.map(d => (
               <div key={d.month} className="flex-1 flex flex-col items-center gap-2">
-                <span className="text-xs text-zinc-400 font-semibold">{d.orders}</span>
+                <span className="tnum" style={{ fontSize: 12, fontWeight: 600, color: 'rgba(var(--ink-rgb),0.6)' }}>{d.orders}</span>
                 <div className="w-full rounded-t-lg bg-gradient-to-t from-violet-600 to-cyan-500 hover:opacity-80 transition-all cursor-pointer"
                   style={{ height: `${(d.orders / maxOrders) * 100}%`, minHeight: '4px' }} />
-                <span className="text-xs text-zinc-600">{d.month}</span>
+                <span style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)' }}>{d.month}</span>
               </div>
             ))}
           </div>
@@ -183,39 +176,39 @@ const Analytics = () => {
       </div>
 
       {/* Campaign breakdown */}
-      <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
-        <h2 className="text-lg font-bold text-white mb-5">Campaign Breakdown</h2>
+      <div style={{ borderRadius: 16, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)', padding: 24 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 18 }}>Campaign breakdown</h2>
         {loading ? (
-          <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
+          <div className="flex justify-center py-10"><div className="spinner" /></div>
         ) : campaigns.length === 0 ? (
-          <div className="text-center py-10 text-zinc-500 text-sm">No campaigns yet</div>
+          <div className="text-center py-10 text-sm" style={{ color: 'var(--text-muted)' }}>No campaigns yet</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead><tr className="border-b border-white/5">
-                {['Campaign', 'Posts', 'Cashback Paid', 'Budget Used', 'Status'].map(h =>
-                  <th key={h} className="text-left text-xs text-zinc-500 font-semibold uppercase tracking-wider px-3 py-3">{h}</th>
+          <div className="data-table" style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead><tr>
+                {['Campaign', 'Posts', 'Cashback paid', 'Budget used', 'Status'].map(h =>
+                  <th key={h}>{h}</th>
                 )}
               </tr></thead>
               <tbody>
                 {campaigns.map((c, i) => {
                   const pct = c.budget > 0 ? Math.round((c.cashbackPaid / c.budget) * 100) : 0
                   return (
-                    <tr key={i} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
-                      <td className="px-3 py-3 text-sm font-medium text-white">{c.name}</td>
-                      <td className="px-3 py-3 text-sm text-zinc-300">{c.posts}</td>
-                      <td className="px-3 py-3 text-sm text-violet-400 font-semibold">৳{(c.cashbackPaid || 0).toLocaleString()}</td>
-                      <td className="px-3 py-3">
+                    <tr key={i}>
+                      <td style={{ fontWeight: 600, color: 'var(--text)' }}>{c.name}</td>
+                      <td className="tnum">{c.posts}</td>
+                      <td className="tnum" style={{ color: 'var(--violet-ink)', fontWeight: 600 }}>৳{(c.cashbackPaid || 0).toLocaleString()}</td>
+                      <td>
                         {c.budget > 0 ? (
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(var(--ink-rgb),0.08)' }}>
                               <div className={`h-full rounded-full ${pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-yellow-500' : 'bg-emerald-500'}`} style={{ width: `${pct}%` }} />
                             </div>
-                            <span className="text-xs text-zinc-400 w-8">{pct}%</span>
+                            <span className="tnum" style={{ fontSize: 12, color: 'var(--text-muted)', width: 32, display: 'inline-block' }}>{pct}%</span>
                           </div>
-                        ) : <span className="text-xs text-zinc-600">Unlimited</span>}
+                        ) : <span style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.3)' }}>Unlimited</span>}
                       </td>
-                      <td className="px-3 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${c.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-zinc-500/10 text-zinc-500'}`}>{c.status}</span></td>
+                      <td><span className={`badge ${c.status === 'active' ? 'badge-success' : 'badge-neutral'}`}>{c.status}</span></td>
                     </tr>
                   )
                 })}

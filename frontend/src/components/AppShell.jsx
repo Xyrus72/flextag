@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, cloneElement } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import Sidebar from './Sidebar'
@@ -30,6 +30,13 @@ const AppShell = ({ links = [], children }) => {
     return { ...l, badge: n > 0 ? (n > 99 ? '99+' : String(n)) : null }
   })
   const primary = links_.slice(0, 4)
+
+  useEffect(() => {
+    if (!open) return undefined
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative' }}>
@@ -93,16 +100,16 @@ const AppShell = ({ links = [], children }) => {
             <NavLink key={l.path} to={l.path} end={isRoot(l.path)}
               style={({ isActive }) => ({
                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
-                textDecoration: 'none', fontSize: 9.5, fontWeight: 600,
-                color: isActive ? '#a78bfa' : 'rgba(var(--ink-rgb),0.45)',
+                textDecoration: 'none', fontSize: 10, fontWeight: 600,
+                color: isActive ? 'var(--violet-ink)' : 'rgba(var(--ink-rgb),0.45)',
               })}>
-              <span style={{ transform: 'scale(0.85)' }}>{l.icon}</span>
+              {cloneElement(l.icon, { size: 15 })}
               <span style={{ whiteSpace: 'nowrap', maxWidth: 72, overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.label.split(' ')[0]}</span>
             </NavLink>
           ))}
           <button type="button" onClick={() => setOpen(true)}
             style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
-              background: 'none', border: 'none', cursor: 'pointer', fontSize: 9.5, fontWeight: 600, color: 'rgba(var(--ink-rgb),0.45)', fontFamily: 'inherit' }}>
+              background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 600, color: 'rgba(var(--ink-rgb),0.45)', fontFamily: 'inherit' }}>
             <Menu size={20} />
             <span>More</span>
           </button>

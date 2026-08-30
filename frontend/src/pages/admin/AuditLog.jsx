@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { ScrollText } from 'lucide-react'
 import { getAuditLog } from '../../services/admin'
 
 /**
@@ -10,17 +11,17 @@ import { getAuditLog } from '../../services/admin'
  */
 
 const GROUP_STYLE = {
-  payout:   { color: '#4ade80', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)' },
-  user:     { color: '#f87171', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)' },
-  dispute:  { color: '#67e8f9', bg: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.3)' },
-  cashback: { color: '#a78bfa', bg: 'rgba(124,58,237,0.12)', border: 'rgba(124,58,237,0.3)' },
-  settings: { color: '#fbbf24', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
-  brand:    { color: '#f9a8d4', bg: 'rgba(236,72,153,0.12)', border: 'rgba(236,72,153,0.3)' },
-  product:  { color: '#fbbf24', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
-  fraud:    { color: '#f87171', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)' },
-  post:     { color: '#a78bfa', bg: 'rgba(124,58,237,0.12)', border: 'rgba(124,58,237,0.3)' },
+  payout:   { color: 'var(--green-ink)', badge: 'success' },
+  user:     { color: '#f87171', badge: 'error' },
+  dispute:  { color: 'var(--cyan-ink)', badge: 'cyan' },
+  cashback: { color: 'var(--violet-ink)', badge: 'info' },
+  settings: { color: 'var(--amber-ink)', badge: 'warning' },
+  brand:    { color: '#f9a8d4', badge: 'neutral' },
+  product:  { color: 'var(--amber-ink)', badge: 'warning' },
+  fraud:    { color: '#f87171', badge: 'error' },
+  post:     { color: 'var(--violet-ink)', badge: 'info' },
 }
-const styleFor = (action) => GROUP_STYLE[String(action).split('.')[0]] || { color: 'rgba(var(--ink-rgb),0.6)', bg: 'rgba(var(--ink-rgb),0.05)', border: 'rgba(var(--ink-rgb),0.1)' }
+const styleFor = (action) => GROUP_STYLE[String(action).split('.')[0]] || { color: 'rgba(var(--ink-rgb),0.6)', badge: 'neutral' }
 
 const PAGE = 50
 
@@ -73,7 +74,7 @@ const AuditLog = () => {
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}><div className="spinner" /></div>
       ) : entries.length === 0 ? (
-        <div className="empty-state"><p style={{ fontSize: 28, marginBottom: 8 }}>📜</p><p>No entries yet.</p></div>
+        <div className="empty-state"><ScrollText size={28} strokeWidth={1.5} style={{ opacity: 0.5, marginBottom: 10 }} /><p>No entries yet.</p></div>
       ) : (
         <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -85,10 +86,7 @@ const AuditLog = () => {
                   padding: '14px 18px', borderRadius: 14,
                   background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.06)',
                 }}>
-                  <span style={{
-                    padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 800, whiteSpace: 'nowrap',
-                    color: st.color, background: st.bg, border: `1px solid ${st.border}`,
-                  }}>{e.action}</span>
+                  <span className={`badge badge-${st.badge}`}>{e.action}</span>
 
                   <div style={{ flex: 1, minWidth: 200 }}>
                     <p style={{ fontSize: 13, color: 'var(--text)', margin: 0 }}>{e.summary || '—'}</p>
@@ -100,7 +98,7 @@ const AuditLog = () => {
                   </div>
 
                   {e.amount ? (
-                    <span style={{ fontSize: 14, fontWeight: 800, color: st.color, whiteSpace: 'nowrap' }}>৳{e.amount.toLocaleString()}</span>
+                    <span className="tnum" style={{ fontSize: 14, fontWeight: 800, color: st.color, whiteSpace: 'nowrap' }}>৳{e.amount.toLocaleString()}</span>
                   ) : null}
                   <span style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.3)', whiteSpace: 'nowrap' }}>
                     {new Date(e.createdAt).toLocaleString()}

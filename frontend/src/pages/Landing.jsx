@@ -170,6 +170,7 @@ const CHECKS = [
 
 const Landing = () => {
   const t = useT()
+  const [motionOk] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const heroRef = useRef(null)
   const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const heroOpacity = useTransform(heroScroll, [0, 0.75], [1, 0])
@@ -205,11 +206,13 @@ const Landing = () => {
       {/* ══ HERO ═══════════════════════════════════════════════════════════ */}
       <section ref={heroRef} style={{ position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         <HeroVideoBg />
-        <div className="hero-fx" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
-          <Suspense fallback={null}>
-            <Hero3D />
-          </Suspense>
-        </div>
+        {motionOk && (
+          <div className="hero-fx" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
+            <Suspense fallback={null}>
+              <Hero3D />
+            </Suspense>
+          </div>
+        )}
 
         <motion.div style={{ opacity: heroOpacity, y: heroY, position: 'relative', zIndex: 10, width: '100%', maxWidth: 980, padding: '96px 24px 0', textAlign: 'center' }}>
           <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1, ease: EASE }}>

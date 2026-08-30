@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Camera, Film, Image as ImageIcon } from 'lucide-react'
 import { getDetectedPosts, submitDetectedPost, dismissDetectedPost } from '../services/instagram'
 
 /**
@@ -66,11 +67,11 @@ const DetectedPosts = () => {
   return (
     <div style={{
       marginBottom: 24, padding: 20, borderRadius: 16,
-      background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(6,182,212,0.07))',
+      background: 'rgba(124,58,237,0.06)',
       border: '1px solid rgba(124,58,237,0.3)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-        <span style={{ fontSize: 20 }}>📸</span>
+        <Camera size={20} strokeWidth={1.6} style={{ color: 'var(--violet-ink)', flexShrink: 0 }} />
         <div>
           <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', margin: 0 }}>
             We spotted {items.length === 1 ? 'a new post' : `${items.length} new posts`} on your Instagram
@@ -92,17 +93,19 @@ const DetectedPosts = () => {
             }}>
               <div style={{
                 width: 52, height: 52, borderRadius: 12, flexShrink: 0, overflow: 'hidden',
-                background: 'rgba(var(--ink-rgb),0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
+                background: 'rgba(var(--ink-rgb),0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 {item.thumbnail
                   ? <img src={item.thumbnail} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : (item.mediaType === 'reel' || item.mediaType === 'video' ? '🎬' : '🖼️')}
+                  : (item.mediaType === 'reel' || item.mediaType === 'video'
+                    ? <Film size={20} strokeWidth={1.5} style={{ color: 'rgba(var(--ink-rgb),0.35)' }} />
+                    : <ImageIcon size={20} strokeWidth={1.5} style={{ color: 'rgba(var(--ink-rgb),0.35)' }} />)}
               </div>
 
               <div style={{ flex: 1, minWidth: 200 }}>
                 <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
                   {item.mediaType === 'reel' ? 'New reel' : item.mediaType === 'video' ? 'New video' : 'New post'}
-                  {matched && <> — looks like <span style={{ color: '#a78bfa' }}>{item.matchedCampaignId.product}</span></>}
+                  {matched && <> — looks like <span style={{ color: 'var(--violet-ink)' }}>{item.matchedCampaignId.product}</span></>}
                   <span style={{ color: 'rgba(var(--ink-rgb),0.3)', fontWeight: 400 }}> · {relative(item.takenAt || item.createdAt)}</span>
                 </p>
                 {item.caption && (
@@ -111,13 +114,13 @@ const DetectedPosts = () => {
                   </p>
                 )}
                 {matched && (
-                  <p style={{ fontSize: 12, color: '#4ade80', fontWeight: 700, margin: '4px 0 0' }}>
+                  <p className="tnum" style={{ fontSize: 12, color: 'var(--green-ink)', fontWeight: 700, margin: '4px 0 0' }}>
                     ৳{(item.matchedOrderId.cashbackAmount || 0).toLocaleString()} cashback waiting
                     {item.matchReasons?.length ? <span style={{ color: 'rgba(var(--ink-rgb),0.3)', fontWeight: 400 }}> · matched on {item.matchReasons.slice(0, 2).join(', ')}</span> : null}
                   </p>
                 )}
                 {itemNotice && (
-                  <p style={{ fontSize: 12, fontWeight: 600, margin: '6px 0 0', color: itemNotice.kind === 'ok' ? '#4ade80' : '#f87171' }}>
+                  <p style={{ fontSize: 12, fontWeight: 600, margin: '6px 0 0', color: itemNotice.kind === 'ok' ? 'var(--green-ink)' : '#f87171' }}>
                     {itemNotice.text}
                   </p>
                 )}

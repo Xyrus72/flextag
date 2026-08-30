@@ -30,15 +30,15 @@ const card = { background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(
 const muted = (a) => `rgba(var(--ink-rgb),${a})`
 
 // pass → ✓ · required failure → ✗ · optional miss → – · deferred/unknown → ·
-const glyphOf = (c) => (c.passed === true ? { mark: '✓', color: '#4ade80' }
-  : c.passed === false ? (c.required ? { mark: '✗', color: '#f87171' } : { mark: '–', color: '#fbbf24' })
+const glyphOf = (c) => (c.passed === true ? { mark: '✓', color: 'var(--green-ink)' }
+  : c.passed === false ? (c.required ? { mark: '✗', color: '#f87171' } : { mark: '–', color: 'var(--amber-ink)' })
   : { mark: '·', color: muted(0.35) })
 
 const CheckRow = ({ check, dim }) => {
   const glyph = glyphOf(check)
   return (
     <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, opacity: dim ? 0.65 : 1 }}>
-      <span style={{ color: glyph.color, fontWeight: 700, flexShrink: 0, width: 14, textAlign: 'center', fontSize: 14 }}>{glyph.mark}</span>
+      <span key={String(check.passed)} className="check-pop" style={{ color: glyph.color, fontWeight: 700, flexShrink: 0, width: 14, textAlign: 'center', fontSize: 14 }}>{glyph.mark}</span>
       <span style={{ minWidth: 0 }}>
         <span style={{ fontSize: 13.5, fontWeight: check.passed === false && check.required ? 600 : 500, color: 'var(--text)' }}>{check.label}</span>
         {check.detail && (check.passed !== true || !dim) && (
@@ -262,7 +262,7 @@ const CaptionValidator = () => {
                   <ul style={{ display: 'flex', flexDirection: 'column', gap: 6, listStyle: 'none', padding: 0, margin: '0 0 12px' }}>
                     {review.issues.map((it, i) => (
                       <li key={i} style={{ fontSize: 12.5, color: muted(0.6), lineHeight: 1.5, display: 'flex', gap: 8 }}>
-                        <span style={{ color: '#fbbf24', flexShrink: 0 }}>–</span><span>{it.message}</span>
+                        <span style={{ color: 'var(--amber-ink)', flexShrink: 0 }}>–</span><span>{it.message}</span>
                       </li>
                     ))}
                   </ul>
@@ -271,7 +271,7 @@ const CaptionValidator = () => {
                   <ul style={{ display: 'flex', flexDirection: 'column', gap: 6, listStyle: 'none', padding: 0, margin: '0 0 12px' }}>
                     {review.suggestions.map((s, i) => (
                       <li key={i} style={{ fontSize: 12.5, color: muted(0.6), lineHeight: 1.5, display: 'flex', gap: 8 }}>
-                        <span style={{ color: '#67e8f9', flexShrink: 0 }}>→</span><span>{s}</span>
+                        <span style={{ color: 'var(--cyan-ink)', flexShrink: 0 }}>→</span><span>{s}</span>
                       </li>
                     ))}
                   </ul>

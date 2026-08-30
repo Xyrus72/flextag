@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { CreditCard } from 'lucide-react'
 import { getWallet, requestWithdrawal, topUpWallet } from '../../services/wallet'
 import { useT } from '../../context/LanguageContext'
 
@@ -65,9 +66,9 @@ const Wallet = () => {
   }
 
   const balCards = [
-    { label:t('wallet.totalEarnings'),    value:`৳${totalEarnings.toLocaleString()}`, sub:'Lifetime cashback earned',    grad:'linear-gradient(135deg,#7c3aed44,#06b6d444)', border:'rgba(124,58,237,0.3)',  text:'#a78bfa' },
-    { label:t('wallet.pendingEscrow'),    value:`৳${pendingEscrow.toLocaleString()}`,  sub:'Awaiting post verification',  grad:'linear-gradient(135deg,#f59e0b22,#fbbf2422)', border:'rgba(245,158,11,0.3)', text:'#fbbf24' },
-    { label:t('wallet.available'), value:`৳${available.toLocaleString()}`,      sub: reserved > 0 ? `৳${reserved.toLocaleString()} reserved for a payout in the queue` : 'Ready to withdraw — usually paid same day', grad:'linear-gradient(135deg,#22c55e22,#4ade8022)', border:'rgba(34,197,94,0.3)', text:'#4ade80' },
+    { label:t('wallet.totalEarnings'),    value:`৳${totalEarnings.toLocaleString()}`, sub:'Lifetime cashback earned',    text:'var(--violet-ink)' },
+    { label:t('wallet.pendingEscrow'),    value:`৳${pendingEscrow.toLocaleString()}`,  sub:'Awaiting post verification',  text:'var(--amber-ink)' },
+    { label:t('wallet.available'), value:`৳${available.toLocaleString()}`,      sub: reserved > 0 ? `৳${reserved.toLocaleString()} reserved for a payout in the queue` : 'Ready to withdraw — usually paid same day', text:'var(--green-ink)' },
   ]
 
   const txIcon = type => type === 'cashback' || type === 'top_up'
@@ -77,7 +78,7 @@ const Wallet = () => {
   return (
     <div className="page-root">
       <div className="page-header">
-        <div className="page-label"><span>My Earnings</span></div>
+        <div className="page-label"><span>My earnings</span></div>
         <h1 className="page-title">{t('page.wallet.title')}</h1>
         <p className="page-subtitle">{t('page.wallet.subtitle')}</p>
       </div>
@@ -85,9 +86,9 @@ const Wallet = () => {
       {/* Balance cards */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:16, marginBottom:28 }}>
         {balCards.map(b => (
-          <div key={b.label} style={{ padding:24, borderRadius:16, background:b.grad, border:`1px solid ${b.border}`, backdropFilter:'blur(20px)' }}>
-            <p style={{ fontSize:10, fontWeight:600, letterSpacing:'0.15em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.4)', marginBottom:10 }}>{b.label}</p>
-            <p style={{ fontSize:30, fontWeight:800, color:b.text, letterSpacing:'-0.03em' }}>{loading ? '—' : b.value}</p>
+          <div key={b.label} style={{ padding:24, borderRadius:16, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.08)' }}>
+            <p style={{ fontSize:12, fontWeight:500, letterSpacing:0, textTransform:'none', color:'rgba(var(--ink-rgb),0.45)', marginBottom:10 }}>{b.label}</p>
+            <p className="tnum" style={{ fontSize:30, fontWeight:800, color:b.text, letterSpacing:'-0.03em' }}>{loading ? '—' : b.value}</p>
             <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.3)', marginTop:6 }}>{b.sub}</p>
           </div>
         ))}
@@ -100,7 +101,7 @@ const Wallet = () => {
           {loading ? (
             <div style={{ display:'flex', justifyContent:'center', padding:'48px 0' }}><div className="spinner" /></div>
           ) : transactions.length === 0 ? (
-            <div className="empty-state"><p>💳</p><p>No transactions yet</p></div>
+            <div className="empty-state"><p><CreditCard size={22} style={{ color: 'rgba(var(--ink-rgb),0.3)' }} strokeWidth={1.5} /></p><p>No transactions yet</p></div>
           ) : (
             <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
               {transactions.map(t => (
@@ -116,7 +117,7 @@ const Wallet = () => {
                     <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.25)', marginTop:2 }}>{new Date(t.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div style={{ textAlign:'right', flexShrink:0 }}>
-                    <p style={{ fontSize:14, fontWeight:700, color: (t.type==='cashback'||t.type==='top_up') ? '#4ade80' : '#f87171', margin:0 }}>
+                    <p className="tnum" style={{ fontSize:14, fontWeight:700, color: (t.type==='cashback'||t.type==='top_up') ? 'var(--green-ink)' : '#f87171', margin:0 }}>
                       {(t.type==='cashback'||t.type==='top_up') ? '+' : '-'}৳{t.amount?.toLocaleString()}
                     </p>
                     <span className={`badge ${t.type === 'withdrawal' && PAYOUT_STATUS[t.payoutStatus]
@@ -140,7 +141,7 @@ const Wallet = () => {
           <div style={{ background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:16, padding:24 }}>
             <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>{t('wallet.addCash')}</h2>
             
-            {topUpSuccess && <div style={{ padding:'10px 14px', borderRadius:12, background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.2)', marginBottom:14 }}><p style={{ fontSize:13, color:'#4ade80', margin:0 }}>{topUpSuccess}</p></div>}
+            {topUpSuccess && <div style={{ padding:'10px 14px', borderRadius:12, background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.2)', marginBottom:14 }}><p style={{ fontSize:13, color:'var(--green-ink)', margin:0 }}>{topUpSuccess}</p></div>}
             {topUpError   && <div style={{ padding:'10px 14px', borderRadius:12, background:'rgba(239,68,68,0.1)',  border:'1px solid rgba(239,68,68,0.2)',  marginBottom:14 }}><p style={{ fontSize:13, color:'#f87171', margin:0 }}>{topUpError}</p></div>}
 
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
@@ -151,8 +152,8 @@ const Wallet = () => {
               </div>
               <button onClick={handleTopUp} className="btn-primary"
                 disabled={!topUpAmount || Number(topUpAmount)<50 || toppingUp}
-                style={{ width:'100%', padding:14, marginTop:4, background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', borderColor: '#059669' }}>
-                {toppingUp ? 'Processing…' : 'Top Up Wallet'}
+                style={{ width:'100%', padding:14, marginTop:4 }}>
+                {toppingUp ? 'Processing…' : 'Top up wallet'}
               </button>
             </div>
           </div>
@@ -162,17 +163,17 @@ const Wallet = () => {
             <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>{t('wallet.withdraw')}</h2>
 
             <div style={{ padding:'12px 14px', borderRadius:12, background:'rgba(124,58,237,0.08)', border:'1px solid rgba(124,58,237,0.2)', marginBottom:16 }}>
-              <p style={{ fontSize:12, color:'#a78bfa', fontWeight:600, margin:'0 0 4px' }}>Minimum withdrawal: ৳{minThreshold}</p>
+              <p style={{ fontSize:12, color:'var(--violet-ink)', fontWeight:600, margin:'0 0 4px' }}>Minimum withdrawal: ৳{minThreshold}</p>
               <p style={{ fontSize:11, color:'rgba(var(--ink-rgb),0.3)', margin:0 }}>Reduces processing fees</p>
             </div>
 
-            {withdrawSuccess && <div style={{ padding:'10px 14px', borderRadius:12, background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.2)', marginBottom:14 }}><p style={{ fontSize:13, color:'#4ade80', margin:0 }}>{withdrawSuccess}</p></div>}
+            {withdrawSuccess && <div style={{ padding:'10px 14px', borderRadius:12, background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.2)', marginBottom:14 }}><p style={{ fontSize:13, color:'var(--green-ink)', margin:0 }}>{withdrawSuccess}</p></div>}
             {withdrawError   && <div style={{ padding:'10px 14px', borderRadius:12, background:'rgba(239,68,68,0.1)',  border:'1px solid rgba(239,68,68,0.2)',  marginBottom:14 }}><p style={{ fontSize:13, color:'#f87171', margin:0 }}>{withdrawError}</p></div>}
 
             {available < minThreshold ? (
               <div style={{ padding:16, borderRadius:14, background:'rgba(var(--ink-rgb),0.03)', textAlign:'center' }}>
                 <p style={{ fontSize:14, color:'rgba(var(--ink-rgb),0.4)', margin:'0 0 6px' }}>Insufficient balance</p>
-                <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.2)', margin:0 }}>Need ৳{(minThreshold-available).toLocaleString()} more</p>
+                <p style={{ fontSize:12, color:'var(--text-muted)', margin:0 }}>Need <span className="tnum" style={{ color:'var(--text)' }}>৳{(minThreshold-available).toLocaleString()}</span> more</p>
               </div>
             ) : (
               <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
@@ -188,7 +189,7 @@ const Wallet = () => {
                       <button key={value} onClick={() => setPayoutMethod(value)} style={{
                         flex:1, padding:'8px 0', borderRadius:10, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit',
                         background: payoutMethod === value ? 'rgba(124,58,237,0.25)' : 'rgba(var(--ink-rgb),0.04)',
-                        color: payoutMethod === value ? '#a78bfa' : 'rgba(var(--ink-rgb),0.5)',
+                        color: payoutMethod === value ? 'var(--violet-ink)' : 'rgba(var(--ink-rgb),0.5)',
                         border: payoutMethod === value ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(var(--ink-rgb),0.08)',
                       }}>{label}</button>
                     ))}

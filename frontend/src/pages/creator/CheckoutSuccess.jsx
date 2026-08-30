@@ -16,19 +16,19 @@ const CheckoutSuccess = () => {
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
           </svg>
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8, background: 'linear-gradient(135deg,#34d399,#06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Payment Successful!</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8, color: 'var(--text)' }}>Payment successful</h1>
         <p style={{ color: 'rgba(var(--ink-rgb),0.5)', fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
           Your order is placed and payment confirmed. The brand will ship your item soon — post about it once it arrives to earn your cashback.
         </p>
         {tranId && (
           <div style={{ padding: '16px 20px', borderRadius: 16, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.08)', marginBottom: 28 }}>
-            <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Transaction ID</p>
+            <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', letterSpacing: 0, textTransform: 'none', margin: 0 }}>Transaction ID</p>
             <p style={{ fontSize: 14, color: 'var(--text)', fontFamily: 'monospace', margin: '4px 0 0' }}>{tranId}</p>
           </div>
         )}
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <Link to="/creator/orders" className="btn-primary" style={{ textDecoration: 'none', padding: '12px 22px' }}>View My Orders</Link>
-          <Link to="/creator/catalog" className="btn-ghost" style={{ textDecoration: 'none', padding: '12px 22px' }}>Keep Shopping</Link>
+          <Link to="/creator/orders" className="btn-primary" style={{ textDecoration: 'none', padding: '12px 22px' }}>View my orders</Link>
+          <Link to="/creator/catalog" className="btn-ghost" style={{ textDecoration: 'none', padding: '12px 22px' }}>Keep shopping</Link>
         </div>
       </div>
     </div>

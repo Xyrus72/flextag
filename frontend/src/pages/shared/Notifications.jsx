@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { Bell } from 'lucide-react'
 import { getNotifications, markNotificationsRead } from '../../services/notifications'
+import { NotificationIcon } from '../../utils/notificationIcons'
 
 /**
  * Everything the bell has ever told you.
@@ -10,16 +12,16 @@ import { getNotifications, markNotificationsRead } from '../../services/notifica
  * was released" three weeks ago is still one click from the wallet.
  */
 
-const TYPE_META = {
-  cashback:      { icon: '💰', label: 'Cashback' },
-  payout:        { icon: '💸', label: 'Payouts' },
-  order:         { icon: '📦', label: 'Orders' },
-  dispute:       { icon: '⚖️', label: 'Disputes' },
-  post_verified: { icon: '✅', label: 'Posts' },
-  rating:        { icon: '⭐', label: 'Reviews' },
-  referral:      { icon: '🎁', label: 'Referrals' },
-  wallet:        { icon: '🏦', label: 'Wallet' },
-  system:        { icon: '🔔', label: 'System' },
+const TYPE_LABEL = {
+  cashback:      'Cashback',
+  payout:        'Payouts',
+  order:         'Orders',
+  dispute:       'Disputes',
+  post_verified: 'Posts',
+  rating:        'Reviews',
+  referral:      'Referrals',
+  wallet:        'Wallet',
+  system:        'System',
 }
 
 const PAGE = 25
@@ -83,7 +85,7 @@ const Notifications = () => {
         <h1 className="page-title">Notifications</h1>
         <p className="page-subtitle">
           {unread > 0 ? `${unread} unread · ` : ''}Everything that happened on your account.
-          {' '}<Link to="/creator/profile" style={{ color: '#67e8f9' }}>Email preferences →</Link>
+          {' '}<Link to="/creator/profile" style={{ color: 'var(--cyan-ink)' }}>Email preferences →</Link>
         </p>
       </div>
 
@@ -91,11 +93,12 @@ const Notifications = () => {
         {['all', ...types].map(t => (
           <button key={t} onClick={() => change(() => { setFilter(t); setPage(0) })} style={{
             padding: '8px 16px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-            fontFamily: 'inherit', border: 'none',
+            fontFamily: 'inherit', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 6,
             background: filter === t ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.04)',
             color: filter === t ? '#fff' : 'rgba(var(--ink-rgb),0.45)',
           }}>
-            {t === 'all' ? 'All' : `${TYPE_META[t]?.icon || '🔔'} ${TYPE_META[t]?.label || t}`}
+            {t !== 'all' && <NotificationIcon type={t} size={13} />}
+            {t === 'all' ? 'All' : (TYPE_LABEL[t] || t)}
           </button>
         ))}
         {unread > 0 && (
@@ -110,7 +113,7 @@ const Notifications = () => {
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}><div className="spinner" /></div>
       ) : items.length === 0 ? (
-        <div className="empty-state"><p style={{ fontSize: 28, marginBottom: 8 }}>🔔</p><p>Nothing here yet.</p></div>
+        <div className="empty-state"><Bell size={28} strokeWidth={1.5} style={{ opacity: 0.4, marginBottom: 10 }} /><p>Nothing here yet.</p></div>
       ) : (
         <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -121,7 +124,7 @@ const Notifications = () => {
                 background: n.read ? 'rgba(var(--ink-rgb),0.02)' : 'rgba(124,58,237,0.07)',
                 border: `1px solid ${n.read ? 'rgba(var(--ink-rgb),0.05)' : 'rgba(124,58,237,0.22)'}`,
               }}>
-                <span style={{ fontSize: 20, lineHeight: 1 }}>{n.icon || TYPE_META[n.type]?.icon || '🔔'}</span>
+                <span style={{ flexShrink: 0, color: 'var(--violet-ink)', marginTop: 1 }}><NotificationIcon type={n.type} size={18} /></span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 14, fontWeight: n.read ? 500 : 700, color: 'var(--text)', margin: 0 }}>{n.title}</p>
                   {n.body && <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.5)', margin: '4px 0 0', lineHeight: 1.5 }}>{n.body}</p>}

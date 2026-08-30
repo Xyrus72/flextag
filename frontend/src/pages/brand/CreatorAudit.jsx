@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, ShieldCheck, AtSign, UserPlus } from 'lucide-react'
+import { Search, ShieldCheck, AtSign, UserPlus, User, AlertTriangle } from 'lucide-react'
 import { runInstagramAudit } from '../../services/instagram'
 
 /**
@@ -12,10 +12,10 @@ const panel = { background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba
 
 const gradeColor = (g) => ({ A: '#4ade80', B: '#a3e635', C: '#facc15', D: '#fb923c', F: '#f87171' }[String(g || '').charAt(0)] || '#a78bfa')
 
-const Kpi = ({ label, value, sub, color = '#fff' }) => (
+const Kpi = ({ label, value, sub, color = 'var(--text)' }) => (
   <div className="stat-card" style={{ background: 'rgba(var(--ink-rgb),0.03)', borderColor: 'rgba(var(--ink-rgb),0.07)' }}>
-    <p style={{ fontSize: 26, fontWeight: 800, color, letterSpacing: '-0.03em', marginBottom: 4 }}>{value}</p>
-    <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.3)', marginBottom: 4 }}>{label}</p>
+    <p className="tnum" style={{ fontSize: 26, fontWeight: 800, color, letterSpacing: '-0.03em', marginBottom: 4 }}>{value}</p>
+    <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', marginBottom: 4 }}>{label}</p>
     {sub && <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.45)', margin: 0 }}>{sub}</p>}
   </div>
 )
@@ -66,8 +66,8 @@ const CreatorAudit = () => {
           </div>
           <button onClick={run} disabled={busy || !handle.trim()} className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '0 22px' }}>
             {busy
-              ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, borderColor: 'rgba(var(--ink-rgb),0.3)', borderTopColor: '#fff' }} /> Auditing…</>
-              : <><Search size={14} /> Run Audit</>}
+              ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, borderColor: 'rgba(11,10,20,0.2)', borderTopColor: 'currentColor' }} /> Auditing…</>
+              : <><Search size={14} /> Run audit</>}
           </button>
         </div>
         {busy && <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)', margin: '12px 0 0' }}>Pulling the profile, recent posts and a follower sample — this can take up to a minute.</p>}
@@ -81,21 +81,21 @@ const CreatorAudit = () => {
             <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', background: 'rgba(var(--ink-rgb),0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>
               {profile.profilePicUrl
                 ? <img src={profile.profilePicUrl} alt="" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none' }} />
-                : '👤'}
+                : <User size={26} strokeWidth={1.5} style={{ color: 'rgba(var(--ink-rgb),0.3)' }} />}
             </div>
             <div style={{ flex: 1, minWidth: 200 }}>
               <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{profile.fullName || `@${audit.username}`}</p>
               <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.4)', margin: '2px 0 0' }}>
                 @{audit.username}
-                {profile.isVerified && <span style={{ color: '#67e8f9' }}> · verified</span>}
+                {profile.isVerified && <span style={{ color: 'var(--cyan-ink)' }}> · verified</span>}
                 {profile.isPrivate && <span style={{ color: '#fb923c' }}> · private</span>}
               </p>
             </div>
             <div style={{ display: 'flex', gap: 24, textAlign: 'center' }}>
               {[['Followers', profile.followers], ['Following', profile.following], ['Posts', profile.posts]].map(([l, v]) => (
                 <div key={l}>
-                  <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', margin: 0 }}>{(Number(v) || 0).toLocaleString()}</p>
-                  <p style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.3)', margin: 0 }}>{l}</p>
+                  <p className="tnum" style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', margin: 0 }}>{(Number(v) || 0).toLocaleString()}</p>
+                  <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', margin: 0 }}>{l}</p>
                 </div>
               ))}
             </div>
@@ -103,7 +103,7 @@ const CreatorAudit = () => {
 
           {/* Verdict banner */}
           <div style={{
-            padding: '14px 18px', borderRadius: 14,
+            padding: '14px 18px', borderRadius: 16,
             background: eligibility.eligible ? 'rgba(34,197,94,0.08)' : 'rgba(251,146,60,0.08)',
             border: `1px solid ${eligibility.eligible ? 'rgba(34,197,94,0.25)' : 'rgba(251,146,60,0.25)'}`,
             display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
@@ -114,8 +114,8 @@ const CreatorAudit = () => {
                 ? 'This account meets FlexTag creator standards.'
                 : `Flagged: ${(eligibility.reasons || []).join(' · ') || 'does not meet creator standards.'}`}
             </p>
-            <Link to="/brand/invite" style={{ fontSize: 12, fontWeight: 600, color: '#a78bfa', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <UserPlus size={13} /> Invite to a campaign →
+            <Link to="/brand/invite" style={{ fontSize: 12, fontWeight: 600, color: 'var(--violet-ink)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <UserPlus size={13} /> Invite to a campaign
             </Link>
           </div>
 
@@ -125,16 +125,16 @@ const CreatorAudit = () => {
             <Kpi label="Fake Followers" value={audience.fakeFollowerPct != null ? `${audience.fakeFollowerPct}%` : '—'}
               sub={audience.sampleSize ? `${audience.sampleSize} sampled · ${audience.quality || ''}` : 'no sample available'}
               color={audience.fakeFollowerPct > 25 ? '#f87171' : audience.fakeFollowerPct > 12 ? '#facc15' : '#4ade80'} />
-            <Kpi label="Engagement" value={metrics.engagementRate != null ? `${metrics.engagementRate}%` : '—'} sub={metrics.postsAnalyzed ? `${metrics.postsAnalyzed} posts analyzed` : ''} color="#f9a8d4" />
-            <Kpi label="Avg Likes" value={(Number(metrics.avgLikes) || 0).toLocaleString()} sub={metrics.avgComments != null ? `${Number(metrics.avgComments).toLocaleString()} avg comments` : ''} color="#67e8f9" />
+            <Kpi label="Engagement" value={metrics.engagementRate != null ? `${metrics.engagementRate}%` : '—'} sub={metrics.postsAnalyzed ? `${metrics.postsAnalyzed} posts analyzed` : ''} color="#ec4899" />
+            <Kpi label="Avg Likes" value={(Number(metrics.avgLikes) || 0).toLocaleString()} sub={metrics.avgComments != null ? `${Number(metrics.avgComments).toLocaleString()} avg comments` : ''} color="var(--cyan-ink)" />
             <Kpi label="Posting Cadence" value={metrics.postsPerWeek != null ? `${metrics.postsPerWeek}/wk` : '—'}
-              sub={metrics.daysSinceLastPost != null ? `last post ${metrics.daysSinceLastPost}d ago` : ''} color="#a78bfa" />
+              sub={metrics.daysSinceLastPost != null ? `last post ${metrics.daysSinceLastPost}d ago` : ''} color="var(--violet-ink)" />
           </div>
 
           {/* Health flags */}
           {Array.isArray(health.flags) && health.flags.length > 0 && (
             <div style={panel}>
-              <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: '0 0 12px' }}>⚠️ Things to know</h2>
+              <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}><AlertTriangle size={16} strokeWidth={1.75} /> Things to know</h2>
               <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {health.flags.map((f, i) => <li key={i} style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.55)' }}>{typeof f === 'string' ? f : f.label || f.message}</li>)}
               </ul>

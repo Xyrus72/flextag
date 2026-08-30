@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Banknote } from 'lucide-react'
 import { getPayouts, sendPayout, rejectPayout, reconcilePayout, runPayoutQueue } from '../../services/wallet'
 
 /**
@@ -11,11 +12,11 @@ import { getPayouts, sendPayout, rejectPayout, reconcilePayout, runPayoutQueue }
  */
 
 const STATUS_STYLE = {
-  queued:     { label: 'Queued',     color: '#fbbf24', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
-  processing: { label: 'Processing', color: '#67e8f9', bg: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.3)' },
-  paid:       { label: 'Paid',       color: '#4ade80', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)' },
-  failed:     { label: 'Held',       color: '#f87171', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)' },
-  rejected:   { label: 'Returned',   color: 'rgba(var(--ink-rgb),0.5)', bg: 'rgba(var(--ink-rgb),0.06)', border: 'rgba(var(--ink-rgb),0.12)' },
+  queued:     { label: 'Queued',     color: 'var(--amber-ink)', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', badge: 'warning' },
+  processing: { label: 'Processing', color: 'var(--cyan-ink)', bg: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.3)',  badge: 'cyan' },
+  paid:       { label: 'Paid',       color: 'var(--green-ink)', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)',  badge: 'success' },
+  failed:     { label: 'Held',       color: '#f87171', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)',  badge: 'error' },
+  rejected:   { label: 'Returned',   color: 'rgba(var(--ink-rgb),0.5)', bg: 'rgba(var(--ink-rgb),0.06)', border: 'rgba(var(--ink-rgb),0.12)', badge: 'neutral' },
 }
 
 const METHOD_LABEL = { bkash: 'bKash', nagad: 'Nagad', rocket: 'Rocket', bank: 'Bank' }
@@ -87,10 +88,10 @@ const Payouts = () => {
   const copy = (text) => navigator.clipboard?.writeText(text)
 
   const cards = [
-    { key: 'queued',     label: 'Waiting',    grad: 'linear-gradient(135deg,#f59e0b22,#fbbf2422)', border: 'rgba(245,158,11,0.3)', color: '#fbbf24' },
-    { key: 'processing', label: 'In flight',  grad: 'linear-gradient(135deg,#06b6d422,#67e8f922)', border: 'rgba(6,182,212,0.3)',  color: '#67e8f9' },
-    { key: 'paid',       label: 'Paid out',   grad: 'linear-gradient(135deg,#22c55e22,#4ade8022)', border: 'rgba(34,197,94,0.3)',  color: '#4ade80' },
-    { key: 'failed',     label: 'Held',       grad: 'linear-gradient(135deg,#ef444422,#f8717122)', border: 'rgba(239,68,68,0.3)',  color: '#f87171' },
+    { key: 'queued',     label: 'Waiting',    bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', color: 'var(--amber-ink)' },
+    { key: 'processing', label: 'In flight',  bg: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.3)',  color: 'var(--cyan-ink)' },
+    { key: 'paid',       label: 'Paid out',   bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.3)',  color: 'var(--green-ink)' },
+    { key: 'failed',     label: 'Held',       bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)',  color: '#f87171' },
   ]
 
   return (
@@ -109,7 +110,7 @@ const Payouts = () => {
         background: config.automatic ? 'rgba(34,197,94,0.06)' : 'rgba(124,58,237,0.06)',
         border: `1px solid ${config.automatic ? 'rgba(34,197,94,0.2)' : 'rgba(124,58,237,0.2)'}`,
       }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: config.automatic ? '#4ade80' : '#a78bfa' }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: config.automatic ? 'var(--green-ink)' : 'var(--violet-ink)' }}>
           {config.automatic ? `Automatic — ${config.provider}` : 'Manual settlement'}
         </span>
         <span style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.45)' }}>
@@ -129,16 +130,16 @@ const Payouts = () => {
           padding: '10px 14px', borderRadius: 12, marginBottom: 16, fontSize: 13,
           background: banner.kind === 'ok' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
           border: `1px solid ${banner.kind === 'ok' ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`,
-          color: banner.kind === 'ok' ? '#4ade80' : '#f87171',
+          color: banner.kind === 'ok' ? 'var(--green-ink)' : '#f87171',
         }}>{banner.text}</div>
       )}
 
       {/* Totals */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 24 }}>
         {cards.map(c => (
-          <div key={c.key} style={{ padding: 20, borderRadius: 14, background: c.grad, border: `1px solid ${c.border}` }}>
+          <div key={c.key} style={{ padding: 20, borderRadius: 14, background: c.bg, border: `1px solid ${c.border}` }}>
             <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.4)', marginBottom: 8 }}>{c.label}</p>
-            <p style={{ fontSize: 26, fontWeight: 800, color: c.color, letterSpacing: '-0.03em' }}>
+            <p className="tnum" style={{ fontSize: 26, fontWeight: 800, color: c.color, letterSpacing: '-0.03em' }}>
               ৳{(summary?.[c.key]?.amount || 0).toLocaleString()}
             </p>
             <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.3)', marginTop: 4 }}>{summary?.[c.key]?.count || 0} request{(summary?.[c.key]?.count || 0) === 1 ? '' : 's'}</p>
@@ -167,7 +168,7 @@ const Payouts = () => {
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}><div className="spinner" /></div>
       ) : rows.length === 0 ? (
-        <div className="empty-state"><p style={{ fontSize: 28, marginBottom: 8 }}>💸</p><p>No {filter === 'all' ? '' : filter} payouts</p></div>
+        <div className="empty-state"><Banknote size={28} strokeWidth={1.5} style={{ opacity: 0.5, marginBottom: 10 }} /><p>No {filter === 'all' ? '' : filter} payouts</p></div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {rows.map(r => {
@@ -186,10 +187,7 @@ const Payouts = () => {
                       <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{r.userId?.name || 'Creator'}</p>
                       {r.userId?.igVerified && <span className="badge badge-success" style={{ fontSize: 9 }}>IG verified</span>}
                       {r.userId?.tier && <span className="badge badge-neutral" style={{ fontSize: 9, textTransform: 'capitalize' }}>{r.userId.tier}</span>}
-                      <span style={{
-                        padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 800,
-                        color: st.color, background: st.bg, border: `1px solid ${st.border}`,
-                      }}>{st.label}</span>
+                      <span className={`badge badge-${st.badge}`}>{st.label}</span>
                     </div>
                     <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)', margin: '0 0 10px' }}>
                       {r.userId?.email} {r.userId?.instagramHandle ? `· @${String(r.userId.instagramHandle).replace(/^@/, '')}` : ''} · requested {new Date(r.createdAt).toLocaleString()}
@@ -199,14 +197,14 @@ const Payouts = () => {
                         <span style={{ color: 'rgba(var(--ink-rgb),0.35)' }}>Send to: </span>
                         <button onClick={() => copy(account)} title="Copy number" style={{
                           background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'monospace',
-                          fontSize: 13, fontWeight: 700, color: '#67e8f9',
+                          fontSize: 13, fontWeight: 700, color: 'var(--cyan-ink)',
                         }}>{account} ⧉</button>
                         <span style={{ color: 'rgba(var(--ink-rgb),0.35)', marginLeft: 6 }}>({METHOD_LABEL[r.payoutMethod] || 'bKash'})</span>
                       </div>
                       {r.balance !== null && r.balance !== undefined && (
                         <div>
                           <span style={{ color: 'rgba(var(--ink-rgb),0.35)' }}>Balance now: </span>
-                          <span style={{ color: underwater ? '#f87171' : 'rgba(var(--ink-rgb),0.6)', fontWeight: 600 }}>৳{r.balance.toLocaleString()}</span>
+                          <span className="tnum" style={{ color: underwater ? '#f87171' : 'rgba(var(--ink-rgb),0.6)', fontWeight: 600 }}>৳{r.balance.toLocaleString()}</span>
                         </div>
                       )}
                       {r.payoutRef && (
@@ -215,7 +213,7 @@ const Payouts = () => {
                     </div>
                     {underwater && pending && (
                       <p style={{ fontSize: 12, color: '#f87171', marginTop: 10 }}>
-                        ⚠ Their balance has dropped below this request (a clawback landed). Sending will be refused — return it instead.
+                        Their balance has dropped below this request (a clawback landed). Sending will be refused — return it instead.
                       </p>
                     )}
                     {r.payoutError && (
@@ -224,7 +222,7 @@ const Payouts = () => {
                   </div>
 
                   <div style={{ textAlign: 'right', minWidth: 140 }}>
-                    <p style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>৳{r.amount?.toLocaleString()}</p>
+                    <p className="tnum" style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>৳{r.amount?.toLocaleString()}</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
                       {pending && (
                         <>
@@ -240,7 +238,7 @@ const Payouts = () => {
                       {r.payoutStatus === 'processing' && (
                         <button onClick={() => handleReconcile(r)} disabled={busyId === r._id} style={{
                           padding: '8px 16px', fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
-                          background: 'rgba(6,182,212,0.1)', color: '#67e8f9', border: '1px solid rgba(6,182,212,0.25)',
+                          background: 'rgba(6,182,212,0.1)', color: 'var(--cyan-ink)', border: '1px solid rgba(6,182,212,0.25)',
                         }}>Confirm settled</button>
                       )}
                       {r.payoutSentAt && (

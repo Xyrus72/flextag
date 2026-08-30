@@ -8,6 +8,7 @@ import {
   getContacts,
 } from '../../services/messages'
 import api from '../../services/api'
+import { Check } from 'lucide-react'
 
 /* ── Icons ──────────────────────────────────────────────────────────────── */
 const Icon = ({ d, size = 18, cls = '' }) => (
@@ -35,11 +36,11 @@ const Avatar = ({ user, size = 40 }) => {
   const src  = user?.logoUrl || user?.avatar
   const name = user?.companyName || user?.name || 'U'
   const role = user?.role || 'creator'
-  const gradient = role === 'brand' ? 'linear-gradient(135deg,#10b981,#0d9488)'
-    : role === 'admin' ? 'linear-gradient(135deg,#ef4444,#dc2626)'
-    : 'linear-gradient(135deg,#7c3aed,#06b6d4)'
+  const bg = role === 'brand' ? 'var(--success)'
+    : role === 'admin' ? 'var(--error)'
+    : 'var(--purple)'
   return (
-    <div style={{ width: size, height: size, borderRadius: Math.round(size * 0.3), background: gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.4, fontWeight: 800, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
+    <div style={{ width: size, height: size, borderRadius: Math.round(size * 0.3), background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.4, fontWeight: 800, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
       {src ? <img src={src} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : name[0].toUpperCase()}
     </div>
   )
@@ -285,18 +286,18 @@ export default function Chat() {
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button onClick={handleStartAdminSupport}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#ef4444,#dc2626)', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(239,68,68,0.25)', fontFamily: 'inherit' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: 'var(--error)', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
             <ShieldIcon /> Admin Support
           </button>
           {isCreator && (
             <button onClick={() => openContacts('brand')}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#10b981,#0d9488)', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(16,185,129,0.25)', fontFamily: 'inherit' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: 'var(--success)', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
               <BuildingIcon /> Chat with Brands
             </button>
           )}
           {isBrand && (
             <button onClick={() => openContacts('creator')}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(124,58,237,0.25)', fontFamily: 'inherit' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: 'var(--purple)', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
               <UserIcon /> Chat with Creators
             </button>
           )}
@@ -310,7 +311,7 @@ export default function Chat() {
         <div style={{ borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(var(--ink-rgb),0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Active Conversations</span>
-            <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'rgba(124,58,237,0.15)', color: '#a78bfa' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'rgba(124,58,237,0.15)', color: 'var(--violet-ink)' }}>
               {conversations.length}
             </span>
           </div>
@@ -323,19 +324,19 @@ export default function Chat() {
                 <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.25)', marginBottom: 16 }}>Choose an option above to start chatting:</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <button onClick={handleStartAdminSupport}
-                    style={{ padding: '9px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    🛡️ Talk to Admin Support
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '9px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <ShieldIcon /> Talk to Admin Support
                   </button>
                   {isCreator && (
                     <button onClick={() => openContacts('brand')}
-                      style={{ padding: '9px 14px', borderRadius: 10, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', color: '#34d399', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                      🏢 Chat with a Brand
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '9px 14px', borderRadius: 10, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', color: '#34d399', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      <BuildingIcon /> Chat with a Brand
                     </button>
                   )}
                   {isBrand && (
                     <button onClick={() => openContacts('creator')}
-                      style={{ padding: '9px 14px', borderRadius: 10, background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)', color: '#a78bfa', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                      👤 Chat with a Creator
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '9px 14px', borderRadius: 10, background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)', color: 'var(--violet-ink)', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      <UserIcon /> Chat with a Creator
                     </button>
                   )}
                 </div>
@@ -399,11 +400,11 @@ export default function Chat() {
                       </span>
                     )}
                     {partner?.isVerified && (
-                      <span style={{ padding: '2px 8px', borderRadius: 999, fontSize: 10, fontWeight: 700, background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}>✓ Verified</span>
+                      <span style={{ padding: '2px 8px', borderRadius: 999, fontSize: 10, fontWeight: 700, background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={10} strokeWidth={3} /> Verified</span>
                     )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }} />
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399' }} />
                     <span style={{ fontSize: 11, color: '#34d399', fontWeight: 600 }}>
                       {typingUser ? `${typingUser} is typing…` : 'Live Real-Time Database Connection'}
                     </span>
@@ -433,11 +434,11 @@ export default function Chat() {
                           <div style={{
                             padding: '12px 16px', borderRadius: 14, fontSize: 14, lineHeight: 1.5,
                             ...(isMe
-                              ? { background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', borderBottomRightRadius: 4 }
+                              ? { background: 'var(--purple)', color: '#fff', borderBottomRightRadius: 4 }
                               : { background: 'rgba(var(--ink-rgb),0.06)', color: '#e4e4e7', borderBottomLeftRadius: 4, border: '1px solid rgba(var(--ink-rgb),0.08)' }
                             )
                           }}>
-                            {!isMe && <p style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa', margin: '0 0 4px' }}>{senderName}</p>}
+                            {!isMe && <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--violet-ink)', margin: '0 0 4px' }}>{senderName}</p>}
                             {msg.text}
                           </div>
                           <p style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.3)', marginTop: 4, textAlign: isMe ? 'right' : 'left' }}>
@@ -458,12 +459,11 @@ export default function Chat() {
                     value={input}
                     onChange={handleInputChange}
                     placeholder={`Write a message to ${partner?.companyName || partner?.name || 'user'}…`}
-                    style={{ flex: 1, padding: '12px 16px', borderRadius: 12, background: 'rgba(var(--ink-rgb),0.05)', border: '1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize: 14, outline: 'none', fontFamily: 'inherit' }}
-                    onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.5)'}
-                    onBlur={e  => e.target.style.borderColor = 'rgba(var(--ink-rgb),0.1)'}
+                    className="field-input"
+                    style={{ flex: 1 }}
                   />
                   <button type="submit" disabled={!input.trim() || sending}
-                    style={{ padding: '12px 20px', borderRadius: 12, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', border: 'none', cursor: 'pointer', opacity: (!input.trim() || sending) ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontFamily: 'inherit' }}>
+                    style={{ padding: '12px 20px', borderRadius: 12, background: 'var(--purple)', color: '#fff', border: 'none', cursor: 'pointer', opacity: (!input.trim() || sending) ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontFamily: 'inherit' }}>
                     <SendIcon /> Send
                   </button>
                 </form>
@@ -471,7 +471,7 @@ export default function Chat() {
             </>
           ) : (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40, color: 'rgba(var(--ink-rgb),0.3)' }}>
-              <div style={{ width: 60, height: 60, borderRadius: 16, background: 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', marginBottom: 16 }}>
+              <div style={{ width: 60, height: 60, borderRadius: 16, background: 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--violet-ink)', marginBottom: 16 }}>
                 <MessageIcon />
               </div>
               <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Select or Start a Chat</h3>
@@ -493,8 +493,8 @@ export default function Chat() {
           <div style={{ width: 500, maxWidth: '100%', borderRadius: 16, background: 'var(--bg-2)', border: '1px solid rgba(var(--ink-rgb),0.1)', padding: 24, boxShadow: 'var(--shadow-lg)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
-                  {contactRole === 'brand' ? '🏢 Registered Brand Partners' : '👤 Registered Creators'}
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
+                  {contactRole === 'brand' ? <><BuildingIcon /> Registered Brand Partners</> : <><UserIcon /> Registered Creators</>}
                 </h3>
                 <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.4)', margin: '2px 0 0' }}>
                   {contactRole === 'brand'
@@ -510,12 +510,12 @@ export default function Chat() {
             {/* Role toggle inside modal */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
               {isCreator && ['brand'].map(r => (
-                <button key={r} style={{ padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: 'linear-gradient(135deg,#10b981,#0d9488)', color: '#fff', border: 'none', cursor: 'default', fontFamily: 'inherit' }}>
+                <button key={r} style={{ padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: 'var(--success)', color: '#fff', border: 'none', cursor: 'default', fontFamily: 'inherit' }}>
                   Brand Partners
                 </button>
               ))}
               {isBrand && ['creator'].map(r => (
-                <button key={r} style={{ padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', border: 'none', cursor: 'default', fontFamily: 'inherit' }}>
+                <button key={r} style={{ padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: 'var(--purple)', color: '#fff', border: 'none', cursor: 'default', fontFamily: 'inherit' }}>
                   Creators
                 </button>
               ))}
@@ -556,7 +556,7 @@ export default function Chat() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{displayName}</p>
                             {c.isVerified && (
-                              <span style={{ fontSize: 10, color: '#34d399', fontWeight: 700, background: 'rgba(16,185,129,0.15)', padding: '1px 6px', borderRadius: 4 }}>✓ Verified</span>
+                              <span style={{ fontSize: 10, color: '#34d399', fontWeight: 700, background: 'rgba(16,185,129,0.15)', padding: '1px 6px', borderRadius: 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={10} strokeWidth={3} /> Verified</span>
                             )}
                           </div>
                           <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.4)', margin: '1px 0 0' }}>
@@ -565,7 +565,7 @@ export default function Chat() {
                         </div>
                       </div>
 
-                      <span style={{ padding: '5px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700, background: `linear-gradient(135deg,${accentColor},${contactRole === 'brand' ? '#0d9488' : '#06b6d4'})`, color: '#fff', boxShadow: `0 4px 12px rgba(${contactRole === 'brand' ? '16,185,129' : '124,58,237'},0.2)` }}>
+                      <span style={{ padding: '5px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700, background: accentColor, color: '#fff' }}>
                         Chat
                       </span>
                     </div>

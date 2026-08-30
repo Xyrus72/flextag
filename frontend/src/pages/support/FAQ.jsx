@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 
 const faqData = [
   { q: 'How do I earn cashback on Flextag?', a: 'Purchase a product from our catalog, post authentic content on Instagram featuring the product, submit the post URL, and once verified (including a 7-day retention period), cashback is deposited into your wallet.' },
@@ -19,25 +20,25 @@ const FAQ = () => {
 
   return (
     <div className="page-root">
-      <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Frequently Asked Questions</h1>
-      <p className="text-zinc-500 mb-6">Find answers to common questions</p>
+      <div className="page-header">
+        <h1 className="page-title">Frequently asked questions</h1>
+        <p className="page-subtitle">Find answers to common questions</p>
+      </div>
 
       <div className="max-w-3xl mx-auto">
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search FAQs..."
-          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all placeholder:text-zinc-600 mb-6" />
+          className="field-input mb-6" />
 
         <div className="space-y-3">
           {filtered.map((faq, i) => (
-            <div key={i} className="rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden transition-all">
-              <button onClick={() => setOpenIdx(openIdx === i ? null : i)} className="flex items-center justify-between w-full p-5 text-left">
-                <p className="text-sm font-semibold text-white pr-4">{faq.q}</p>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`text-zinc-500 transition-transform flex-shrink-0 ${openIdx === i ? 'rotate-180' : ''}`}>
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
+            <div key={i} style={{ borderRadius: 16, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.06)', overflow: 'hidden' }}>
+              <button onClick={() => setOpenIdx(openIdx === i ? null : i)} className="flex items-center justify-between w-full p-5 text-left" style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', margin: 0, paddingRight: 16 }}>{faq.q}</p>
+                <ChevronDown size={18} strokeWidth={1.75} style={{ color: 'var(--text-dim)', flexShrink: 0, transition: 'transform 150ms', transform: openIdx === i ? 'rotate(180deg)' : 'none' }} />
               </button>
               {openIdx === i && (
-                <div className="px-5 pb-5 pt-0 border-t border-white/5">
-                  <p className="text-sm text-zinc-400 leading-relaxed pt-4">{faq.a}</p>
+                <div style={{ padding: '0 20px 20px', borderTop: '1px solid rgba(var(--ink-rgb),0.06)' }}>
+                  <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0, paddingTop: 16 }}>{faq.a}</p>
                 </div>
               )}
             </div>

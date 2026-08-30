@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { FileText } from 'lucide-react'
 import { importProducts } from '../../services/products'
 import { API_URL } from '../../config'
 
@@ -68,7 +69,7 @@ const ImportProducts = () => {
               border: `2px dashed ${dragging ? 'rgba(124,58,237,0.6)' : 'rgba(var(--ink-rgb),0.12)'}`,
               transition: 'all 0.2s',
             }}>
-            <p style={{ fontSize: 32, margin: '0 0 8px' }}>📄</p>
+            <FileText size={30} strokeWidth={1.5} style={{ marginBottom: 8, color: 'var(--text-muted)' }} />
             <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: '0 0 6px' }}>
               {fileName || 'Drop your CSV here'}
             </p>
@@ -105,8 +106,8 @@ const ImportProducts = () => {
 
           {/* Result */}
           {result && (
-            <div style={{ marginTop: 20, padding: 20, borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)' }}>
-              <p style={{ fontSize: 14, fontWeight: 700, color: result.errors?.length ? '#fbbf24' : '#4ade80', margin: '0 0 10px' }}>
+            <div style={{ marginTop: 20, padding: 20, borderRadius: 16, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)' }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: result.errors?.length ? 'var(--amber-ink)' : 'var(--green-ink)', margin: '0 0 10px' }}>
                 {result.message}
               </p>
 
@@ -138,7 +139,7 @@ const ImportProducts = () => {
 
               {result.imported > 0 && (
                 <Link to="/brand/my-products" className="btn-primary" style={{ display: 'inline-block', textDecoration: 'none', marginTop: 14, padding: '9px 18px', fontSize: 13 }}>
-                  See my products →
+                  See my products
                 </Link>
               )}
             </div>
@@ -162,7 +163,7 @@ const ImportProducts = () => {
               ['campaignBudget', 'optional · ৳ cap'],
             ].map(([col, note]) => (
               <div key={col} style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                <code style={{ fontSize: 12, color: '#a78bfa' }}>{col}</code>
+                <code style={{ fontSize: 12, color: 'var(--violet-ink)' }}>{col}</code>
                 <span style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', textAlign: 'right' }}>{note}</span>
               </div>
             ))}

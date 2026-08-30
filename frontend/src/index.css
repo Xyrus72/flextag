@@ -30,6 +30,7 @@
   --violet-ink:   #a78bfa;
   --green-ink:    #4ade80;
   --cyan-ink:     #67e8f9;
+  --amber-ink:    #fbbf24;
   --success:      #22c55e;
   --warning:      #f59e0b;
   --error:        #ef4444;
@@ -64,6 +65,7 @@
   --violet-ink:   #6d28d9;
   --green-ink:    #15803d;
   --cyan-ink:     #0e7490;
+  --amber-ink:    #b45309;
   --footer-bg:    #eceef6;
   --btn-bg:       #16141f;
   --btn-bg-hover: #2a2739;
@@ -113,10 +115,10 @@
 :root[data-theme='light'] main [class~="border-white/10"] { border-color: rgba(var(--ink-rgb),0.14); }
 :root[data-theme='light'] main [class*="hover:border-white/10"]:hover { border-color: rgba(var(--ink-rgb),0.16); }
 
-/* Theme switch feels smooth, not jarring */
-body, nav, section, footer {
-  transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease;
-}
+/* Theme switch snaps instead of smearing: a blanket transition here would fire
+   alongside every component's own hover/focus transition at once when the
+   flip happens. ThemeContext suppresses transitions app-wide for one frame
+   during the flip instead — see suppressTransitionsForFlip(). */
 
 /* The hero's cinematic dark layers don't belong on a light page */
 :root[data-theme='light'] .hero-video { display: none; }
@@ -428,11 +430,34 @@ select option {
 
 /* ── Card Hover ───────────────────────────────────────────────────────────── */
 .card-hover {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-property: border-color, box-shadow, translate;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }
-.card-hover:hover {
-  border-color: rgba(var(--ink-rgb),0.16);
-  box-shadow: var(--shadow-md);
+@media (hover: hover) and (pointer: fine) {
+  .card-hover:hover {
+    border-color: rgba(var(--ink-rgb),0.16);
+    box-shadow: var(--shadow-md);
+    translate: 0 -2px;
+  }
+}
+
+/* Quick-action link tiles (dashboards): these navigate somewhere, so they get
+   a small lift on top of the color change — signals "this is a door", not
+   just "this is data" (that's what .stat-card's hover already means). */
+.quick-action-card {
+  transition-property: border-color, background-color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+.quick-action-card:focus-visible,
+.quick-action-card:hover {
+  border-color: rgba(124,58,237,0.3);
+  background: rgba(124,58,237,0.06);
+}
+@media (hover: hover) and (pointer: fine) {
+  .quick-action-card { transition-property: border-color, background-color, translate; }
+  .quick-action-card:hover { translate: 0 -2px; }
 }
 
 /* ── Spinner ──────────────────────────────────────────────────────────────── */
@@ -550,7 +575,69 @@ select option {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.page-header { animation: pageFade 0.35s cubic-bezier(0.2, 0, 0, 1) both; }
+.page-root   { animation: pageFade 0.35s cubic-bezier(0.2, 0, 0, 1) both; }
+.page-header { animation: pageFade 0.35s cubic-bezier(0.2, 0, 0, 1) both; animation-delay: 40ms; }
+
+/* One card/row in a group entrance — pass the index as --i. Runs once on
+   mount only; never replay this on a refetch or filter change. */
+.stagger-in {
+  animation: pageFade 0.35s cubic-bezier(0.2, 0, 0, 1) both;
+  animation-delay: calc(60ms + var(--i, 0) * 40ms);
+}
+
+/* Check glyph flips state (pass/fail/pending) — key the element on the glyph
+   so React remounts it and this replays. The color/glyph are the static cue;
+   this pop is decoration on top, never the only signal. */
+@keyframes checkPop {
+  from { opacity: 0; transform: scale(0.25); filter: blur(4px); }
+  to   { opacity: 1; transform: scale(1);    filter: blur(0); }
+}
+.check-pop { display: inline-block; animation: checkPop 0.2s cubic-bezier(0.2, 0, 0, 1); }
+
+/* Popovers (notification dropdown) scale in from their trigger corner. */
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.97) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.notif-pop { transform-origin: top right; animation: popIn 0.18s cubic-bezier(0.2, 0, 0, 1); }
+
+/* Chart bars grow in once when the data lands or the range changes. */
+@keyframes barGrow {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+.bar-grow {
+  transform-origin: bottom;
+  animation: barGrow 0.45s cubic-bezier(0.2, 0, 0, 1) both;
+  animation-delay: calc(var(--i, 0) * 30ms);
+}
+
+/* Bell + badge acknowledge a LIVE socket notification only — never idle,
+   never a poll-discovered one. One nudge per real event. */
+@keyframes bellNudge {
+  0%   { rotate: 0deg; }
+  25%  { rotate: -11deg; }
+  55%  { rotate: 8deg; }
+  80%  { rotate: -4deg; }
+  100% { rotate: 0deg; }
+}
+.bell-nudge { display: inline-flex; animation: bellNudge 0.45s cubic-bezier(0.2, 0, 0, 1); }
+@keyframes badgePop {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.badge-pop { animation: badgePop 0.2s cubic-bezier(0.2, 0, 0, 1); }
+
+/* A lazy route chunk that resolves inside 150ms should never flash a spinner. */
+@keyframes spinnerReveal { from { opacity: 0; } to { opacity: 1; } }
+.route-spinner { opacity: 0; animation: spinnerReveal 0.2s cubic-bezier(0.2, 0, 0, 1) 0.15s both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .page-root, .page-header, .stagger-in, .check-pop, .notif-pop, .bar-grow, .bell-nudge, .badge-pop {
+    animation: none !important;
+  }
+  .route-spinner { opacity: 1; animation: none !important; }
+}
 
 /* ── Tables: neutral row hover, quiet current-row accent ─────────────────── */
 .data-table tr { transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1); }
@@ -580,16 +667,31 @@ select option {
   position: relative;
   transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1), color 150ms cubic-bezier(0.2, 0, 0, 1);
 }
-.side-link.active::before {
-  content: '';
-  position: absolute;
-  left: -10px;
-  top: 22%;
-  bottom: 22%;
-  width: 2.5px;
-  border-radius: 3px;
-  background: var(--purple);
+.side-link:hover:not(.active) {
+  background: rgba(var(--ink-rgb),0.04);
+  color: var(--text-muted);
 }
+.sidebar-logout {
+  transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1), color 150ms cubic-bezier(0.2, 0, 0, 1), border-color 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+.sidebar-logout:hover {
+  background: rgba(239,68,68,0.08);
+  color: #f87171;
+  border-color: rgba(239,68,68,0.2);
+}
+.notif-row { transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1); }
+.notif-row:hover { background: rgba(var(--ink-rgb),0.05) !important; }
+
+/* Theme/language toggle buttons in the nav rail */
+.icon-toggle {
+  transition-property: border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+.icon-toggle:hover { border-color: rgba(124,58,237,0.45); color: var(--text); }
+/* The active-item rail itself is a <motion.span layoutId> rendered by
+   Sidebar.jsx (it morphs between links on navigation) — this class only
+   supplies its geometry via inline style at the call site. */
 
 /* ── Legacy hooks kept as no-ops so old markup stays harmless ────────────── */
 .gradient-border { position: relative; border-radius: 16px; }

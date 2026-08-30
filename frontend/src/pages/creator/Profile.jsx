@@ -26,11 +26,11 @@ const PlusIcon   = () => <Icon d="M12 5v14M5 12h14" />
 const HomeIcon   = () => <Icon d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
 const XIcon      = () => <Icon d="M18 6L6 18M6 6l12 12" />
 
-const TIER_GRADIENT = {
-  diamond: 'from-cyan-300 to-blue-400',
-  gold:    'from-yellow-400 to-amber-500',
-  silver:  'from-gray-300 to-gray-500',
-  bronze:  'from-orange-400 to-amber-600',
+const TIER_SOLID = {
+  diamond: '#22d3ee',
+  gold:    '#f59e0b',
+  silver:  '#9ca3af',
+  bronze:  '#b45309',
 }
 
 const EMPTY_ADDR = { label: 'Home', fullName: '', phone: '', street: '', city: '', state: '', zip: '', country: 'Bangladesh' }
@@ -39,18 +39,16 @@ const EMPTY_ADDR = { label: 'Home', fullName: '', phone: '', street: '', city: '
  inputs, which is why typing in them used to feel laggy. */
 const FieldInput = ({ label, fkey, form, setForm, editing, type = 'text', readOnly = false }) => (
   <div>
-    <label style={{ display:'block', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.35)', marginBottom:6 }}>
+    <label style={{ display:'block', fontSize:12, fontWeight:500, letterSpacing:0, textTransform:'none', color:'rgba(var(--ink-rgb),0.45)', marginBottom:6 }}>
       {label}
     </label>
     {editing && !readOnly ? (
       <input type={type} value={form[fkey]}
         onChange={e => setForm({ ...form, [fkey]: e.target.value })}
-        style={{ width:'100%', padding:'10px 14px', borderRadius:10, background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize:14, outline:'none', transition:'border 0.2s' }}
-        onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.6)'}
-        onBlur={e  => e.target.style.borderColor = 'rgba(var(--ink-rgb),0.1)'}
+        className="field-input"
       />
     ) : (
-      <p style={{ fontSize:14, color: form[fkey] ? '#e4e4e7' : 'rgba(var(--ink-rgb),0.2)', padding:'10px 0' }}>
+      <p style={{ fontSize:14, color: form[fkey] ? 'var(--text)' : 'var(--text-dim)', padding:'10px 0' }}>
         {form[fkey] || 'Not set'}
       </p>
     )}
@@ -62,9 +60,8 @@ const AddrInput = ({ label, field, state, setter, type = 'text' }) => (
     <label style={{ display:'block', fontSize:11, color:'rgba(var(--ink-rgb),0.35)', marginBottom:4 }}>{label}</label>
     <input type={type} placeholder={label}
       value={state[field]} onChange={e => setter({ ...state, [field]: e.target.value })}
-      style={{ width:'100%', padding:'9px 12px', borderRadius:8, background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize:13, outline:'none' }}
-      onFocus={e => e.target.style.borderColor='rgba(124,58,237,0.5)'}
-      onBlur={e  => e.target.style.borderColor='rgba(var(--ink-rgb),0.1)'}
+      className="field-input"
+      style={{ padding:'9px 12px', fontSize:13 }}
     />
   </div>
 )
@@ -175,7 +172,7 @@ export default function Profile() {
   }
 
   /* ── render helpers ──────────────────────────────────────────── */
-  const tierGrad = TIER_GRADIENT[user?.tier] || TIER_GRADIENT.bronze
+  const tierColor = TIER_SOLID[user?.tier] || TIER_SOLID.bronze
 
   // ── Email preferences ─────────────────────────────────────────
   // Money and dispute emails are opt-out; the daily digest is everything else.
@@ -208,8 +205,8 @@ export default function Profile() {
     <div className="page-root">
       {/* ── Header ───────────────────────────────────────────────── */}
       <div className="page-header">
-        <div className="page-label"><span>Account Settings</span></div>
-        <h1 className="page-title">Profile &amp; Shipping</h1>
+        <div className="page-label"><span>Account settings</span></div>
+        <h1 className="page-title">Profile &amp; shipping</h1>
         <p className="page-subtitle">Manage your account details and delivery addresses</p>
       </div>
 
@@ -220,19 +217,18 @@ export default function Profile() {
         <div style={{ borderRadius:16, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28, display:'flex', flexDirection:'column', gap:0 }}>
           {/* header row */}
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
-            <h2 style={{ fontSize:17, fontWeight:700, color: 'var(--text)', margin:0 }}>Personal Info</h2>
+            <h2 style={{ fontSize:17, fontWeight:700, color: 'var(--text)', margin:0 }}>Personal info</h2>
             <button
               onClick={() => { setEditing(!editing); setSaveMsg('') }}
-              style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, fontWeight:600, color: editing ? 'rgba(var(--ink-rgb),0.5)' : '#a78bfa', background:'none', border:'none', cursor:'pointer', padding:'6px 12px', borderRadius:8, transition:'all 0.2s' }}
+              style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, fontWeight:600, color: editing ? 'rgba(var(--ink-rgb),0.5)' : 'var(--violet-ink)', background:'none', border:'none', cursor:'pointer', padding:'6px 12px', borderRadius:8, transition:'all 0.2s' }}
             >
-              {editing ? <><XIcon /> Cancel</> : <><EditIcon /> Edit Profile</>}
+              {editing ? <><XIcon /> Cancel</> : <><EditIcon /> Edit profile</>}
             </button>
           </div>
 
           {/* avatar + tier */}
           <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:24, paddingBottom:24, borderBottom:'1px solid rgba(var(--ink-rgb),0.06)' }}>
-            <div style={{ width:64, height:64, borderRadius:'50%', background:`linear-gradient(135deg, var(--tw-gradient-stops))`, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, fontWeight:700, color:'#fff' }}
-              className={`bg-gradient-to-br ${tierGrad}`}>
+            <div style={{ width:64, height:64, borderRadius:'50%', background: tierColor, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, fontWeight:700, color:'#fff' }}>
               {user?.name?.[0]?.toUpperCase() || 'C'}
             </div>
             <div>
@@ -242,11 +238,11 @@ export default function Profile() {
                 {(user?.followersCount || 0).toLocaleString()} followers
               </p>
               <div style={{ display:'flex', gap:6 }}>
-                <span style={{ padding:'2px 10px', borderRadius:999, fontSize:10, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', background:'rgba(245,158,11,0.12)', color:'#fbbf24', border:'1px solid rgba(245,158,11,0.2)' }}>
+                <span className="badge badge-warning">
                   {user?.tier || 'Bronze'}
                 </span>
                 {user?.igVerified && (
-                  <span style={{ padding:'2px 10px', borderRadius:999, fontSize:10, fontWeight:700, background:'rgba(34,197,94,0.12)', color:'#4ade80', border:'1px solid rgba(34,197,94,0.2)' }}>
+                  <span style={{ padding:'2px 10px', borderRadius:999, fontSize:10, fontWeight:700, background:'rgba(34,197,94,0.12)', color:'var(--green-ink)', border:'1px solid rgba(34,197,94,0.2)' }}>
                     IG Verified ✓
                   </span>
                 )}
@@ -258,29 +254,28 @@ export default function Profile() {
           {saveMsg && (
             <div style={{ marginBottom:16, padding:'10px 14px', borderRadius:10, fontSize:13,
               ...(saveMsg.includes('saved')
-                ? { background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', color:'#4ade80' }
+                ? { background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', color:'var(--green-ink)' }
                 : { background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', color:'#f87171' })
             }}>{saveMsg}</div>
           )}
 
           {/* fields */}
           <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-            <FieldInput label="Full Name"          fkey="name" form={form} setForm={setForm} editing={editing} />
+            <FieldInput label="Full name"          fkey="name" form={form} setForm={setForm} editing={editing} />
             <FieldInput label="Email"              fkey="email" readOnly form={form} setForm={setForm} editing={editing} />
-            <FieldInput label="Phone Number"       fkey="phone" type="tel" form={form} setForm={setForm} editing={editing} />
+            <FieldInput label="Phone number"       fkey="phone" type="tel" form={form} setForm={setForm} editing={editing} />
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-              <FieldInput label="Instagram Handle" fkey="instagramHandle" form={form} setForm={setForm} editing={editing} />
-              <FieldInput label="TikTok Handle"    fkey="tiktokHandle" form={form} setForm={setForm} editing={editing} />
+              <FieldInput label="Instagram handle" fkey="instagramHandle" form={form} setForm={setForm} editing={editing} />
+              <FieldInput label="TikTok handle"    fkey="tiktokHandle" form={form} setForm={setForm} editing={editing} />
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-              <FieldInput label="Follower Count"      fkey="followersCount"  type="number" form={form} setForm={setForm} editing={editing} />
-              <FieldInput label="Engagement Rate (%)" fkey="engagementRate"  type="number" form={form} setForm={setForm} editing={editing} />
+              <FieldInput label="Follower count"      fkey="followersCount"  type="number" form={form} setForm={setForm} editing={editing} />
+              <FieldInput label="Engagement rate (%)" fkey="engagementRate"  type="number" form={form} setForm={setForm} editing={editing} />
             </div>
 
             {editing && (
-              <button onClick={handleSave} disabled={saving}
-                style={{ marginTop:8, padding:'13px 0', borderRadius:12, fontWeight:700, fontSize:14, color:'#fff', background:'linear-gradient(135deg,#7c3aed,#06b6d4)', border:'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, display:'flex', alignItems:'center', justifyContent:'center', gap:8, transition:'opacity 0.2s' }}>
-                <SaveIcon />{saving ? 'Saving…' : 'Save Changes'}
+              <button onClick={handleSave} disabled={saving} className="btn-primary" style={{ marginTop:8, width:'100%', padding:'13px 0' }}>
+                <SaveIcon />{saving ? 'Saving…' : 'Save changes'}
               </button>
             )}
           </div>
@@ -290,12 +285,12 @@ export default function Profile() {
         <div style={{ borderRadius:16, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28 }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
             <div>
-              <h2 style={{ fontSize:17, fontWeight:700, color: 'var(--text)', margin:0 }}>Shipping Addresses</h2>
+              <h2 style={{ fontSize:17, fontWeight:700, color: 'var(--text)', margin:0 }}>Shipping addresses</h2>
               <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.3)', margin:'3px 0 0' }}>Saved to your account</p>
             </div>
             <button onClick={() => { setShowAddForm(!showAddForm); setEditingAddr(null) }}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:10, fontSize:13, fontWeight:600, color:'#a78bfa', background:'rgba(124,58,237,0.1)', border:'1px solid rgba(124,58,237,0.2)', cursor:'pointer', transition:'all 0.2s' }}>
-              <PlusIcon /> Add New
+              style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:10, fontSize:13, fontWeight:600, color:'var(--violet-ink)', background:'rgba(124,58,237,0.1)', border:'1px solid rgba(124,58,237,0.2)', cursor:'pointer', transition:'all 0.2s' }}>
+              <PlusIcon /> Add new
             </button>
           </div>
 
@@ -308,26 +303,26 @@ export default function Profile() {
           {/* Add address form */}
           {showAddForm && (
             <div style={{ marginBottom:20, padding:18, borderRadius:14, background:'rgba(124,58,237,0.06)', border:'1px solid rgba(124,58,237,0.15)' }}>
-              <p style={{ fontSize:13, fontWeight:600, color:'#a78bfa', marginBottom:14 }}>New Address</p>
+              <p style={{ fontSize:13, fontWeight:600, color:'var(--violet-ink)', marginBottom:14 }}>New address</p>
               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
                   <AddrInput label="Label (e.g. Home)" field="label"    state={newAddr} setter={setNewAddr} />
-                  <AddrInput label="Full Name"          field="fullName" state={newAddr} setter={setNewAddr} />
+                  <AddrInput label="Full name"          field="fullName" state={newAddr} setter={setNewAddr} />
                 </div>
-                <AddrInput label="Street Address *" field="street"  state={newAddr} setter={setNewAddr} />
+                <AddrInput label="Street address *" field="street"  state={newAddr} setter={setNewAddr} />
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
                   <AddrInput label="City"  field="city"  state={newAddr} setter={setNewAddr} />
                   <AddrInput label="State" field="state" state={newAddr} setter={setNewAddr} />
                 </div>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-                  <AddrInput label="ZIP Code" field="zip"     state={newAddr} setter={setNewAddr} />
+                  <AddrInput label="ZIP code" field="zip"     state={newAddr} setter={setNewAddr} />
                   <AddrInput label="Country"  field="country" state={newAddr} setter={setNewAddr} />
                 </div>
                 <AddrInput label="Phone" field="phone" state={newAddr} setter={setNewAddr} type="tel" />
                 <div style={{ display:'flex', gap:8, marginTop:4 }}>
                   <button onClick={handleAddAddress} disabled={addrSaving || !newAddr.street}
-                    style={{ flex:1, padding:'11px 0', borderRadius:10, fontWeight:700, fontSize:13, color:'#fff', background:'linear-gradient(135deg,#7c3aed,#06b6d4)', border:'none', cursor: addrSaving ? 'not-allowed' : 'pointer', opacity: addrSaving ? 0.6 : 1 }}>
-                    {addrSaving ? 'Saving…' : 'Add Address'}
+                    className="btn-primary" style={{ flex:1, padding:'11px 0' }}>
+                    {addrSaving ? 'Saving…' : 'Add address'}
                   </button>
                   <button onClick={() => setShowAddForm(false)}
                     style={{ padding:'11px 16px', borderRadius:10, fontSize:13, color:'rgba(var(--ink-rgb),0.5)', background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.08)', cursor:'pointer' }}>
@@ -341,13 +336,13 @@ export default function Profile() {
           {/* Address list */}
           {addrLoading ? (
             <div style={{ display:'flex', justifyContent:'center', padding:'40px 0' }}>
-              <div style={{ width:32, height:32, borderRadius:'50%', border:'2px solid rgba(124,58,237,0.3)', borderTopColor:'#7c3aed', animation:'spin 0.8s linear infinite' }} />
+              <div className="spinner" />
             </div>
           ) : addresses.length === 0 ? (
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'48px 0', borderRadius:14, border:'1px dashed rgba(var(--ink-rgb),0.08)' }}>
               <HomeIcon />
               <p style={{ fontSize:14, color:'rgba(var(--ink-rgb),0.3)', marginTop:12 }}>No addresses saved yet</p>
-              <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.15)', marginTop:4 }}>Add an address to speed up checkout</p>
+              <p style={{ fontSize:12, color:'var(--text-dim)', marginTop:4 }}>Add an address to speed up checkout</p>
             </div>
           ) : (
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
@@ -356,11 +351,11 @@ export default function Profile() {
                   {/* edit form for this address */}
                   {editingAddr === addr._id ? (
                     <div style={{ padding:18, borderRadius:14, background:'rgba(124,58,237,0.06)', border:'1px solid rgba(124,58,237,0.2)' }}>
-                      <p style={{ fontSize:13, fontWeight:600, color:'#a78bfa', marginBottom:12 }}>Edit Address</p>
+                      <p style={{ fontSize:13, fontWeight:600, color:'var(--violet-ink)', marginBottom:12 }}>Edit address</p>
                       <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
                           <AddrInput label="Label"     field="label"    state={editForm} setter={setEditForm} />
-                          <AddrInput label="Full Name" field="fullName" state={editForm} setter={setEditForm} />
+                          <AddrInput label="Full name" field="fullName" state={editForm} setter={setEditForm} />
                         </div>
                         <AddrInput label="Street"  field="street"  state={editForm} setter={setEditForm} />
                         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
@@ -373,7 +368,7 @@ export default function Profile() {
                         </div>
                         <div style={{ display:'flex', gap:8, marginTop:4 }}>
                           <button onClick={handleUpdateAddr} disabled={addrSaving}
-                            style={{ flex:1, padding:'10px 0', borderRadius:10, fontWeight:700, fontSize:13, color:'#fff', background:'linear-gradient(135deg,#7c3aed,#06b6d4)', border:'none', cursor:'pointer' }}>
+                            className="btn-primary" style={{ flex:1, padding:'10px 0' }}>
                             {addrSaving ? 'Saving…' : 'Update'}
                           </button>
                           <button onClick={() => setEditingAddr(null)}
@@ -394,8 +389,8 @@ export default function Profile() {
                           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
                             <span style={{ fontSize:13, fontWeight:700, color: 'var(--text)' }}>{addr.label || 'Address'}</span>
                             {addr.isDefault && (
-                              <span style={{ padding:'2px 8px', borderRadius:999, fontSize:10, fontWeight:700, background:'rgba(124,58,237,0.18)', color:'#a78bfa', border:'1px solid rgba(124,58,237,0.3)' }}>
-                                ★ Default
+                              <span style={{ padding:'2px 8px', borderRadius:999, fontSize:10, fontWeight:700, background:'rgba(124,58,237,0.18)', color:'var(--violet-ink)', border:'1px solid rgba(124,58,237,0.3)' }}>
+                                Default
                               </span>
                             )}
                           </div>
@@ -413,7 +408,7 @@ export default function Profile() {
                         {!addr.isDefault && (
                           <button onClick={() => handleSetDefault(addr._id)}
                             style={{ fontSize:12, color:'rgba(124,58,237,0.8)', fontWeight:600, background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:4, padding:0 }}>
-                            <StarIcon /> Set as Default
+                            <StarIcon /> Set as default
                           </button>
                         )}
                         <button onClick={() => startEditAddr(addr)}
@@ -462,11 +457,10 @@ export default function Profile() {
             </button>
           </div>
         ))}
-        {prefsMsg && <p style={{ fontSize:12, color:'#4ade80', margin:'12px 0 0' }}>{prefsMsg}</p>}
+        {prefsMsg && <p style={{ fontSize:12, color:'var(--green-ink)', margin:'12px 0 0' }}>{prefsMsg}</p>}
       </div>
 
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
         @media (min-width: 1024px) {
           .lg\\:grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
         }

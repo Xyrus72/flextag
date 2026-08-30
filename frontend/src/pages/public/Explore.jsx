@@ -5,7 +5,7 @@ import Footer from '../../components/Footer'
 import StarRating from '../../components/StarRating'
 import { getProducts } from '../../services/products'
 import { useT } from '../../context/LanguageContext'
-import { Package } from 'lucide-react'
+import { Package, ShoppingBag } from 'lucide-react'
 
 /**
  * The public shop window.
@@ -62,7 +62,7 @@ const Explore = () => {
           <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}><div className="spinner" /></div>
         ) : products.length === 0 ? (
           <div className="empty-state">
-            <p style={{ fontSize: 28, marginBottom: 8 }}>🛍️</p>
+            <ShoppingBag size={28} strokeWidth={1.5} style={{ color: 'var(--text-dim)', opacity: 0.5, marginBottom: 10 }} />
             <p>{t('explore.empty')}</p>
           </div>
         ) : (
@@ -79,13 +79,13 @@ const Explore = () => {
                     {p.image && (p.image.startsWith('http') || p.image.startsWith('/'))
                       ? <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
                       : <Package size={22} strokeWidth={1.5} style={{ color: 'rgba(var(--ink-rgb),0.25)' }} />}
-                    <div style={{ position: 'absolute', top: 10, right: 10, padding: '4px 10px', borderRadius: 8, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', fontSize: 11, fontWeight: 800 }}>
+                    <div style={{ position: 'absolute', top: 10, right: 10, padding: '4px 10px', borderRadius: 8, background: 'var(--purple)', color: '#fff', fontSize: 11, fontWeight: 800 }} className="tnum">
                       {p.cashbackRate}% back
                     </div>
                   </div>
                   <div style={{ padding: 16, flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', margin: '0 0 4px', fontWeight: 700, textTransform: 'uppercase' }}>{p.brand}</p>
+                      <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', margin: '0 0 4px', fontWeight: 700 }}>{p.brand}</p>
                       <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0, lineHeight: 1.3 }}>{p.name}</p>
                       {p.reviews > 0 && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
@@ -96,12 +96,12 @@ const Explore = () => {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', background: 'rgba(var(--ink-rgb),0.02)', padding: '8px 12px', borderRadius: 10 }}>
                       <div>
-                        <span style={{ display: 'block', fontSize: 10, color: 'rgba(var(--ink-rgb),0.3)', textTransform: 'uppercase' }}>{t('explore.retail')}</span>
-                        <span style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.4)', textDecoration: 'line-through' }}>৳{price.toLocaleString()}</span>
+                        <span style={{ display: 'block', fontSize: 10, color: 'rgba(var(--ink-rgb),0.3)' }}>{t('explore.retail')}</span>
+                        <span className="tnum" style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.4)', textDecoration: 'line-through' }}>৳{price.toLocaleString()}</span>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ display: 'block', fontSize: 10, color: '#4ade80', fontWeight: 700, textTransform: 'uppercase' }}>{t('explore.yourCost')}</span>
-                        <span style={{ fontSize: 16, fontWeight: 800, color: '#4ade80' }}>৳{netPrice.toLocaleString()}</span>
+                        <span style={{ display: 'block', fontSize: 10, color: 'var(--green-ink)', fontWeight: 700 }}>{t('explore.yourCost')}</span>
+                        <span className="tnum" style={{ fontSize: 16, fontWeight: 800, color: 'var(--green-ink)' }}>৳{netPrice.toLocaleString()}</span>
                       </div>
                     </div>
                     <Link to="/register" className="btn-primary" style={{ textDecoration: 'none', textAlign: 'center', padding: '10px 0', fontSize: 12 }}>
@@ -114,7 +114,7 @@ const Explore = () => {
           </div>
         )}
 
-        <div style={{ textAlign: 'center', marginTop: 56, padding: 32, borderRadius: 16, background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(6,182,212,0.07))', border: '1px solid rgba(124,58,237,0.25)' }}>
+        <div style={{ textAlign: 'center', marginTop: 56, padding: 32, borderRadius: 16, background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.2)' }}>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: '0 0 8px' }}>{t('explore.bottomTitle')}</h2>
           <p style={{ fontSize: 14, color: 'rgba(var(--ink-rgb),0.5)', margin: '0 0 20px' }}>{t('explore.bottomSubtitle')}</p>
           <Link to="/register" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block', padding: '14px 34px', fontSize: 14 }}>

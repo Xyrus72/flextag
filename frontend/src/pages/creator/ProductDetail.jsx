@@ -7,6 +7,7 @@ import { API_URL } from '../../config'
 import { getWishlist } from '../../services/users'
 import { getCampaigns } from '../../services/campaigns'
 import { startConversation } from '../../services/messages'
+import { Package, ChevronLeft, Share2, MessageCircle, SearchX } from 'lucide-react'
 
 const ProductDetail = () => {
   const { id } = useParams()
@@ -39,7 +40,7 @@ const ProductDetail = () => {
               price: camp.price,
               cashbackRate: camp.cashbackRate,
               instantSplitPct: camp.instantSplitPct || 0,
-              image: '📦',
+              image: '',
               rating: 0,
               reviews: 0,
               inStock: camp.stockLeft > 0,
@@ -106,77 +107,73 @@ const ProductDetail = () => {
 
   if (loading) {
     return (
-      <div className="p-4 lg:p-8 min-h-screen flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+      <div className="page-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div className="spinner" />
       </div>
     )
   }
 
   if (!product) {
     return (
-      <div className="p-4 lg:p-8 min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-4xl mb-3">🔍</p>
-          <p className="text-lg text-zinc-400">Product not found</p>
-          <Link to="/creator/catalog" className="text-violet-400 hover:text-violet-300 mt-2 block">Back to Catalog</Link>
+      <div className="page-root">
+        <div className="empty-state">
+          <SearchX size={28} strokeWidth={1.5} style={{ color: 'var(--text-dim)', marginBottom: 10 }} />
+          <p>Product not found</p>
+          <Link to="/creator/catalog" className="btn-ghost" style={{ marginTop: 16, textDecoration: 'none' }}>Back to catalog</Link>
         </div>
       </div>
     )
   }
 
   const netCost = Math.round(product.price * (1 - (product.cashbackRate || 0) / 100))
-  const budgetCap = product.campaignBudget || 50000
   const totalSpent = product.totalCashbackSpent || 0
-  const isCapReached = totalSpent >= budgetCap
+  const isCapReached = product.campaignBudget ? totalSpent >= product.campaignBudget : false
 
   return (
     <div className="page-root">
-      <Link to="/creator/catalog" className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-violet-400 mb-6 transition-colors">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-        Back to Catalog
+      <Link to="/creator/catalog" className="inline-flex items-center gap-2 text-sm hover:text-violet-400 mb-6 transition-colors" style={{ color: 'var(--text-muted)' }}>
+        <ChevronLeft size={16} strokeWidth={1.75} />
+        Back to catalog
       </Link>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        <div className="aspect-square rounded-3xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-[120px] relative overflow-hidden">
+        <div className="aspect-square rounded-2xl flex items-center justify-center relative overflow-hidden" style={{ background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)' }}>
           {product.image && (product.image.startsWith('http') || product.image.startsWith('/')) ? (
             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
           ) : (
-            <span>{product.image || '📦'}</span>
+            <Package size={64} strokeWidth={1.5} style={{ color: 'rgba(var(--ink-rgb),0.2)' }} />
           )}
           {product.cashbackRate > 0 && (
-            <div style={{ position: 'absolute', top: 16, right: 16, padding: '6px 14px', borderRadius: 10, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', fontSize: 13, fontWeight: 800, boxShadow: 'none' }}>
+            <div className="tnum" style={{ position: 'absolute', top: 16, right: 16, padding: '6px 14px', borderRadius: 10, background: 'var(--purple)', color: '#fff', fontSize: 13, fontWeight: 700 }}>
               {product.cashbackRate}% Cashback
             </div>
           )}
           {isCapReached && (
             <div style={{ position: 'absolute', top: 16, left: 16, padding: '6px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.25)', border: '1px solid rgba(239,68,68,0.4)', color: '#f87171', fontSize: 12, fontWeight: 800 }}>
-              Budget Cap Reached
+              Budget cap reached
             </div>
           )}
           {!product.inStock && !isCapReached && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-              <span className="text-xl font-bold text-zinc-400">Out of Stock</span>
+              <span className="text-xl font-bold" style={{ color: 'rgba(var(--ink-rgb),0.6)' }}>Out of stock</span>
             </div>
           )}
         </div>
 
         <div>
-          <span className="text-xs text-zinc-500 uppercase tracking-wider font-medium">{product.brand}</span>
+          <span className="text-xs" style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', letterSpacing: 0, textTransform: 'none' }}>{product.brand}</span>
           <div className="flex items-start justify-between gap-4 mt-2">
-            <h1 className="text-3xl font-bold text-white">{product.name}</h1>
+            <h1 className="text-3xl font-bold" style={{ color: 'var(--text)' }}>{product.name}</h1>
             <div className="flex items-center gap-2">
               {/* Shares the crawler-friendly link, so it unfurls with the actual
                   deal on it instead of a blank card. */}
               <button onClick={shareProduct} title="Share this deal" aria-label="Share this deal"
                 style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36,
-                  borderRadius: 999, cursor: 'pointer', background: 'rgba(var(--ink-rgb),0.05)',
+                  borderRadius: 10, cursor: 'pointer', background: 'rgba(var(--ink-rgb),0.05)',
                   border: '1px solid rgba(var(--ink-rgb),0.1)', color: 'rgba(var(--ink-rgb),0.5)',
                 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
-                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                </svg>
+                <Share2 size={18} strokeWidth={1.75} />
               </button>
               <WishlistButton productId={product._id} saved={savedIds.includes(String(product._id))} onChange={ids => setSavedIds(ids)} />
             </div>
@@ -184,71 +181,74 @@ const ProductDetail = () => {
           {reviews.count > 0 ? (
             <div className="flex items-center gap-2 mt-3">
               <StarRating value={reviews.average} />
-              <span className="text-sm text-zinc-400">{reviews.average} · {reviews.count} creator review{reviews.count === 1 ? '' : 's'}</span>
+              <span className="text-sm tnum" style={{ color: 'rgba(var(--ink-rgb),0.6)' }}>{reviews.average} · {reviews.count} creator review{reviews.count === 1 ? '' : 's'}</span>
             </div>
           ) : (
-            <p className="text-sm text-zinc-500 mt-3">No reviews yet — be the first creator to try it.</p>
+            <p className="text-sm mt-3" style={{ color: 'var(--text-muted)' }}>No reviews yet — be the first creator to try it.</p>
           )}
 
-          {product.description && <p className="text-zinc-400 mt-4 leading-relaxed">{product.description}</p>}
+          {product.description && <p className="mt-4 leading-relaxed" style={{ color: 'rgba(var(--ink-rgb),0.6)' }}>{product.description}</p>}
 
-          <div className="mt-6 p-5 rounded-2xl bg-white/[0.03] border border-white/5">
+          <div className="mt-6 p-5 rounded-2xl" style={{ background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)' }}>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-zinc-500">Retail Price</span>
-              <span className="text-xl font-bold text-white">৳{product.price?.toLocaleString()}</span>
+              <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Retail price</span>
+              <span className="text-xl font-bold tnum" style={{ color: 'var(--text)' }}>৳{product.price?.toLocaleString()}</span>
             </div>
             {product.cashbackRate > 0 && (
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-zinc-500">Cashback ({product.cashbackRate}%)</span>
-                <span className="text-xl font-bold text-emerald-400">-৳{Math.round(product.price * product.cashbackRate / 100).toLocaleString()}</span>
+                <span className="text-sm tnum" style={{ color: 'var(--text-muted)' }}>Cashback ({product.cashbackRate}%)</span>
+                <span className="text-xl font-bold tnum" style={{ color: 'var(--green-ink)' }}>-৳{Math.round(product.price * product.cashbackRate / 100).toLocaleString()}</span>
               </div>
             )}
-            <div className="border-t border-white/5 pt-3 flex items-center justify-between">
-              <span className="text-sm font-semibold text-zinc-300">Your Net Cost</span>
-              <span className="text-2xl font-extrabold bg-gradient-to-r from-violet-500 to-cyan-400 bg-clip-text text-transparent">
+            <div className="pt-3 flex items-center justify-between" style={{ borderTop: '1px solid rgba(var(--ink-rgb),0.07)' }}>
+              <span className="text-sm font-semibold" style={{ color: 'rgba(var(--ink-rgb),0.72)' }}>Your net cost</span>
+              <span className="text-2xl font-extrabold tnum" style={{ color: 'var(--text)' }}>
                 ৳{netCost.toLocaleString()}
               </span>
             </div>
           </div>
 
-          <div className="mt-4 p-4 rounded-2xl bg-cyan-950/20 border border-cyan-500/20">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Campaign Spend Control</span>
-              <span className="text-xs font-semibold text-cyan-400">Cap: ৳{budgetCap.toLocaleString()}</span>
+          {product.campaignBudget && (
+            <div className="mt-4 p-4 rounded-2xl bg-cyan-950/20 border border-cyan-500/20">
+              <div className="flex items-center justify-between mb-2">
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Campaign spend control</span>
+                <span className="text-xs font-semibold text-cyan-400 tnum">Cap: ৳{product.campaignBudget.toLocaleString()}</span>
+              </div>
+              <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'rgba(var(--ink-rgb),0.1)' }}>
+                <div className="h-full bg-gradient-to-r from-cyan-500 to-violet-500" style={{ width: `${Math.min(100, (totalSpent / product.campaignBudget) * 100)}%` }} />
+              </div>
+              <div className="flex items-center justify-between mt-2 text-xs tnum" style={{ color: 'rgba(var(--ink-rgb),0.6)' }}>
+                <span>Disbursed: ৳{totalSpent.toLocaleString()}</span>
+                <span>Available: ৳{Math.max(0, product.campaignBudget - totalSpent).toLocaleString()}</span>
+              </div>
             </div>
-            <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-cyan-500 to-violet-500" style={{ width: `${Math.min(100, (totalSpent / budgetCap) * 100)}%` }} />
-            </div>
-            <div className="flex items-center justify-between mt-2 text-xs text-zinc-400">
-              <span>Disbursed: ৳{totalSpent.toLocaleString()}</span>
-              <span>Available: ৳{Math.max(0, budgetCap - totalSpent).toLocaleString()}</span>
-            </div>
-          </div>
+          )}
 
           <div className="mt-4 p-5 rounded-2xl bg-violet-950/20 border border-violet-500/20">
-            <h3 className="text-sm font-bold text-violet-300 uppercase tracking-wider mb-3">Posting Rules & Requirements</h3>
-            <div className="space-y-2 text-sm text-zinc-300">
-              <div>Hashtags: <span className="text-violet-400 font-semibold">{product.postingRules?.hashtags?.join(' ') || '#FlexTag #BrandPartner'}</span></div>
-              <div>Tag Handle: <span className="text-emerald-400 font-semibold">{product.postingRules?.taggingHandles?.join(' ') || '@flextag.official'}</span></div>
-              <div>Min Followers: <span className="font-semibold">{(product.creatorCriteria?.minFollowers || 1000).toLocaleString()}</span></div>
-              <div>Retention: <span className="font-semibold">7 Days mandatory retention</span></div>
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Posting rules &amp; requirements</h3>
+            <div className="space-y-2 text-sm" style={{ color: 'rgba(var(--ink-rgb),0.72)' }}>
+              <div>Hashtags: <span className="font-semibold" style={{ color: 'var(--violet-ink)' }}>{product.postingRules?.hashtags?.join(' ') || '#FlexTag #BrandPartner'}</span></div>
+              <div>Tag handle: <span className="font-semibold" style={{ color: 'var(--green-ink)' }}>{product.postingRules?.taggingHandles?.join(' ') || '@flextag.official'}</span></div>
+              {product.creatorCriteria?.minFollowers > 0 && (
+                <div>Min followers: <span className="font-semibold tnum">{product.creatorCriteria.minFollowers.toLocaleString()}</span></div>
+              )}
+              <div>Retention: <span className="font-semibold">7 days mandatory retention</span></div>
             </div>
           </div>
 
           <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="flex items-center rounded-xl bg-white/5 border border-white/10 self-center sm:self-auto">
-              <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-4 py-3 text-zinc-400 hover:text-white transition-colors">−</button>
-              <span className="px-4 py-3 text-white font-semibold min-w-[40px] text-center">{qty}</span>
-              <button onClick={() => setQty(qty + 1)} className="px-4 py-3 text-zinc-400 hover:text-white transition-colors">+</button>
+            <div className="flex items-center rounded-xl self-center sm:self-auto" style={{ background: 'rgba(var(--ink-rgb),0.05)', border: '1px solid rgba(var(--ink-rgb),0.1)' }}>
+              <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-4 py-3 transition-colors" style={{ color: 'rgba(var(--ink-rgb),0.6)' }}>−</button>
+              <span className="px-4 py-3 font-semibold min-w-[40px] text-center tnum" style={{ color: 'var(--text)' }}>{qty}</span>
+              <button onClick={() => setQty(qty + 1)} className="px-4 py-3 transition-colors" style={{ color: 'rgba(var(--ink-rgb),0.6)' }}>+</button>
             </div>
             <button onClick={addToCart} disabled={!product.inStock || isCapReached}
-              className="btn-primary" style={{ flex: 1, padding: '14px', fontSize: 14 }}>
-              {isCapReached ? 'Budget Cap Reached' : product.inStock ? `Add to Cart — ৳${(product.price * qty).toLocaleString()}` : 'Out of Stock'}
+              className="btn-primary tnum" style={{ flex: 1, padding: '14px', fontSize: 14 }}>
+              {isCapReached ? 'Budget cap reached' : product.inStock ? `Add to cart — ৳${(product.price * qty).toLocaleString()}` : 'Out of stock'}
             </button>
-            <button onClick={handleChatWithBrand}
-              className="px-5 py-3.5 rounded-xl bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30 hover:bg-emerald-500/25 transition-all flex items-center justify-center gap-2">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              Chat with Brand
+            <button onClick={handleChatWithBrand} className="btn-ghost" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px 20px' }}>
+              <MessageCircle size={16} strokeWidth={1.75} />
+              Chat with brand
             </button>
           </div>
         </div>

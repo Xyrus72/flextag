@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { useSocket } from '../context/SocketContext'
 import { getNotifications, markNotificationsRead } from '../services/notifications'
+import { NotificationIcon } from '../utils/notificationIcons'
 
 const relative = (d) => {
   const t = new Date(d).getTime()
@@ -16,9 +17,10 @@ const relative = (d) => {
 }
 
 const NotificationBell = () => {
-  const [items, setItems]   = useState([])
-  const [unread, setUnread] = useState(0)
-  const [open, setOpen]     = useState(false)
+  const [items, setItems]     = useState([])
+  const [unread, setUnread]   = useState(0)
+  const [open, setOpen]       = useState(false)
+  const [nudgeKey, setNudgeKey] = useState(0)   // bumps only on a LIVE socket event, never the poll
   const { socket } = useSocket()
   const navigate = useNavigate()
   const location = useLocation()
@@ -46,6 +48,7 @@ const NotificationBell = () => {
       if (!n) return
       setItems(prev => [n, ...prev].slice(0, 20))
       setUnread(u => u + 1)
+      setNudgeKey(k => k + 1)
     }
     socket.on('notification', onNotif)
     return () => socket.off('notification', onNotif)
@@ -56,6 +59,13 @@ const NotificationBell = () => {
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [])
+
+  useEffect(() => {
+    if (!open) return undefined
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
 
   const toggle = () => {
     const next = !open
@@ -71,38 +81,41 @@ const NotificationBell = () => {
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <button type="button" onClick={toggle} aria-label="Notifications" style={{
+      <button type="button" onClick={toggle} aria-label="Notifications" aria-haspopup="true" aria-expanded={open} style={{
         position: 'relative', width: 40, height: 40, borderRadius: 12, cursor: 'pointer',
         background: 'rgba(var(--ink-rgb),0.05)', border: '1px solid rgba(var(--ink-rgb),0.1)',
         color: 'rgba(var(--ink-rgb),0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <Bell size={18} />
+        <span key={nudgeKey} className={nudgeKey > 0 ? 'bell-nudge' : ''} style={{ display: 'inline-flex' }}>
+          <Bell size={18} strokeWidth={1.75} />
+        </span>
         {unread > 0 && (
-          <span style={{
+          <span key={`badge-${unread > 0}`} className="badge-pop tnum" style={{
             position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, padding: '0 5px',
-            borderRadius: 9, background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 800,
+            borderRadius: 9, background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700,
             display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--bg)',
           }}>{unread > 9 ? '9+' : unread}</span>
         )}
       </button>
 
       {open && (
-        <div style={{
+        <div className="notif-pop" style={{
           position: 'absolute', right: 0, top: 48, width: 320, maxHeight: 420, overflowY: 'auto',
           background: 'var(--bg-2)', border: '1px solid rgba(124,58,237,0.25)', borderRadius: 16,
           boxShadow: 'var(--shadow-lg)', zIndex: 60, padding: 8,
         }}>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.4)', padding: '8px 10px 6px' }}>Notifications</p>
+          <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', padding: '8px 10px 6px', margin: 0 }}>Notifications</p>
           {items.length === 0 ? (
-            <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.4)', textAlign: 'center', padding: '24px 12px' }}>You&apos;re all caught up 🎉</p>
+            <div style={{ textAlign: 'center', padding: '28px 12px' }}>
+              <Bell size={22} strokeWidth={1.5} style={{ color: 'var(--text-dim)', marginBottom: 8 }} />
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>You&apos;re all caught up</p>
+            </div>
           ) : items.map((n, i) => (
-            <button type="button" key={n._id || i} onClick={() => openItem(n)} style={{
+            <button type="button" key={n._id || i} onClick={() => openItem(n)} className="notif-row" style={{
               width: '100%', textAlign: 'left', display: 'flex', gap: 10, padding: '10px 10px', borderRadius: 12,
               background: n.read ? 'transparent' : 'rgba(124,58,237,0.08)', border: 'none', cursor: 'pointer', marginBottom: 2,
-            }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(var(--ink-rgb),0.05)'}
-              onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(124,58,237,0.08)'}>
-              <span style={{ fontSize: 18, flexShrink: 0 }}>{n.icon || '🔔'}</span>
+            }}>
+              <span style={{ flexShrink: 0, color: 'var(--violet-ink)', marginTop: 1 }}><NotificationIcon type={n.type} size={17} /></span>
               <span style={{ minWidth: 0, flex: 1 }}>
                 <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{n.title}</span>
                 {n.body && <span style={{ display: 'block', fontSize: 12, color: 'rgba(var(--ink-rgb),0.5)', lineHeight: 1.4, marginTop: 2 }}>{n.body}</span>}
@@ -113,7 +126,7 @@ const NotificationBell = () => {
           <button type="button" onClick={() => { setOpen(false); navigate(centre) }} style={{
             width: '100%', marginTop: 4, padding: '10px 0', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
             background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)',
-            color: '#67e8f9', fontSize: 12, fontWeight: 700,
+            color: 'var(--cyan-ink)', fontSize: 12, fontWeight: 600,
           }}>See all notifications</button>
         </div>
       )}

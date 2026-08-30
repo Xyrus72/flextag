@@ -37,14 +37,14 @@ const ActivationChecklist = () => {
           <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', margin: 0 }}>
             Get to your first cashback
           </p>
-          <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.4)', margin: '2px 0 0' }}>
+          <p className="tnum" style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.4)', margin: '2px 0 0' }}>
             {data.completed} of {data.total} done{next ? ` — next: ${next.title.toLowerCase()}` : ''}
           </p>
         </div>
         <div style={{ flex: '0 0 140px', height: 8, borderRadius: 99, background: 'rgba(var(--ink-rgb),0.07)', overflow: 'hidden' }}>
           <div style={{
             height: '100%', width: `${(data.completed / data.total) * 100}%`,
-            background: 'linear-gradient(90deg,#7c3aed,#06b6d4)', transition: 'width 0.4s ease',
+            background: 'var(--purple)', transition: 'width 0.4s cubic-bezier(0.2,0,0,1)',
           }} />
         </div>
       </div>
@@ -62,7 +62,7 @@ const ActivationChecklist = () => {
                 width: 24, height: 24, borderRadius: '50%', flexShrink: 0, fontSize: 12, fontWeight: 800,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: step.done ? 'rgba(34,197,94,0.2)' : 'rgba(124,58,237,0.15)',
-                color: step.done ? '#4ade80' : '#a78bfa',
+                color: step.done ? 'var(--green-ink)' : 'var(--violet-ink)',
                 border: `1px solid ${step.done ? 'rgba(34,197,94,0.4)' : 'rgba(124,58,237,0.3)'}`,
               }}>{step.done ? '✓' : i + 1}</div>
               <div style={{ minWidth: 0 }}>
@@ -70,7 +70,7 @@ const ActivationChecklist = () => {
                   fontSize: 13, fontWeight: 700, margin: 0,
                   color: 'var(--text)', textDecoration: step.done ? 'line-through' : 'none',
                 }}>
-                  {step.title}{step.urgent && <span style={{ color: '#fbbf24', marginLeft: 8, fontSize: 11 }}>← cashback waiting</span>}
+                  {step.title}{step.urgent && <span style={{ color: 'var(--amber-ink)', marginLeft: 8, fontSize: 11 }}>← cashback waiting</span>}
                 </p>
                 {!step.done && (
                   <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.45)', margin: '2px 0 0', lineHeight: 1.5 }}>{step.detail}</p>

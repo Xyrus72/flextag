@@ -3,17 +3,17 @@ import { useNavigate } from 'react-router-dom'
 import { getOrders, rateOrder } from '../../services/orders'
 import StarRating from '../../components/StarRating'
 import { useT } from '../../context/LanguageContext'
-import { Package } from 'lucide-react'
+import { Package, Star } from 'lucide-react'
 
 const statusConfig = {
-  processing: { label: 'Processing', bg: 'bg-yellow-500/10', text: 'text-yellow-400', dot: 'bg-yellow-400' },
-  packed:     { label: 'Packed',     bg: 'bg-blue-500/10',   text: 'text-blue-400',   dot: 'bg-blue-400' },
-  shipped:    { label: 'Shipped',    bg: 'bg-violet-500/10', text: 'text-violet-400',  dot: 'bg-violet-400' },
-  delivered:  { label: 'Delivered',  bg: 'bg-emerald-500/10',text: 'text-emerald-400', dot: 'bg-emerald-400' },
-  cancelled:  { label: 'Cancelled',  bg: 'bg-red-500/10',    text: 'text-red-400',     dot: 'bg-red-400' },
+  processing: { label: 'Processing', badge: 'badge-warning' },
+  packed:     { label: 'Packed',     badge: 'badge-cyan' },
+  shipped:    { label: 'Shipped',    badge: 'badge-info' },
+  delivered:  { label: 'Delivered',  badge: 'badge-success' },
+  cancelled:  { label: 'Cancelled',  badge: 'badge-error' },
   // fulfillment module return flow — these orders can no longer earn cashback
-  return_requested: { label: 'Return requested', bg: 'bg-yellow-500/10', text: 'text-yellow-400', dot: 'bg-yellow-400' },
-  returned:         { label: 'Returned',         bg: 'bg-red-500/10',    text: 'text-red-400',    dot: 'bg-red-400' },
+  return_requested: { label: 'Return requested', badge: 'badge-warning' },
+  returned:         { label: 'Returned',         badge: 'badge-error' },
 }
 
 const MyOrders = () => {
@@ -74,14 +74,14 @@ const MyOrders = () => {
 
       <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:24 }}>
         {['all', 'processing', 'packed', 'shipped', 'delivered', 'returned', 'cancelled'].map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{
+          <button key={f} onClick={() => setFilter(f)} className="tnum" style={{
             padding:'8px 18px', borderRadius:100, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit',
             textTransform:'capitalize', transition:'all 0.2s', border:'none',
             background: filter === f ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.04)',
             color: filter === f ? '#fff' : 'rgba(var(--ink-rgb),0.45)',
             boxShadow: filter === f ? 'none' : 'none',
           }}>
-            {f === 'all' ? `All Orders (${orders.length})` : `${f} (${orders.filter(o => o.status === f).length})`}
+            {f === 'all' ? `All orders (${orders.length})` : `${f} (${orders.filter(o => o.status === f).length})`}
           </button>
         ))}
       </div>
@@ -89,33 +89,34 @@ const MyOrders = () => {
       {loading ? (
         <div style={{ display:'flex', justifyContent:'center', padding:'80px 0' }}><div className="spinner" /></div>
       ) : filtered.length === 0 ? (
-        <div className="empty-state"><p>📦</p><p>No orders — browse the catalog and place your first order</p></div>
+        <div className="empty-state">
+          <Package size={28} strokeWidth={1.5} style={{ color:'var(--text-dim)', marginBottom:10 }} />
+          <p>No orders — browse the catalog and place your first order</p>
+        </div>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
           {filtered.map(o => {
             const sc = statusConfig[o.status] || statusConfig.processing
             return (
-              <div key={o._id} style={{ padding:'20px', borderRadius:14, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.07)', transition:'all 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor='rgba(124,58,237,0.25)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor='rgba(var(--ink-rgb),0.07)'}
+              <div key={o._id} className="card-hover" style={{ padding:'20px', borderRadius:14, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.07)' }}
               >
                 <div style={{ display:'flex', alignItems:'flex-start', gap:16 }}>
-                  <div style={{ width:52, height:52, borderRadius:14, background:'rgba(var(--ink-rgb),0.05)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, flexShrink:0 }}>{String(o.image || '').startsWith('http') ? <img src={o.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 14 }} /> : <Package size={22} strokeWidth={1.5} style={{ color: 'rgba(var(--ink-rgb),0.25)' }} />}</div>
+                  <div style={{ width:52, height:52, borderRadius:14, background:'rgba(var(--ink-rgb),0.05)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{String(o.image || '').startsWith('http') ? <img src={o.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 14 }} /> : <Package size={22} strokeWidth={1.5} style={{ color: 'rgba(var(--ink-rgb),0.25)' }} />}</div>
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
                       <p style={{ fontSize:14, fontWeight:600, color: 'var(--text)', margin:0, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{o.product}</p>
-                      <span className={`badge ${sc.text === 'text-emerald-400' ? 'badge-success' : sc.text === 'text-red-400' ? 'badge-error' : sc.text === 'text-yellow-400' ? 'badge-warning' : 'badge-cyan'}`} style={{ marginLeft:12, flexShrink:0 }}>{sc.label}</span>
+                      <span className={`badge ${sc.badge}`} style={{ marginLeft:12, flexShrink:0 }}>{sc.label}</span>
                     </div>
-                    <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.3)', marginBottom:12 }}>{o.brand} · {o.orderId} · {new Date(o.createdAt).toLocaleDateString()}</p>
+                    <p style={{ fontSize:12, color:'var(--text-muted)', marginBottom:12 }}>{o.brand} · {o.orderId} · {new Date(o.createdAt).toLocaleDateString()}</p>
                     <div style={{ display:'flex', flexWrap:'wrap', gap:16, fontSize:13 }}>
-                      <div><span style={{ color:'rgba(var(--ink-rgb),0.35)' }}>Paid: </span><span style={{ color: 'var(--text)', fontWeight:600 }}>৳{o.total?.toLocaleString()}</span></div>
-                      <div><span style={{ color:'rgba(var(--ink-rgb),0.35)' }}>Cashback: </span><span style={{ color:'#4ade80', fontWeight:600 }}>৳{o.cashbackAmount?.toLocaleString()}</span></div>
-                      {o.tracking && <div><span style={{ color:'rgba(var(--ink-rgb),0.35)' }}>Tracking: </span><span style={{ color:'#67e8f9', fontFamily:'monospace', fontSize:11 }}>{o.tracking}</span></div>}
+                      <div><span style={{ color:'rgba(var(--ink-rgb),0.35)' }}>Paid: </span><span className="tnum" style={{ color: 'var(--text)', fontWeight:600 }}>৳{o.total?.toLocaleString()}</span></div>
+                      <div><span style={{ color:'rgba(var(--ink-rgb),0.35)' }}>Cashback: </span><span className="tnum" style={{ color:'var(--green-ink)', fontWeight:600 }}>৳{o.cashbackAmount?.toLocaleString()}</span></div>
+                      {o.tracking && <div><span style={{ color:'rgba(var(--ink-rgb),0.35)' }}>Tracking: </span><span style={{ color:'var(--cyan-ink)', fontFamily:'monospace', fontSize:11 }}>{o.tracking}</span></div>}
                     </div>
                     {o.status === 'delivered' && !o.cashbackReleased && (
                       <div style={{ marginTop:14 }}>
                         <button onClick={() => navigate('/creator/submit-post', { state: { orderId: o._id, campaignId: o.campaignId, product: o.product } })} className="btn-primary" style={{ padding:'8px 18px', fontSize:12 }}>
-                          Submit Post →
+                          Submit post
                         </button>
                       </div>
                     )}
@@ -127,7 +128,7 @@ const MyOrders = () => {
                         <div style={{ marginTop:12, display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
                           <StarRating value={o.creatorRating.quality} />
                           <span style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.35)' }}>You reviewed this order</span>
-                          <button onClick={() => openRating(o)} style={{ background:'none', border:'none', padding:0, cursor:'pointer', fontFamily:'inherit', fontSize:12, fontWeight:600, color:'#67e8f9' }}>Edit</button>
+                          <button onClick={() => openRating(o)} style={{ background:'none', border:'none', padding:0, cursor:'pointer', fontFamily:'inherit', fontSize:12, fontWeight:600, color:'var(--cyan-ink)' }}>Edit</button>
                         </div>
                       ) : ratingFor === o._id ? (
                         <div style={{ marginTop:14, padding:16, borderRadius:14, background:'rgba(var(--ink-rgb),0.02)', border:'1px solid rgba(var(--ink-rgb),0.06)' }}>
@@ -148,8 +149,9 @@ const MyOrders = () => {
                           </div>
                         </div>
                       ) : (
-                        <button onClick={() => openRating(o)} className="btn-primary" style={{ marginTop:12, padding:'8px 18px', fontSize:12, background:'rgba(251,191,36,0.15)', color:'#fbbf24', border:'1px solid rgba(251,191,36,0.3)', boxShadow:'none' }}>
-                          ⭐ Rate this order
+                        <button onClick={() => openRating(o)} className="btn-ghost" style={{ marginTop:12, padding:'8px 18px', fontSize:12, display:'inline-flex', alignItems:'center', gap:6 }}>
+                          <Star size={14} strokeWidth={1.75} />
+                          Rate this order
                         </button>
                       )
                     )}
@@ -157,7 +159,7 @@ const MyOrders = () => {
                       <button onClick={() => navigate('/creator/disputes', { state: { orderId: o._id } })} style={{
                         marginTop:12, background:'none', border:'none', padding:0, cursor:'pointer', fontFamily:'inherit',
                         fontSize:12, fontWeight:600, color:'rgba(var(--ink-rgb),0.35)',
-                      }}>Something wrong? Report a problem →</button>
+                      }}>Something wrong? Report a problem</button>
                     )}
                   </div>
                 </div>

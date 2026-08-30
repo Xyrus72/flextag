@@ -24,35 +24,31 @@ const CATEGORIES = [
 ]
 
 const StockBadge = ({ stock }) => {
-  if (stock === 0)  return <span style={{ padding:'3px 10px', borderRadius:999, fontSize:11, fontWeight:700, background:'rgba(239,68,68,0.12)', color:'#f87171', border:'1px solid rgba(239,68,68,0.2)' }}>Out of Stock</span>
-  if (stock < 10)   return <span style={{ padding:'3px 10px', borderRadius:999, fontSize:11, fontWeight:700, background:'rgba(245,158,11,0.12)', color:'#fbbf24', border:'1px solid rgba(245,158,11,0.2)' }}>Low: {stock}</span>
-  if (stock < 50)   return <span style={{ padding:'3px 10px', borderRadius:999, fontSize:11, fontWeight:700, background:'rgba(6,182,212,0.12)', color:'#22d3ee', border:'1px solid rgba(6,182,212,0.2)' }}>{stock} units</span>
-  return                   <span style={{ padding:'3px 10px', borderRadius:999, fontSize:11, fontWeight:700, background:'rgba(34,197,94,0.12)', color:'#4ade80', border:'1px solid rgba(34,197,94,0.2)' }}>{stock} units</span>
+  if (stock === 0)  return <span className="badge badge-error">Out of stock</span>
+  if (stock < 10)   return <span className="badge badge-warning">Low: {stock}</span>
+  if (stock < 50)   return <span className="badge badge-cyan">{stock} units</span>
+  return                   <span className="badge badge-success">{stock} units</span>
 }
 
 const StatusBadge = ({ active, status }) => {
-  if (status === 'pending')  return <span style={{ padding:'3px 10px', borderRadius:999, fontSize:11, fontWeight:700, background:'rgba(245,158,11,0.12)', color:'#fbbf24', border:'1px solid rgba(245,158,11,0.2)' }}>Pending</span>
-  if (status === 'rejected') return <span style={{ padding:'3px 10px', borderRadius:999, fontSize:11, fontWeight:700, background:'rgba(239,68,68,0.12)', color:'#f87171', border:'1px solid rgba(239,68,68,0.2)' }}>Rejected</span>
-  if (active) return                <span style={{ padding:'3px 10px', borderRadius:999, fontSize:11, fontWeight:700, background:'rgba(34,197,94,0.12)', color:'#4ade80', border:'1px solid rgba(34,197,94,0.2)' }}>Active</span>
-  return                            <span style={{ padding:'3px 10px', borderRadius:999, fontSize:11, fontWeight:700, background:'rgba(113,113,122,0.15)', color:'#71717a', border:'1px solid rgba(113,113,122,0.2)' }}>Inactive</span>
+  if (status === 'pending')  return <span className="badge badge-warning">Pending</span>
+  if (status === 'rejected') return <span className="badge badge-error">Rejected</span>
+  if (active) return                <span className="badge badge-success">Active</span>
+  return                            <span className="badge badge-neutral">Inactive</span>
 }
 
 /* Module scope: a component created during render remounts its input on every
  keystroke — that is what made these fields feel laggy. */
 const FieldInput = ({ label, fkey, form, setForm, editing, type = 'text', placeholder = '' }) => (
   <div>
-    <label style={{ display:'block', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.3)', marginBottom:5 }}>
-      {label}
-    </label>
+    <label className="field-label">{label}</label>
     {editing ? (
       <input type={type} value={form[fkey]} placeholder={placeholder}
         onChange={e => setForm({ ...form, [fkey]: e.target.value })}
-        style={{ width:'100%', padding:'10px 14px', borderRadius:10, background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize:14, outline:'none', transition:'border 0.2s' }}
-        onFocus={e => e.target.style.borderColor='rgba(16,185,129,0.5)'}
-        onBlur={e  => e.target.style.borderColor='rgba(var(--ink-rgb),0.1)'}
+        className="field-input"
       />
     ) : (
-      <p style={{ fontSize:14, color: form[fkey] ? '#e4e4e7' : 'rgba(var(--ink-rgb),0.2)', padding:'10px 0', margin:0 }}>
+      <p style={{ fontSize:14, color: form[fkey] ? 'var(--text)' : 'rgba(var(--ink-rgb),0.2)', padding:'10px 0', margin:0 }}>
         {form[fkey] || 'Not set'}
       </p>
     )}
@@ -154,15 +150,15 @@ export default function BrandProfile() {
             <h2 style={{ fontSize:17, fontWeight:700, color: 'var(--text)', margin:0 }}>Company Info</h2>
             <button
               onClick={() => { setEditing(!editing); setSaveMsg('') }}
-              style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, fontWeight:600, color: editing ? 'rgba(var(--ink-rgb),0.4)' : '#6ee7b7', background:'none', border:'none', cursor:'pointer', padding:'6px 12px', borderRadius:8 }}>
-              {editing ? <><XIcon /> Cancel</> : <><EditIcon /> Edit Profile</>}
+              style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, fontWeight:600, color: editing ? 'rgba(var(--ink-rgb),0.4)' : 'var(--violet-ink)', background:'none', border:'none', cursor:'pointer', padding:'6px 12px', borderRadius:8 }}>
+              {editing ? <><XIcon /> Cancel</> : <><EditIcon /> Edit profile</>}
             </button>
           </div>
 
           {/* logo + identity */}
           <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:24, paddingBottom:24, borderBottom:'1px solid rgba(var(--ink-rgb),0.06)' }}>
             <div style={{ position:'relative', marginBottom:12 }}>
-              <div style={{ width:80, height:80, borderRadius:14, overflow:'hidden', background:'linear-gradient(135deg,#10b981,#0d9488)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:32, fontWeight:800, color:'#fff', boxShadow:'0 8px 32px rgba(16,185,129,0.2)', border:'2px solid rgba(16,185,129,0.2)' }}>
+              <div style={{ width:80, height:80, borderRadius:14, overflow:'hidden', background:'var(--purple)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:32, fontWeight:800, color:'#fff', border:'2px solid rgba(124,58,237,0.25)' }}>
                 {logoPreview
                   ? <img src={logoPreview} alt="logo" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
                   : (user?.companyName || user?.name || 'B')[0].toUpperCase()
@@ -170,7 +166,7 @@ export default function BrandProfile() {
               </div>
               {editing && (
                 <button onClick={() => fileRef.current?.click()}
-                  style={{ position:'absolute', bottom:-6, right:-6, width:26, height:26, borderRadius:'50%', background:'linear-gradient(135deg,#10b981,#0d9488)', border:'2px solid var(--bg)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'#fff' }}>
+                  style={{ position:'absolute', bottom:-6, right:-6, width:26, height:26, borderRadius:'50%', background:'var(--purple)', border:'2px solid var(--bg)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'#fff' }}>
                   <UploadIcon />
                   <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleLogoFile} />
                 </button>
@@ -179,8 +175,8 @@ export default function BrandProfile() {
             <p style={{ fontSize:17, fontWeight:700, color: 'var(--text)', margin:0 }}>{user?.companyName || user?.name}</p>
             <div style={{ display:'flex', gap:6, marginTop:6 }}>
               {user?.isVerified
-                ? <span style={{ padding:'3px 10px', borderRadius:999, fontSize:11, fontWeight:700, background:'rgba(16,185,129,0.12)', color:'#34d399', border:'1px solid rgba(16,185,129,0.2)' }}>✓ Verified Brand</span>
-                : <span style={{ padding:'3px 10px', borderRadius:999, fontSize:11, fontWeight:700, background:'rgba(245,158,11,0.1)', color:'#fbbf24', border:'1px solid rgba(245,158,11,0.2)' }}>⏳ Pending Verification</span>
+                ? <span className="badge badge-success">Verified brand</span>
+                : <span className="badge badge-warning">Pending verification</span>
               }
             </div>
             {editing && (
@@ -194,7 +190,7 @@ export default function BrandProfile() {
           {saveMsg && (
             <div style={{ marginBottom:16, padding:'10px 14px', borderRadius:10, fontSize:13,
               ...(saveMsg.includes('saved')
-                ? { background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', color:'#4ade80' }
+                ? { background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', color:'var(--green-ink)' }
                 : { background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', color:'#f87171' })
             }}>{saveMsg}</div>
           )}
@@ -203,7 +199,7 @@ export default function BrandProfile() {
           <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
             <FieldInput label="Company Name"     fkey="companyName" form={form} setForm={setForm} editing={editing} />
             <div>
-              <label style={{ display:'block', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.3)', marginBottom:5 }}>Email</label>
+              <label className="field-label">Email</label>
               <p style={{ fontSize:14, color:'rgba(var(--ink-rgb),0.4)', padding:'10px 0', margin:0 }}>{user?.email}</p>
             </div>
             <FieldInput label="Website"          fkey="website"         placeholder="https://example.com" form={form} setForm={setForm} editing={editing} />
@@ -211,10 +207,10 @@ export default function BrandProfile() {
 
             {editing ? (
               <div>
-                <label style={{ display:'block', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.3)', marginBottom:5 }}>Product Category</label>
+                <label className="field-label">Product category</label>
                 <select value={form.productCategory}
                   onChange={e => setForm({ ...form, productCategory: e.target.value })}
-                  style={{ width:'100%', padding:'10px 14px', borderRadius:10, background:'rgba(var(--ink-rgb),0.05)', border:'1px solid rgba(var(--ink-rgb),0.1)', color: form.productCategory ? 'var(--text)' : 'rgba(var(--ink-rgb),0.3)', fontSize:14, outline:'none', appearance:'none' }}>
+                  className="field-select">
                   <option value="" style={{ background:'var(--bg-2)' }}>Select category…</option>
                   {CATEGORIES.map(c => <option key={c} value={c} style={{ background:'var(--bg-2)' }}>{c}</option>)}
                 </select>
@@ -224,9 +220,8 @@ export default function BrandProfile() {
             )}
 
             {editing && (
-              <button onClick={handleSave} disabled={saving}
-                style={{ marginTop:8, padding:'13px 0', borderRadius:12, fontWeight:700, fontSize:14, color:'#fff', background:'linear-gradient(135deg,#10b981,#0d9488)', border:'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, display:'flex', alignItems:'center', justifyContent:'center', gap:8, transition:'opacity 0.2s' }}>
-                <SaveIcon />{saving ? 'Saving…' : 'Save Changes'}
+              <button onClick={handleSave} disabled={saving} className="btn-primary" style={{ marginTop:8, width: '100%', padding: '13px 0' }}>
+                <SaveIcon />{saving ? 'Saving…' : 'Save changes'}
               </button>
             )}
           </div>
@@ -245,14 +240,14 @@ export default function BrandProfile() {
           {products.length > 0 && (
             <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
               {[
-                { label:'Total Stock', value: totalStock.toLocaleString(), color:'#a78bfa' },
-                { label:'Active',      value: activeCount,                 color:'#4ade80' },
-                { label:'Pending',     value: pendingCount,                color:'#fbbf24' },
-                { label:'Low Stock',   value: lowStockCount,               color:'#f87171' },
+                { label:'Total stock', value: totalStock.toLocaleString(), color:'var(--violet-ink)' },
+                { label:'Active',      value: activeCount,                 color:'var(--green-ink)' },
+                { label:'Pending',     value: pendingCount,                color:'var(--amber-ink)' },
+                { label:'Low stock',   value: lowStockCount,               color:'#f87171' },
               ].map(s => (
                 <div key={s.label} style={{ padding:'12px 14px', borderRadius:12, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', textAlign:'center' }}>
-                  <p style={{ fontSize:18, fontWeight:800, color: s.color, margin:0 }}>{s.value}</p>
-                  <p style={{ fontSize:10, color:'rgba(var(--ink-rgb),0.35)', margin:'3px 0 0', textTransform:'uppercase', letterSpacing:'0.08em' }}>{s.label}</p>
+                  <p className="tnum" style={{ fontSize:18, fontWeight:800, color: s.color, margin:0 }}>{s.value}</p>
+                  <p style={{ fontSize:12, fontWeight:500, color:'var(--text-muted)', margin:'3px 0 0' }}>{s.label}</p>
                 </div>
               ))}
             </div>
@@ -280,10 +275,10 @@ export default function BrandProfile() {
           {/* table */}
           {loadingProducts ? (
             <div style={{ display:'flex', justifyContent:'center', padding:'60px 0' }}>
-              <div style={{ width:36, height:36, borderRadius:'50%', border:'2px solid rgba(16,185,129,0.3)', borderTopColor:'#10b981', animation:'spin 0.8s linear infinite' }} />
+              <div className="spinner" />
             </div>
           ) : products.length === 0 ? (
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'60px 0', borderRadius:14, border:'1px dashed rgba(var(--ink-rgb),0.08)' }}>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'60px 0', borderRadius:16, border:'1px dashed rgba(var(--ink-rgb),0.08)' }}>
               <PackageIcon />
               <p style={{ fontSize:14, color:'rgba(var(--ink-rgb),0.3)', marginTop:14 }}>No products yet</p>
               <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.15)', marginTop:4 }}>Post a product to see your inventory here</p>
@@ -293,55 +288,51 @@ export default function BrandProfile() {
               No products match your filters
             </div>
           ) : (
-            <div style={{ overflowX:'auto' }}>
+            <div className="data-table" style={{ overflowX:'auto' }}>
               <table style={{ width:'100%', borderCollapse:'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom:'1px solid rgba(var(--ink-rgb),0.06)' }}>
+                  <tr>
                     {['Product', 'Category', 'Price', 'Cashback', 'Stock', 'Status'].map(h => (
-                      <th key={h} style={{ textAlign:'left', padding:'8px 12px', fontSize:11, fontWeight:700, color:'rgba(var(--ink-rgb),0.3)', textTransform:'uppercase', letterSpacing:'0.1em', whiteSpace:'nowrap' }}>{h}</th>
+                      <th key={h}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map(p => (
-                    <tr key={p._id} style={{ borderBottom:'1px solid rgba(var(--ink-rgb),0.03)', transition:'background 0.15s' }}
-                      onMouseEnter={e => e.currentTarget.style.background='rgba(var(--ink-rgb),0.02)'}
-                      onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                    <tr key={p._id}>
 
-                      <td style={{ padding:'12px 12px' }}>
+                      <td>
                         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                           <div style={{ width:36, height:36, borderRadius:8, background:'rgba(var(--ink-rgb),0.05)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0, overflow:'hidden', border:'1px solid rgba(var(--ink-rgb),0.07)' }}>
                             {p.image && p.image.startsWith('http')
                               ? <img src={p.image} alt={p.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                              : p.image || '📦'
+                              : p.image || <PackageIcon />
                             }
                           </div>
                           <div>
-                            <p style={{ fontSize:13, fontWeight:600, color:'#e4e4e7', margin:0, whiteSpace:'nowrap', maxWidth:140, overflow:'hidden', textOverflow:'ellipsis' }}>{p.name}</p>
+                            <p style={{ fontSize:13, fontWeight:600, color:'var(--text)', margin:0, whiteSpace:'nowrap', maxWidth:140, overflow:'hidden', textOverflow:'ellipsis' }}>{p.name}</p>
                             <p style={{ fontSize:11, color:'rgba(var(--ink-rgb),0.25)', margin:0 }}>#{p._id?.slice(-6)}</p>
                           </div>
                         </div>
                       </td>
 
-                      <td style={{ padding:'12px 12px' }}>
+                      <td>
                         <span style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.45)' }}>{p.category}</span>
                       </td>
 
-                      <td style={{ padding:'12px 12px', fontSize:13, fontWeight:600, color:'#e4e4e7', whiteSpace:'nowrap' }}>
+                      <td className="tnum" style={{ fontSize:13, fontWeight:600, color:'var(--text)', whiteSpace:'nowrap' }}>
                         ৳{p.price?.toLocaleString()}
                       </td>
 
-                      <td style={{ padding:'12px 12px' }}>
-                        <span style={{ padding:'3px 10px', borderRadius:999, fontSize:11, fontWeight:700, background:'rgba(124,58,237,0.12)', color:'#a78bfa', border:'1px solid rgba(124,58,237,0.2)' }}>
-                          {p.cashbackRate}%
-                        </span>
+                      <td>
+                        <span className="badge badge-info">{p.cashbackRate}%</span>
                       </td>
 
-                      <td style={{ padding:'12px 12px' }}>
+                      <td>
                         <StockBadge stock={p.stock ?? 0} />
                       </td>
 
-                      <td style={{ padding:'12px 12px' }}>
+                      <td>
                         <StatusBadge active={p.isActive} status={p.status} />
                       </td>
                     </tr>
@@ -354,7 +345,6 @@ export default function BrandProfile() {
       </div>
 
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
         .brand-grid { grid-template-columns: 1fr; }
         @media (min-width: 1024px) {
           .brand-grid { grid-template-columns: 320px 1fr; }

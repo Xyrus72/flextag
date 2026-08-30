@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import { AlertTriangle } from 'lucide-react'
 
 /**
  * Catches render crashes so one broken component doesn't leave a creator
@@ -31,7 +32,7 @@ class ErrorBoundary extends Component {
         padding: 24, textAlign: 'center',
       }}>
         <div style={{ maxWidth: 460 }}>
-          <p style={{ fontSize: 40, margin: '0 0 12px' }}>😵‍💫</p>
+          <AlertTriangle size={36} strokeWidth={1.5} style={{ color: 'var(--text-dim)', margin: '0 auto 14px' }} />
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: '0 0 8px' }}>
             This page hit a snag
           </h1>
