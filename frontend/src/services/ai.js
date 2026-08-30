@@ -17,3 +17,11 @@ export const generateCaptions = (data) => api.post('/api/ai/caption', data, { ti
  *     issues: [{ type, message }], suggestions: string[], improvedCaption, reason? }
  */
 export const validateCaption = (data) => api.post('/api/ai/validate', data, { timeout: 90000 }).then(r => r.data)
+
+/**
+ * Deterministic verification preview of a draft — no AI, cheap enough to call
+ * on every (debounced) keystroke. Runs the real post-verification rules.
+ * body { caption?, orderId? | campaignId? | hashtags/handles, mediaType? }
+ * → { ok, wouldPass, checks, postTimeChecks, found, required, missing, product, brand, contentType }
+ */
+export const checkCaption = (data) => api.post('/api/ai/check', data, { timeout: 15000 }).then(r => r.data)

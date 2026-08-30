@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
 import { getOrders } from '../../services/orders'
 import { getPosts, submitPost } from '../../services/posts'
 import { generateCaptions } from '../../services/ai'
@@ -200,9 +200,11 @@ const PostSubmission = () => {
   const [verifying, setVerifying] = useState(false)
 
   // AI caption state
-  const [aiPrompt, setAiPrompt]     = useState('')
-  const [aiResponse, setAiResponse] = useState('')
+  const [aiLang, setAiLang]         = useState('')
+  const [aiResult, setAiResult]     = useState(null)   // { source, styled, captions: [{ text, angle }] }
+  const [aiError, setAiError]       = useState('')
   const [aiLoading, setAiLoading]   = useState(false)
+  const [aiCopied, setAiCopied]     = useState(-1)
 
   useEffect(() => {
     // Only delivered, unpaid orders without a live submission can be picked (the backend enforces all of it too)
@@ -247,29 +249,35 @@ const PostSubmission = () => {
   // Gate on a RESOLVED order (not just an id): a preselected id is useless until the list has loaded
   const canSubmit = !!selectedOrder && !!postUrl.trim() && !submitting && !loadingOrders
 
-  // Real AI caption via /api/ai/caption — the order lets the backend inject the
-  // campaign's required hashtags/mention verbatim. Falls back server-side to a
-  // template when no Anthropic key is set, so this always returns something.
+  // Real AI captions via /api/ai/caption — the order lets the backend inject
+  // the campaign's required hashtags/mention verbatim AND condition on the
+  // creator's own recent captions (their audit) so the variants sound like
+  // them. Every variant comes back compliance-checked server-side.
   const generateCaption = async () => {
-    if (!aiPrompt) return
-    setAiLoading(true)
+    if (!aiLang || !selectedOrder) return
+    setAiLoading(true); setAiError(''); setAiResult(null)
     try {
       const data = await generateCaptions({
-        orderId: selectedOrder?._id,
-        campaignId: selectedOrder?.campaignId?._id || selectedOrder?.campaignId,
-        product: selectedOrder?.product,
-        brand: selectedOrder?.brand,
-        language: aiPrompt,
-        count: 1,
+        orderId: selectedOrder._id,
+        campaignId: selectedOrder.campaignId?._id || selectedOrder.campaignId,
+        product: selectedOrder.product,
+        brand: selectedOrder.brand,
+        language: aiLang,
+        count: 3,
       })
-      setAiResponse(data?.captions?.[0]?.text || '')
-    } catch {
-      const product = selectedOrder?.product || 'this product'
-      const brand   = selectedOrder?.brand   || 'our partner brand'
-      setAiResponse(`✨ Loving ${product} from ${brand}! Honestly worth it. 🔥\n\n#FlextagCreator`)
+      setAiResult(data?.captions?.length ? data : null)
+      if (!data?.captions?.length) setAiError('Nothing came back — try again in a moment.')
+    } catch (err) {
+      setAiError(err.response?.data?.message || 'Caption generation is unavailable right now — try again in a bit.')
     } finally {
       setAiLoading(false)
     }
+  }
+
+  const copyVariant = async (text, i) => {
+    try { await navigator.clipboard?.writeText(text) } catch { /* clipboard unavailable */ }
+    setAiCopied(i)
+    setTimeout(() => setAiCopied(-1), 1600)
   }
 
   const handleSubmit = async () => {
@@ -444,34 +452,49 @@ const PostSubmission = () => {
           </div>
         </div>
 
-        {/* AI Caption Assistant */}
+        {/* Caption assistant */}
         <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
-          <h2 className="text-lg font-bold text-white mb-1">AI Creative Assistant</h2>
-          <p className="text-xs text-zinc-500 mb-5">Generate captions & hashtag ideas</p>
+          <h2 className="text-lg font-bold text-white mb-1">Caption ideas</h2>
+          <p className="text-xs text-zinc-500 mb-5">Three options in your own voice, campaign hashtags and mention already in place.</p>
           <div className="space-y-4">
             <div>
-              <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Language</label>
+              <label className="text-xs text-zinc-500 font-medium block mb-1.5">Language</label>
               <div className="grid grid-cols-3 gap-2">
                 {[{ id: 'bangla', label: 'বাংলা' }, { id: 'english', label: 'English' }, { id: 'banglish', label: 'Banglish' }].map(l => (
-                  <button key={l.id} onClick={() => setAiPrompt(l.id)}
-                    className={`py-2.5 rounded-xl text-sm font-semibold transition-all ${aiPrompt === l.id ? 'bg-violet-500/15 border border-violet-500/30 text-violet-400' : 'bg-white/5 border border-white/5 text-zinc-500 hover:bg-white/10'}`}>
+                  <button key={l.id} onClick={() => setAiLang(l.id)}
+                    className={`py-2.5 rounded-xl text-sm font-semibold transition-all ${aiLang === l.id ? 'bg-violet-500/15 border border-violet-500/30 text-violet-400' : 'bg-white/5 border border-white/5 text-zinc-500 hover:bg-white/10'}`}>
                     {l.label}
                   </button>
                 ))}
               </div>
             </div>
-            <button onClick={generateCaption} disabled={!aiPrompt || aiLoading || !selectedOrderId}
+            <button onClick={generateCaption} disabled={!aiLang || aiLoading || !selectedOrderId}
               className="w-full py-3 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-400 font-semibold hover:bg-violet-500/25 transition-all disabled:opacity-30">
-              {aiLoading ? '✨ Generating...' : '✨ Generate Caption'}
+              {aiLoading ? 'Writing…' : 'Write me three captions'}
             </button>
-            {!selectedOrderId && <p className="text-xs text-zinc-600">Select an order first to generate a relevant caption.</p>}
-            {aiResponse && (
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-zinc-500 font-medium uppercase tracking-wider">Generated Caption</span>
-                  <button onClick={() => navigator.clipboard?.writeText(aiResponse)} className="text-xs text-violet-400 hover:text-violet-300">Copy</button>
-                </div>
-                <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">{aiResponse}</p>
+            {!selectedOrderId && <p className="text-xs text-zinc-600">Select an order first — the captions are written for that campaign.</p>}
+            {aiError && <p className="text-xs text-red-400">{aiError}</p>}
+            {aiResult && (
+              <div className="space-y-3">
+                {aiResult.source === 'template' ? (
+                  <p className="text-xs text-zinc-500">AI isn't configured on the server, so these are basic starters — the required tags are still correct.</p>
+                ) : aiResult.styled ? (
+                  <p className="text-xs text-zinc-500">Written to match the voice of your recent Instagram posts.</p>
+                ) : null}
+                {aiResult.captions.map((c, i) => (
+                  <div key={i} className="p-4 rounded-xl bg-white/5 border border-white/5">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-zinc-500 font-medium capitalize">{c.angle}</span>
+                      <button onClick={() => copyVariant(c.text, i)} className="text-xs text-violet-400 hover:text-violet-300">
+                        {aiCopied === i ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
+                    <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed m-0">{c.text}</p>
+                  </div>
+                ))}
+                <p className="text-xs text-zinc-600">
+                  Editing it first? <Link to="/creator/caption-validator" className="text-violet-400 hover:text-violet-300">Run your draft through the caption checker</Link> — it runs the same checks as verification.
+                </p>
               </div>
             )}
           </div>
