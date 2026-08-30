@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getOrders, rateOrder } from '../../services/orders'
 import StarRating from '../../components/StarRating'
 import { useT } from '../../context/LanguageContext'
+import { Package } from 'lucide-react'
 
 const statusConfig = {
   processing: { label: 'Processing', bg: 'bg-yellow-500/10', text: 'text-yellow-400', dot: 'bg-yellow-400' },
@@ -76,9 +77,9 @@ const MyOrders = () => {
           <button key={f} onClick={() => setFilter(f)} style={{
             padding:'8px 18px', borderRadius:100, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit',
             textTransform:'capitalize', transition:'all 0.2s', border:'none',
-            background: filter === f ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
+            background: filter === f ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.04)',
             color: filter === f ? '#fff' : 'rgba(var(--ink-rgb),0.45)',
-            boxShadow: filter === f ? '0 0 16px rgba(124,58,237,0.3)' : 'none',
+            boxShadow: filter === f ? 'none' : 'none',
           }}>
             {f === 'all' ? `All Orders (${orders.length})` : `${f} (${orders.filter(o => o.status === f).length})`}
           </button>
@@ -94,12 +95,12 @@ const MyOrders = () => {
           {filtered.map(o => {
             const sc = statusConfig[o.status] || statusConfig.processing
             return (
-              <div key={o._id} style={{ padding:'20px', borderRadius:18, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.07)', transition:'all 0.2s' }}
+              <div key={o._id} style={{ padding:'20px', borderRadius:14, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.07)', transition:'all 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.borderColor='rgba(124,58,237,0.25)'}
                 onMouseLeave={e => e.currentTarget.style.borderColor='rgba(var(--ink-rgb),0.07)'}
               >
                 <div style={{ display:'flex', alignItems:'flex-start', gap:16 }}>
-                  <div style={{ width:52, height:52, borderRadius:14, background:'rgba(var(--ink-rgb),0.05)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, flexShrink:0 }}>{o.image || '📦'}</div>
+                  <div style={{ width:52, height:52, borderRadius:14, background:'rgba(var(--ink-rgb),0.05)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, flexShrink:0 }}>{String(o.image || '').startsWith('http') ? <img src={o.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 14 }} /> : <Package size={22} strokeWidth={1.5} style={{ color: 'rgba(var(--ink-rgb),0.25)' }} />}</div>
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
                       <p style={{ fontSize:14, fontWeight:600, color: 'var(--text)', margin:0, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{o.product}</p>

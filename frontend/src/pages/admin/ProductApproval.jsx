@@ -63,7 +63,7 @@ const ProductApproval = () => {
         {['pending', 'approved', 'rejected', 'all'].map(f => (
           <button key={f} onClick={() => changeFilter(f)} style={{
             padding: '8px 18px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', textTransform: 'capitalize',
-            background: filter === f ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
+            background: filter === f ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.04)',
             color: filter === f ? '#fff' : 'rgba(var(--ink-rgb),0.4)',
             border: filter === f ? 'none' : '1px solid rgba(var(--ink-rgb),0.07)',
           }}>
@@ -90,7 +90,7 @@ const ProductApproval = () => {
             const brandEmail = p.brandId?.email || ''
 
             return (
-              <div key={p._id} style={{ background: 'rgba(var(--ink-rgb),0.02)', border: '1px solid rgba(var(--ink-rgb),0.06)', borderRadius: 18, overflow: 'hidden', transition: 'border-color 0.2s' }}
+              <div key={p._id} style={{ background: 'rgba(var(--ink-rgb),0.02)', border: '1px solid rgba(var(--ink-rgb),0.06)', borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(124,58,237,0.2)'}
                 onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(var(--ink-rgb),0.06)'}>
 

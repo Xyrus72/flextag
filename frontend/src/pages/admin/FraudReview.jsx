@@ -139,7 +139,7 @@ const FraudReview = () => {
           <button key={t.key} onClick={() => changeLevel(t.key)} style={{
             padding: '8px 18px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
             fontFamily: 'inherit', border: 'none',
-            background: level === t.key ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
+            background: level === t.key ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.04)',
             color: level === t.key ? '#fff' : 'rgba(var(--ink-rgb),0.45)',
           }}>{t.label}</button>
         ))}
@@ -160,7 +160,7 @@ const FraudReview = () => {
             const assessment = detail[u._id]
             return (
               <div key={u._id} style={{
-                borderRadius: 18, background: 'rgba(var(--ink-rgb),0.03)',
+                borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)',
                 border: `1px solid ${u.blocked ? 'rgba(239,68,68,0.35)' : 'rgba(var(--ink-rgb),0.07)'}`,
                 overflow: 'hidden',
               }}>

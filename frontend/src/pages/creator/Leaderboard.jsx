@@ -58,9 +58,9 @@ const Leaderboard = () => {
         {[{ id:'leaderboard', label:'🏅 Leaderboard' }, { id:'badges', label:'🎖️ Badges' }].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             padding:'9px 20px', borderRadius:10, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all 0.2s', border:'none',
-            background: tab === t.id ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'transparent',
+            background: tab === t.id ? 'var(--purple)' : 'transparent',
             color: tab === t.id ? '#fff' : 'rgba(var(--ink-rgb),0.4)',
-            boxShadow: tab === t.id ? '0 0 20px rgba(124,58,237,0.3)' : 'none',
+            boxShadow: tab === t.id ? 'none' : 'none',
           }}>{t.label}</button>
         ))}
       </div>
@@ -89,7 +89,7 @@ const Leaderboard = () => {
                       }}>{c.name[0]}</div>
                       <p style={{ fontSize:13, fontWeight:700, color: 'var(--text)', margin:'0 0 2px' }}>{c.name.split(' ')[0]}</p>
                       <p style={{ fontSize:11, color:'rgba(var(--ink-rgb),0.35)', margin:0 }}>{c.instagramHandle || '@' + c.name.split(' ')[0].toLowerCase()}</p>
-                      <p style={{ fontSize:20, fontWeight:900, background:'linear-gradient(135deg,#7c3aed,#06b6d4)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text', margin:'4px 0 0' }}>#{pos}</p>
+                      <p style={{ fontSize:20, fontWeight:800, background:'linear-gradient(135deg,#7c3aed,#06b6d4)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text', margin:'4px 0 0' }}>#{pos}</p>
                     </div>
                   )
                 })}
@@ -105,7 +105,7 @@ const Leaderboard = () => {
                 {ranked.map(c => (
                   <tr key={c._id} style={{ background: c._id === user?._id ? 'rgba(124,58,237,0.05)' : '' }}>
                     <td>
-                      <span style={{ fontWeight:800, fontSize:14, background: c.rank<=3 ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : '', WebkitBackgroundClip: c.rank<=3 ? 'text' : '', WebkitTextFillColor: c.rank<=3 ? 'transparent' : 'rgba(var(--ink-rgb),0.3)', backgroundClip: c.rank<=3 ? 'text' : '' }}>#{c.rank}</span>
+                      <span style={{ fontWeight:800, fontSize:14, background: c.rank<=3 ? 'var(--purple)' : '', WebkitBackgroundClip: c.rank<=3 ? 'text' : '', WebkitTextFillColor: c.rank<=3 ? 'transparent' : 'rgba(var(--ink-rgb),0.3)', backgroundClip: c.rank<=3 ? 'text' : '' }}>#{c.rank}</span>
                     </td>
                     <td>
                       <div style={{ display:'flex', alignItems:'center', gap:10 }}>
@@ -128,7 +128,7 @@ const Leaderboard = () => {
       ) : (
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))', gap:16 }}>
           {badges.map(b => (
-            <div key={b.name} style={{ padding:24, borderRadius:18, background:b.color, border:`1px solid ${b.border}`, transition:'all 0.2s' }}
+            <div key={b.name} style={{ padding:24, borderRadius:14, background:b.color, border:`1px solid ${b.border}`, transition:'all 0.2s' }}
               onMouseEnter={e => { e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow='0 12px 32px rgba(0,0,0,0.3)' }}
               onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='' }}
             >

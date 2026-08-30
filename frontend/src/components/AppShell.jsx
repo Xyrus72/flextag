@@ -7,6 +7,7 @@ import ThemeToggle from './ThemeToggle'
 import LanguageToggle from './LanguageToggle'
 import useMediaQuery from '../hooks/useMediaQuery'
 import useBadges from '../hooks/useBadges'
+import Logo from './Logo'
 
 /**
  * Responsive dashboard shell shared by the creator / brand / admin layouts.
@@ -55,7 +56,7 @@ const AppShell = ({ links = [], children }) => {
             color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
           }}><Menu size={20} /></button>
           <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
-            <img src="/products/flextag-logo.png" alt="FlexTag" style={{ height: 30, width: 'auto', objectFit: 'contain' }} />
+            <Logo size={26} />
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <LanguageToggle />

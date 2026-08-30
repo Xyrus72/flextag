@@ -307,7 +307,7 @@ export default function Chat() {
       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '320px 1fr', gap: 16, minHeight: 0, marginBottom: 20 }} className="chat-layout">
 
         {/* Sidebar */}
-        <div style={{ borderRadius: 18, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(var(--ink-rgb),0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Active Conversations</span>
             <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'rgba(124,58,237,0.15)', color: '#a78bfa' }}>
@@ -382,7 +382,7 @@ export default function Chat() {
         </div>
 
         {/* Main Chat Room */}
-        <div style={{ borderRadius: 18, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {activeConv ? (
             <>
               {/* Header */}
@@ -431,7 +431,7 @@ export default function Chat() {
                       <div key={msg._id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                         <div style={{ maxWidth: '75%' }}>
                           <div style={{
-                            padding: '12px 16px', borderRadius: 18, fontSize: 14, lineHeight: 1.5,
+                            padding: '12px 16px', borderRadius: 14, fontSize: 14, lineHeight: 1.5,
                             ...(isMe
                               ? { background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', borderBottomRightRadius: 4 }
                               : { background: 'rgba(var(--ink-rgb),0.06)', color: '#e4e4e7', borderBottomLeftRadius: 4, border: '1px solid rgba(var(--ink-rgb),0.08)' }
@@ -471,7 +471,7 @@ export default function Chat() {
             </>
           ) : (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40, color: 'rgba(var(--ink-rgb),0.3)' }}>
-              <div style={{ width: 60, height: 60, borderRadius: 20, background: 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', marginBottom: 16 }}>
+              <div style={{ width: 60, height: 60, borderRadius: 16, background: 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', marginBottom: 16 }}>
                 <MessageIcon />
               </div>
               <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Select or Start a Chat</h3>
@@ -490,7 +490,7 @@ export default function Chat() {
       {/* ── Contacts Modal ───────────────────────────────────────────────── */}
       {showContacts && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: 20 }}>
-          <div style={{ width: 500, maxWidth: '100%', borderRadius: 22, background: 'var(--bg-2)', border: '1px solid rgba(var(--ink-rgb),0.1)', padding: 24, boxShadow: 'var(--shadow-lg)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ width: 500, maxWidth: '100%', borderRadius: 16, background: 'var(--bg-2)', border: '1px solid rgba(var(--ink-rgb),0.1)', padding: 24, boxShadow: 'var(--shadow-lg)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <div>
                 <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: 0 }}>

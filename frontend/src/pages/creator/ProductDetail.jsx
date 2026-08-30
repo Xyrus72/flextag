@@ -144,7 +144,7 @@ const ProductDetail = () => {
             <span>{product.image || '📦'}</span>
           )}
           {product.cashbackRate > 0 && (
-            <div style={{ position: 'absolute', top: 16, right: 16, padding: '6px 14px', borderRadius: 10, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', fontSize: 13, fontWeight: 800, boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}>
+            <div style={{ position: 'absolute', top: 16, right: 16, padding: '6px 14px', borderRadius: 10, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', fontSize: 13, fontWeight: 800, boxShadow: 'none' }}>
               {product.cashbackRate}% Cashback
             </div>
           )}

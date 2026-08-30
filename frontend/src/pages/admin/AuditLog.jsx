@@ -61,7 +61,7 @@ const AuditLog = () => {
           <button key={g} onClick={() => change(() => { setFilter(g); setPage(0) })} style={{
             padding: '8px 18px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
             fontFamily: 'inherit', border: 'none', textTransform: 'capitalize',
-            background: filter === g ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
+            background: filter === g ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.04)',
             color: filter === g ? '#fff' : 'rgba(var(--ink-rgb),0.45)',
           }}>{g}</button>
         ))}

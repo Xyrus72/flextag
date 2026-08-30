@@ -41,7 +41,7 @@ const AdminDashboard = () => {
     unverifiedBrands.length > 0 && { level:'info', text:`${unverifiedBrands.length} brand${unverifiedBrands.length>1?'s':''} awaiting verification`, link:'/admin/brand-verification' },
   ].filter(Boolean)
 
-  const panel = { background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:20, padding:24, backdropFilter:'blur(20px)' }
+  const panel = { background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:16, padding:24, backdropFilter:'blur(20px)' }
 
   return (
     <div className="page-root">

@@ -8,7 +8,7 @@ import { runInstagramAudit } from '../../services/instagram'
  * verifies FlexTag posts — health score, fake-follower estimate, engagement.
  * Useful even for collabs a brand runs outside FlexTag.
  */
-const panel = { background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 20, padding: 24, backdropFilter: 'blur(20px)' }
+const panel = { background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 16, padding: 24, backdropFilter: 'blur(20px)' }
 
 const gradeColor = (g) => ({ A: '#4ade80', B: '#a3e635', C: '#facc15', D: '#fb923c', F: '#f87171' }[String(g || '').charAt(0)] || '#a78bfa')
 

@@ -38,7 +38,7 @@ const Login = () => {
           background: 'rgba(var(--ink-rgb),0.04)',
           backdropFilter: 'blur(24px)',
           border: '1px solid rgba(var(--ink-rgb),0.08)',
-          borderRadius: 24,
+          borderRadius: 16,
           padding: 36,
           boxShadow: '0 24px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(var(--ink-rgb),0.06)',
           position: 'relative', overflow: 'hidden',

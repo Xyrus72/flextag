@@ -63,7 +63,7 @@ const ImportProducts = () => {
             onDragLeave={() => setDrag(false)}
             onDrop={e => { e.preventDefault(); setDrag(false); readFile(e.dataTransfer.files?.[0]) }}
             style={{
-              padding: 34, borderRadius: 20, textAlign: 'center', marginBottom: 18,
+              padding: 34, borderRadius: 16, textAlign: 'center', marginBottom: 18,
               background: dragging ? 'rgba(124,58,237,0.1)' : 'rgba(var(--ink-rgb),0.03)',
               border: `2px dashed ${dragging ? 'rgba(124,58,237,0.6)' : 'rgba(var(--ink-rgb),0.12)'}`,
               transition: 'all 0.2s',
@@ -105,7 +105,7 @@ const ImportProducts = () => {
 
           {/* Result */}
           {result && (
-            <div style={{ marginTop: 20, padding: 20, borderRadius: 18, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)' }}>
+            <div style={{ marginTop: 20, padding: 20, borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)' }}>
               <p style={{ fontSize: 14, fontWeight: 700, color: result.errors?.length ? '#fbbf24' : '#4ade80', margin: '0 0 10px' }}>
                 {result.message}
               </p>
@@ -146,7 +146,7 @@ const ImportProducts = () => {
         </div>
 
         {/* Format help */}
-        <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 20, padding: 24, height: 'fit-content' }}>
+        <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 16, padding: 24, height: 'fit-content' }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: '0 0 12px' }}>The columns</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 18 }}>
             {[

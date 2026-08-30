@@ -75,7 +75,7 @@ const OtpInput = ({ value, onChange }) => {
             background: digits[i] ? 'rgba(124,58,237,0.12)' : 'rgba(var(--ink-rgb),0.04)',
             border: digits[i] ? '2px solid rgba(124,58,237,0.5)' : '2px solid rgba(var(--ink-rgb),0.08)',
             outline: 'none', transition: 'all 0.2s',
-            boxShadow: digits[i] ? '0 0 16px rgba(124,58,237,0.2)' : 'none',
+            boxShadow: digits[i] ? 'none' : 'none',
           }}
         />
       ))}
@@ -332,10 +332,10 @@ const Register = () => {
                 <div style={{
                   width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', fontSize: 11, fontWeight: 800, transition: 'all 0.3s',
-                  background: step > i ? 'linear-gradient(135deg,#22c55e,#16a34a)' : step === i ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.05)',
+                  background: step > i ? 'linear-gradient(135deg,#22c55e,#16a34a)' : step === i ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.05)',
                   color: step > i || step === i ? '#fff' : 'rgba(var(--ink-rgb),0.2)',
                   border: step > i || step === i ? 'none' : '1px solid rgba(var(--ink-rgb),0.1)',
-                  boxShadow: step === i ? '0 0 16px rgba(124,58,237,0.4)' : 'none',
+                  boxShadow: step === i ? 'none' : 'none',
                 }}>
                   {step > i ? '✓' : i + 1}
                 </div>
@@ -358,7 +358,7 @@ const Register = () => {
         {/* Card */}
         <div style={{
           background: 'rgba(var(--ink-rgb),0.04)', backdropFilter: 'blur(24px)',
-          border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 24,
+          border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 16,
           padding: 36, boxShadow: '0 24px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(var(--ink-rgb),0.06)',
           position: 'relative', overflow: 'hidden',
         }}>

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import ThemeToggle from './ThemeToggle'
 import LanguageToggle from './LanguageToggle'
 import { useT } from '../context/LanguageContext'
+import Logo from './Logo'
 
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth()
@@ -42,19 +43,9 @@ const Navbar = () => {
         : 'rgba(var(--nav-rgb), 0.75)',
       backdropFilter: 'blur(24px)',
       WebkitBackdropFilter: 'blur(24px)',
-      borderBottom: scrolled
-        ? '1px solid rgba(124, 58, 237, 0.2)'
-        : '1px solid rgba(var(--ink-rgb),0.06)',
-      boxShadow: scrolled
-        ? '0 4px 40px rgba(0,0,0,0.6), 0 1px 0 rgba(124,58,237,0.1) inset'
-        : 'none',
+      borderBottom: '1px solid rgba(var(--ink-rgb),0.07)',
+      boxShadow: scrolled ? '0 8px 30px rgba(0,0,0,0.25)' : 'none',
     }}>
-      {/* Top shimmer line */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: 1,
-        background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.6), rgba(6,182,212,0.4), transparent)',
-        pointerEvents: 'none',
-      }} />
 
       <div style={{
         maxWidth: 1280,
@@ -70,11 +61,7 @@ const Navbar = () => {
         {/* ── LOGO ───────────────────────────────────────────────── */}
         <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           {/* FlexTag logo image */}
-          <img
-            src="/products/flextag-logo.png"
-            alt="FlexTag"
-            style={{ height: 48, width: 'auto', objectFit: 'contain' }}
-          />
+          <Logo size={30} />
         </Link>
 
         {/* ── CENTER NAV ─────────────────────────────────────────── */}
@@ -88,15 +75,14 @@ const Navbar = () => {
               href={link.href}
               className="nav-link"
               style={{
-                padding: '8px 14px',
+                padding: '8px 13px',
                 borderRadius: 8,
-                fontSize: 11,
+                fontSize: 13.5,
                 fontWeight: 500,
-                color: 'rgba(var(--ink-rgb),0.5)',
+                color: 'rgba(var(--ink-rgb),0.6)',
                 textDecoration: 'none',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                transition: 'all 0.2s ease',
+                letterSpacing: '-0.005em',
+                transition: 'color 150ms cubic-bezier(0.2,0,0,1), background-color 150ms cubic-bezier(0.2,0,0,1)',
                 fontFamily: 'Inter, sans-serif',
                 whiteSpace: 'nowrap',
               }}
@@ -105,7 +91,7 @@ const Navbar = () => {
                 e.currentTarget.style.background = 'rgba(var(--ink-rgb),0.06)'
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.5)'
+                e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.6)'
                 e.currentTarget.style.background = 'transparent'
               }}
             >
@@ -120,58 +106,25 @@ const Navbar = () => {
           <ThemeToggle />
           {isAuthenticated ? (
             <>
-              <Link to={getDashboardLink()} style={{ textDecoration: 'none' }}>
-                <button style={{
-                  padding: '9px 20px', borderRadius: 10,
-                  background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
-                  border: 'none', color: '#fff', fontWeight: 700,
-                  fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase',
-                  cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                  boxShadow: '0 0 20px rgba(124,58,237,0.35)',
-                  transition: 'all 0.2s',
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 30px rgba(124,58,237,0.6)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                  onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 0 20px rgba(124,58,237,0.35)'; e.currentTarget.style.transform = 'translateY(0)' }}
-                >Dashboard</button>
+              <Link to={getDashboardLink()} className="btn-primary" style={{ textDecoration: 'none', padding: '8px 18px', fontSize: 13 }}>
+                {t('nav.dashboard')}
               </Link>
               <button onClick={logout} style={{
-                background: 'none', border: 'none', padding: '9px 12px',
-                fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', cursor: 'pointer',
-                letterSpacing: '0.1em', textTransform: 'uppercase',
-                fontFamily: 'Inter, sans-serif', transition: 'color 0.2s',
+                background: 'none', border: 'none', padding: '8px 10px',
+                fontSize: 13, fontWeight: 500, color: 'rgba(var(--ink-rgb),0.4)', cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif', transition: 'color 150ms',
               }}
-                onMouseEnter={e => e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.7)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.35)'}
-              >Logout</button>
+                onMouseEnter={e => e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.75)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.4)'}
+              >{t('nav.logout')}</button>
             </>
           ) : (
             <>
-              <Link to="/login" style={{ textDecoration: 'none' }}>
-                <button style={{
-                  background: 'none', border: '1px solid rgba(var(--ink-rgb),0.1)',
-                  padding: '9px 18px', borderRadius: 10,
-                  fontSize: 11, color: 'rgba(var(--ink-rgb),0.55)', cursor: 'pointer',
-                  letterSpacing: '0.1em', textTransform: 'uppercase',
-                  fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.4)'; e.currentTarget.style.color = 'var(--text)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(var(--ink-rgb),0.1)'; e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.55)' }}
-                >Sign In</button>
+              <Link to="/login" className="btn-ghost" style={{ textDecoration: 'none', padding: '8px 16px', fontSize: 13 }}>
+                {t('nav.login')}
               </Link>
-
-              <Link to="/register" style={{ textDecoration: 'none' }}>
-                <button style={{
-                  padding: '9px 20px', borderRadius: 10,
-                  background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
-                  border: 'none', color: '#fff', fontWeight: 700,
-                  fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase',
-                  cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                  boxShadow: '0 0 20px rgba(124,58,237,0.35)',
-                  transition: 'all 0.2s',
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 32px rgba(124,58,237,0.65)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                  onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 0 20px rgba(124,58,237,0.35)'; e.currentTarget.style.transform = 'translateY(0)' }}
-                >Get Started</button>
+              <Link to="/register" className="btn-primary" style={{ textDecoration: 'none', padding: '8px 18px', fontSize: 13 }}>
+                {t('nav.signup')}
               </Link>
             </>
           )}
@@ -227,7 +180,7 @@ const Navbar = () => {
               <button style={{ width: '100%', padding: 12, borderRadius: 10, background: 'transparent', border: '1px solid rgba(var(--ink-rgb),0.1)', color: 'rgba(var(--ink-rgb),0.5)', fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Sign In</button>
             </Link>
             <Link to="/register" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none' }}>
-              <button style={{ width: '100%', padding: 12, borderRadius: 10, background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', border: 'none', color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif', boxShadow: '0 0 20px rgba(124,58,237,0.3)' }}>Get Started Free</button>
+              <button style={{ width: '100%', padding: 12, borderRadius: 10, background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', border: 'none', color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif', boxShadow: 'none' }}>Get Started Free</button>
             </Link>
           </div>
         </div>

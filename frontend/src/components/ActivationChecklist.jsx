@@ -29,7 +29,7 @@ const ActivationChecklist = () => {
 
   return (
     <div style={{
-      marginBottom: 24, padding: 20, borderRadius: 20,
+      marginBottom: 24, padding: 20, borderRadius: 16,
       background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.08)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>

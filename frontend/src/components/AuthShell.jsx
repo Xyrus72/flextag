@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useT } from '../context/LanguageContext'
+import Logo from './Logo'
+import { Banknote, ShieldCheck, Zap } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { API_URL } from '../config'
 
 /**
  * AuthShell — shared split-panel layout for Login & Register.
@@ -11,13 +15,20 @@ import { useT } from '../context/LanguageContext'
  */
 
 const VALUE_PROPS = [
-  { icon: '💸', key: 'perk1' },
-  { icon: '🛡️', key: 'perk2' },
-  { icon: '⚡', key: 'perk3' },
+  { Icon: Banknote, key: 'perk1' },
+  { Icon: ShieldCheck, key: 'perk2' },
+  { Icon: Zap, key: 'perk3' },
 ]
 
 const AuthShell = ({ tagline, children }) => {
   const t = useT()
+  const [stats, setStats] = useState(null)
+  useEffect(() => {
+    let ok = true
+    fetch(`${API_URL}/api/stats/public`).then(r => r.json())
+      .then(d => { if (ok && d && !d.message) setStats(d) }).catch(() => {})
+    return () => { ok = false }
+  }, [])
 
   return (
   <div style={{
@@ -66,7 +77,7 @@ const AuthShell = ({ tagline, children }) => {
 
       {/* Logo */}
       <Link to="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10, position: 'relative', zIndex: 2, width: 'fit-content' }}>
-        <img src="/products/flextag-logo.png" alt="FlexTag" style={{ height: 44, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 0 16px rgba(124,58,237,0.4))' }} />
+        <Logo size={30} />
       </Link>
 
       {/* Headline + value props */}
@@ -75,11 +86,11 @@ const AuthShell = ({ tagline, children }) => {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          style={{ fontSize: 'clamp(32px, 3.2vw, 46px)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.08, color: 'var(--text)', margin: '0 0 16px' }}
+          style={{ fontSize: 'clamp(32px, 3.2vw, 46px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.12, color: 'var(--text)', margin: '0 0 16px', textWrap: 'balance' }}
         >
           {t('auth.headline1')}
           <br />
-          <span className="gradient-text">{t('auth.headline2')}</span>
+          <span className="font-display" style={{ fontStyle: 'italic', color: 'var(--violet-ink)', fontSize: '1.12em' }}>{t('auth.headline2')}</span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
@@ -99,13 +110,19 @@ const AuthShell = ({ tagline, children }) => {
               transition={{ duration: 0.5, delay: 0.3 + i * 0.12, ease: [0.22, 1, 0.36, 1] }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 18px', borderRadius: 16,
+                padding: '14px 18px', borderRadius: 12,
                 background: 'rgba(var(--ink-rgb),0.03)',
                 border: '1px solid rgba(var(--ink-rgb),0.07)',
                 backdropFilter: 'blur(12px)',
               }}
             >
-              <span style={{ fontSize: 22, flexShrink: 0 }}>{v.icon}</span>
+              <span style={{
+                width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.2)',
+              }}>
+                <v.Icon size={17} strokeWidth={2} style={{ color: 'var(--violet-ink)' }} />
+              </span>
               <div>
                 <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{t(`auth.${v.key}.title`)}</p>
                 <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.4)', margin: '2px 0 0' }}>{t(`auth.${v.key}.desc`)}</p>
@@ -122,22 +139,13 @@ const AuthShell = ({ tagline, children }) => {
         transition={{ duration: 0.7, delay: 0.8 }}
         style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 14 }}
       >
-        <div style={{ display: 'flex' }}>
-          {['S', 'M', 'R', 'T', 'A'].map((l, i) => (
-            <div key={i} style={{
-              width: 30, height: 30, borderRadius: '50%',
-              background: `linear-gradient(135deg, hsl(${262 + i * 18}, 75%, 58%), hsl(${195 + i * 12}, 80%, 52%))`,
-              border: '2px solid var(--bg)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 10, fontWeight: 800, color: '#fff',
-              marginLeft: i > 0 ? -9 : 0,
-            }}>{l}</div>
-          ))}
-        </div>
-        <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)', margin: 0 }}>
-          <span style={{ color: 'var(--text)', fontWeight: 700 }}>12,400+</span> creators ·{' '}
-          <span style={{ color: 'var(--text)', fontWeight: 700 }}>340+</span> brands on FlexTag
-        </p>
+        {/* Real numbers or nothing — invented social proof costs more trust than it buys. */}
+        {stats && (
+          <p className="tnum" style={{ fontSize: 12.5, color: 'rgba(var(--ink-rgb),0.4)', margin: 0 }}>
+            <span style={{ color: 'var(--text)', fontWeight: 600 }}>{stats.creators}</span> creators ·{' '}
+            <span style={{ color: 'var(--text)', fontWeight: 600 }}>{stats.brands}</span> brands on FlexTag today
+          </p>
+        )}
       </motion.div>
     </div>
 
@@ -150,12 +158,8 @@ const AuthShell = ({ tagline, children }) => {
       <div style={{ width: '100%', maxWidth: 460 }}>
         {/* Compact logo header (shows on all sizes; primary branding on mobile) */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Link to="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 12, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 17, color: '#fff', fontStyle: 'italic', boxShadow: '0 0 24px rgba(124,58,237,0.4)' }}>F</div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontWeight: 900, fontSize: 21, color: 'var(--text)', fontStyle: 'italic', letterSpacing: '-0.03em', lineHeight: 1 }}>FlexTag™</div>
-              <div style={{ fontSize: 9, color: 'rgba(167,139,250,0.6)', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 2 }}>Shop · Share · Earn</div>
-            </div>
+          <Link to="/" style={{ textDecoration: 'none', display: 'inline-flex' }}>
+            <Logo size={32} />
           </Link>
           <p style={{ fontSize: 14, color: 'rgba(var(--ink-rgb),0.35)', marginTop: 16, fontWeight: 300 }}>{tagline || t('auth.tagline')}</p>
         </div>

@@ -65,7 +65,7 @@ const DetectedPosts = () => {
 
   return (
     <div style={{
-      marginBottom: 24, padding: 20, borderRadius: 20,
+      marginBottom: 24, padding: 20, borderRadius: 16,
       background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(6,182,212,0.07))',
       border: '1px solid rgba(124,58,237,0.3)',
     }}>

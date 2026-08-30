@@ -136,9 +136,9 @@ const Payouts = () => {
       {/* Totals */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 24 }}>
         {cards.map(c => (
-          <div key={c.key} style={{ padding: 20, borderRadius: 18, background: c.grad, border: `1px solid ${c.border}` }}>
+          <div key={c.key} style={{ padding: 20, borderRadius: 14, background: c.grad, border: `1px solid ${c.border}` }}>
             <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.4)', marginBottom: 8 }}>{c.label}</p>
-            <p style={{ fontSize: 26, fontWeight: 900, color: c.color, letterSpacing: '-0.03em' }}>
+            <p style={{ fontSize: 26, fontWeight: 800, color: c.color, letterSpacing: '-0.03em' }}>
               ৳{(summary?.[c.key]?.amount || 0).toLocaleString()}
             </p>
             <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.3)', marginTop: 4 }}>{summary?.[c.key]?.count || 0} request{(summary?.[c.key]?.count || 0) === 1 ? '' : 's'}</p>
@@ -152,7 +152,7 @@ const Payouts = () => {
           <button key={f} onClick={() => changeFilter(f)} style={{
             padding: '8px 18px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
             textTransform: 'capitalize', border: 'none',
-            background: filter === f ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
+            background: filter === f ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.04)',
             color: filter === f ? '#fff' : 'rgba(var(--ink-rgb),0.45)',
           }}>{f}</button>
         ))}
@@ -177,7 +177,7 @@ const Payouts = () => {
             const pending = ['queued', 'failed'].includes(r.payoutStatus)
             return (
               <div key={r._id} style={{
-                padding: 20, borderRadius: 18, background: 'rgba(var(--ink-rgb),0.03)',
+                padding: 20, borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)',
                 border: `1px solid ${underwater && pending ? 'rgba(239,68,68,0.35)' : 'rgba(var(--ink-rgb),0.07)'}`,
               }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
@@ -224,7 +224,7 @@ const Payouts = () => {
                   </div>
 
                   <div style={{ textAlign: 'right', minWidth: 140 }}>
-                    <p style={{ fontSize: 26, fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>৳{r.amount?.toLocaleString()}</p>
+                    <p style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>৳{r.amount?.toLocaleString()}</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
                       {pending && (
                         <>

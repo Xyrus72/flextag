@@ -1,5 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Logo from './Logo'
 
 const Sidebar = ({ links = [], mobile = false, open = false, onClose }) => {
   const { user, logout } = useAuth()
@@ -46,7 +47,7 @@ const Sidebar = ({ links = [], mobile = false, open = false, onClose }) => {
           flexShrink: 0,
         }}>
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src="/products/flextag-logo.png" alt="FlexTag" style={{ height: 42, width: 'auto', objectFit: 'contain' }} />
+            <Logo size={28} />
           </Link>
         </div>
 
