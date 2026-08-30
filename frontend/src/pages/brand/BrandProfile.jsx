@@ -147,7 +147,7 @@ export default function BrandProfile() {
       <div style={{ display:'grid', gap:24 }} className="brand-grid">
 
         {/* ── Company Profile Card ─────────────────────────────── */}
-        <div style={{ borderRadius:20, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28 }}>
+        <div style={{ borderRadius:16, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28 }}>
 
           {/* card header */}
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
@@ -162,7 +162,7 @@ export default function BrandProfile() {
           {/* logo + identity */}
           <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:24, paddingBottom:24, borderBottom:'1px solid rgba(var(--ink-rgb),0.06)' }}>
             <div style={{ position:'relative', marginBottom:12 }}>
-              <div style={{ width:80, height:80, borderRadius:18, overflow:'hidden', background:'linear-gradient(135deg,#10b981,#0d9488)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:32, fontWeight:800, color:'#fff', boxShadow:'0 8px 32px rgba(16,185,129,0.2)', border:'2px solid rgba(16,185,129,0.2)' }}>
+              <div style={{ width:80, height:80, borderRadius:14, overflow:'hidden', background:'linear-gradient(135deg,#10b981,#0d9488)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:32, fontWeight:800, color:'#fff', boxShadow:'0 8px 32px rgba(16,185,129,0.2)', border:'2px solid rgba(16,185,129,0.2)' }}>
                 {logoPreview
                   ? <img src={logoPreview} alt="logo" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
                   : (user?.companyName || user?.name || 'B')[0].toUpperCase()
@@ -233,7 +233,7 @@ export default function BrandProfile() {
         </div>
 
         {/* ── Inventory Section ─────────────────────────────────── */}
-        <div style={{ borderRadius:20, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28 }}>
+        <div style={{ borderRadius:16, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28 }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
             <div>
               <h2 style={{ fontSize:17, fontWeight:700, color: 'var(--text)', margin:0 }}>Product Inventory</h2>

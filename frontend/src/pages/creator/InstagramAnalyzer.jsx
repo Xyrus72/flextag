@@ -16,7 +16,7 @@ const EASE = [0.22, 1, 0.36, 1]
 const PANEL = {
   background: 'rgba(var(--ink-rgb),0.04)',
   border: '1px solid rgba(var(--ink-rgb),0.08)',
-  borderRadius: 20,
+  borderRadius: 16,
   padding: 24,
   backdropFilter: 'blur(20px)',
   WebkitBackdropFilter: 'blur(20px)',
@@ -614,7 +614,7 @@ const NoHandleState = () => (
 
 const RunAuditCard = ({ handle, running, onRun, precheckPending }) => (
   <Panel style={{ maxWidth: 620, margin: '0 auto', padding: '40px 32px', textAlign: 'center' }}>
-    <div style={{ width: 60, height: 60, borderRadius: 18, background: IG_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', boxShadow: '0 0 32px rgba(253,29,29,0.25)' }}>
+    <div style={{ width: 60, height: 60, borderRadius: 14, background: IG_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', boxShadow: '0 0 32px rgba(253,29,29,0.25)' }}>
       <InstagramGlyph size={28} />
     </div>
     <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>Run your first audit</h2>

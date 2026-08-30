@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { ShieldCheck, Users, TrendingUp, Activity, ExternalLink, Star } from 'lucide-react'
 import { getPortfolio } from '../../services/users'
 import { API_URL } from '../../config'
+import Logo from '../../components/Logo'
 
 /**
  * Crawlers do not run React, so the meta tags a shared link unfurls with come
@@ -85,7 +86,7 @@ const CreatorPortfolio = () => {
     <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative' }}>
       <div className="aurora-bg" />
       <header style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', maxWidth: 960, margin: '0 auto' }}>
-        <Link to="/"><img src="/products/flextag-logo.png" alt="FlexTag" style={{ height: 30 }} /></Link>
+        <Link to="/" style={{ textDecoration: 'none' }}><Logo size={26} /></Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {data && (
             <button onClick={share} className="btn-ghost" style={{ padding: '8px 14px', fontSize: 13 }}>Share</button>
@@ -121,7 +122,7 @@ const CreatorPortfolio = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', margin: 0 }}>{creator.name}</h1>
             {creator.igVerified && <span className="badge badge-success"><ShieldCheck size={12} /> Verified</span>}
-            {creator.tier && <span style={{ fontSize: 11, fontWeight: 700, color: tierC, background: `${tierC}1f`, border: `1px solid ${tierC}44`, padding: '2px 10px', borderRadius: 20, textTransform: 'capitalize' }}>{creator.tier}</span>}
+            {creator.tier && <span style={{ fontSize: 11, fontWeight: 700, color: tierC, background: `${tierC}1f`, border: `1px solid ${tierC}44`, padding: '2px 10px', borderRadius: 16, textTransform: 'capitalize' }}>{creator.tier}</span>}
           </div>
           {creator.instagramHandle && (
             <a href={`https://instagram.com/${creator.instagramHandle}`} target="_blank" rel="noreferrer" style={{ fontSize: 14, color: '#a78bfa', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
@@ -170,7 +171,7 @@ const CreatorPortfolio = () => {
       )}
 
       {/* CTA */}
-      <div style={{ marginTop: 40, textAlign: 'center', padding: '28px 20px', borderRadius: 20, background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.2)' }}>
+      <div style={{ marginTop: 40, textAlign: 'center', padding: '28px 20px', borderRadius: 16, background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.2)' }}>
         <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Want to earn cashback like {creator.name?.split(' ')[0]}?</p>
         <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.5)', margin: '6px 0 16px' }}>Shop products you love, post about them, earn 30–70% back.</p>
         <Link to="/register?role=creator" className="btn-primary" style={{ textDecoration: 'none', padding: '11px 24px' }}>Start earning on FlexTag →</Link>

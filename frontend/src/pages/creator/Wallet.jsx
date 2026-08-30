@@ -85,9 +85,9 @@ const Wallet = () => {
       {/* Balance cards */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:16, marginBottom:28 }}>
         {balCards.map(b => (
-          <div key={b.label} style={{ padding:24, borderRadius:20, background:b.grad, border:`1px solid ${b.border}`, backdropFilter:'blur(20px)' }}>
+          <div key={b.label} style={{ padding:24, borderRadius:16, background:b.grad, border:`1px solid ${b.border}`, backdropFilter:'blur(20px)' }}>
             <p style={{ fontSize:10, fontWeight:600, letterSpacing:'0.15em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.4)', marginBottom:10 }}>{b.label}</p>
-            <p style={{ fontSize:30, fontWeight:900, color:b.text, letterSpacing:'-0.03em' }}>{loading ? '—' : b.value}</p>
+            <p style={{ fontSize:30, fontWeight:800, color:b.text, letterSpacing:'-0.03em' }}>{loading ? '—' : b.value}</p>
             <p style={{ fontSize:12, color:'rgba(var(--ink-rgb),0.3)', marginTop:6 }}>{b.sub}</p>
           </div>
         ))}
@@ -95,7 +95,7 @@ const Wallet = () => {
 
       <div style={{ display:'grid', gap:20 }} className="lg:grid-cols-3">
         {/* Transactions */}
-        <div style={{ background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:20, padding:24, gridColumn:'span 2' }} className="lg:col-span-2">
+        <div style={{ background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:16, padding:24, gridColumn:'span 2' }} className="lg:col-span-2">
           <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>{t('wallet.transactions')}</h2>
           {loading ? (
             <div style={{ display:'flex', justifyContent:'center', padding:'48px 0' }}><div className="spinner" /></div>
@@ -137,7 +137,7 @@ const Wallet = () => {
         {/* Controls Column */}
         <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
           {/* Add Cash */}
-          <div style={{ background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:20, padding:24 }}>
+          <div style={{ background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:16, padding:24 }}>
             <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>{t('wallet.addCash')}</h2>
             
             {topUpSuccess && <div style={{ padding:'10px 14px', borderRadius:12, background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.2)', marginBottom:14 }}><p style={{ fontSize:13, color:'#4ade80', margin:0 }}>{topUpSuccess}</p></div>}
@@ -158,7 +158,7 @@ const Wallet = () => {
           </div>
 
           {/* Withdraw */}
-          <div style={{ background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:20, padding:24 }}>
+          <div style={{ background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:16, padding:24 }}>
             <h2 style={{ fontSize:16, fontWeight:700, color: 'var(--text)', margin:'0 0 20px' }}>{t('wallet.withdraw')}</h2>
 
             <div style={{ padding:'12px 14px', borderRadius:12, background:'rgba(124,58,237,0.08)', border:'1px solid rgba(124,58,237,0.2)', marginBottom:16 }}>

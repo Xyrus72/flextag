@@ -92,7 +92,7 @@ const Notifications = () => {
           <button key={t} onClick={() => change(() => { setFilter(t); setPage(0) })} style={{
             padding: '8px 16px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
             fontFamily: 'inherit', border: 'none',
-            background: filter === t ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
+            background: filter === t ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.04)',
             color: filter === t ? '#fff' : 'rgba(var(--ink-rgb),0.45)',
           }}>
             {t === 'all' ? 'All' : `${TYPE_META[t]?.icon || '🔔'} ${TYPE_META[t]?.label || t}`}

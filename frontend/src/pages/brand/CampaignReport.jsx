@@ -18,7 +18,7 @@ const Stat = ({ value, label, accent }) => (
     background: accent ? 'rgba(6,182,212,0.08)' : 'rgba(var(--ink-rgb),0.03)',
     border: `1px solid ${accent ? 'rgba(6,182,212,0.4)' : 'rgba(var(--ink-rgb),0.07)'}`,
   }}>
-    <p style={{ fontSize: 24, fontWeight: 900, color: accent ? '#67e8f9' : 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>{value}</p>
+    <p style={{ fontSize: 24, fontWeight: 800, color: accent ? '#67e8f9' : 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>{value}</p>
     <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.4)', margin: '6px 0 0' }}>{label}</p>
   </div>
 )
@@ -142,7 +142,7 @@ const CampaignReport = () => {
           </div>
 
           <div style={{ display: 'grid', gap: 20, gridTemplateColumns: '1fr' }} className="lg:grid-cols-2">
-            <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 20, padding: 24 }}>
+            <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 16, padding: 24 }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: '0 0 16px' }}>Sales this campaign drove</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <Stat value={n(r.orders.total)} label="Orders" />
@@ -156,7 +156,7 @@ const CampaignReport = () => {
               </div>
             </div>
 
-            <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 20, padding: 24 }}>
+            <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 16, padding: 24 }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: '0 0 16px' }}>Content quality</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <Stat value={`${n(r.posts.stillLive)}/${n(r.posts.verified)}`} label="Still live" />
@@ -172,7 +172,7 @@ const CampaignReport = () => {
           </div>
 
           {r.topPosts.length > 0 && (
-            <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 20, padding: 24, marginTop: 20 }}>
+            <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 16, padding: 24, marginTop: 20 }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: '0 0 16px' }}>Top posts</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {r.topPosts.map((p, i) => (

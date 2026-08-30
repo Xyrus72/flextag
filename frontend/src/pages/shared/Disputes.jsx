@@ -125,7 +125,7 @@ const Disputes = () => {
             </button>
           ) : (
             <form onSubmit={submitDispute} style={{
-              padding: 22, borderRadius: 20, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)',
+              padding: 22, borderRadius: 16, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)',
               display: 'flex', flexDirection: 'column', gap: 14,
             }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>What went wrong?</h2>
@@ -189,7 +189,7 @@ const Disputes = () => {
             const open = openId === d._id
             const counterpart = isCreator ? (d.brandId?.companyName || d.brandId?.name || 'Brand') : (d.creatorId?.name || 'Creator')
             return (
-              <div key={d._id} style={{ borderRadius: 18, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)', overflow: 'hidden' }}>
+              <div key={d._id} style={{ borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)', overflow: 'hidden' }}>
                 <div style={{ padding: 20 }}>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 8 }}>
                     <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: 0 }}>

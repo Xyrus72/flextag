@@ -5,6 +5,7 @@ import Footer from '../../components/Footer'
 import StarRating from '../../components/StarRating'
 import { getProducts } from '../../services/products'
 import { useT } from '../../context/LanguageContext'
+import { Package } from 'lucide-react'
 
 /**
  * The public shop window.
@@ -38,7 +39,7 @@ const Explore = () => {
       <Navbar />
       <main style={{ maxWidth: 1180, margin: '0 auto', padding: '110px 24px 80px' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h1 style={{ fontSize: 'clamp(30px, 5vw, 48px)', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.03em', margin: '0 0 12px' }}>
+          <h1 style={{ fontSize: 'clamp(30px, 5vw, 48px)', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.03em', margin: '0 0 12px' }}>
             {t('explore.title')}
           </h1>
           <p style={{ fontSize: 15, color: 'rgba(var(--ink-rgb),0.5)', maxWidth: 540, margin: '0 auto', lineHeight: 1.7 }}>
@@ -50,7 +51,7 @@ const Explore = () => {
           {categories.map(c => (
             <button key={c} onClick={() => { setLoading(true); setCategory(c) }} style={{
               padding: '8px 20px', borderRadius: 100, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-              background: category === c ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
+              background: category === c ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.04)',
               color: category === c ? '#fff' : 'rgba(var(--ink-rgb),0.45)',
               border: category === c ? 'none' : '1px solid rgba(var(--ink-rgb),0.08)',
             }}>{c}</button>
@@ -71,13 +72,13 @@ const Explore = () => {
               const netPrice = Math.round(price * (1 - (p.cashbackRate || 0) / 100))
               return (
                 <div key={p._id} style={{
-                  borderRadius: 18, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)',
+                  borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)',
                   overflow: 'hidden', display: 'flex', flexDirection: 'column',
                 }}>
                   <div style={{ aspectRatio: '1.2', background: 'rgba(var(--ink-rgb),0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44, position: 'relative' }}>
                     {p.image && (p.image.startsWith('http') || p.image.startsWith('/'))
                       ? <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-                      : <span>{p.image || '📦'}</span>}
+                      : <Package size={22} strokeWidth={1.5} style={{ color: 'rgba(var(--ink-rgb),0.25)' }} />}
                     <div style={{ position: 'absolute', top: 10, right: 10, padding: '4px 10px', borderRadius: 8, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', fontSize: 11, fontWeight: 800 }}>
                       {p.cashbackRate}% back
                     </div>
@@ -113,7 +114,7 @@ const Explore = () => {
           </div>
         )}
 
-        <div style={{ textAlign: 'center', marginTop: 56, padding: 32, borderRadius: 24, background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(6,182,212,0.07))', border: '1px solid rgba(124,58,237,0.25)' }}>
+        <div style={{ textAlign: 'center', marginTop: 56, padding: 32, borderRadius: 16, background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(6,182,212,0.07))', border: '1px solid rgba(124,58,237,0.25)' }}>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: '0 0 8px' }}>{t('explore.bottomTitle')}</h2>
           <p style={{ fontSize: 14, color: 'rgba(var(--ink-rgb),0.5)', margin: '0 0 20px' }}>{t('explore.bottomSubtitle')}</p>
           <Link to="/register" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block', padding: '14px 34px', fontSize: 14 }}>

@@ -30,7 +30,7 @@ const en = {
   // ── Landing hero ───────────────────────────────────────────────────────
   'hero.badge': "Bangladesh's creator-commerce platform",
   'hero.title1': 'Shop. Share.',
-  'hero.title2': 'Get Paid.',
+  'hero.title2': 'Get paid.',
   'hero.subtitle': 'FlexTag pays nano & micro-influencers {rate} cashback for sharing products they genuinely love. Escrow-protected. Paid in 48 hours.',
   'hero.cta': 'Start Earning Free →',
   'hero.secondary': 'See How It Works',

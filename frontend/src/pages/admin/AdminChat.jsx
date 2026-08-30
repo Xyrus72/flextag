@@ -279,7 +279,7 @@ export default function AdminChat() {
         {[['all', 'All Chats'], ['creator', 'Creators'], ['brand', 'Brands']].map(([key, label]) => (
           <button key={key} onClick={() => setFilterRole(key)} style={{
             padding: '7px 16px', borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
-            background: filterRole === key ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
+            background: filterRole === key ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.04)',
             color: filterRole === key ? '#fff' : 'rgba(var(--ink-rgb),0.4)',
             border: filterRole === key ? 'none' : '1px solid rgba(var(--ink-rgb),0.07)',
           }}>
@@ -292,7 +292,7 @@ export default function AdminChat() {
       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '320px 1fr', gap: 14, minHeight: 0, marginBottom: 20 }} className="admin-chat-layout">
 
         {/* ── Left: All Conversations Sidebar ─────────────────────────── */}
-        <div style={{ borderRadius: 18, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Search */}
           <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(var(--ink-rgb),0.06)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 10, background: 'rgba(var(--ink-rgb),0.05)', border: '1px solid rgba(var(--ink-rgb),0.08)' }}>
@@ -360,7 +360,7 @@ export default function AdminChat() {
         </div>
 
         {/* ── Right: Chat Panel ─────────────────────────────────────────── */}
-        <div style={{ borderRadius: 18, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {activeConv ? (
             <>
               {/* Chat Header */}
@@ -420,7 +420,7 @@ export default function AdminChat() {
                       <div key={msg._id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                         <div style={{ maxWidth: '72%' }}>
                           <div style={{
-                            padding: '11px 16px', borderRadius: 18, fontSize: 14, lineHeight: 1.55,
+                            padding: '11px 16px', borderRadius: 14, fontSize: 14, lineHeight: 1.55,
                             ...(isMe
                               ? { background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', borderBottomRightRadius: 4 }
                               : { background: 'rgba(var(--ink-rgb),0.06)', color: '#e4e4e7', borderBottomLeftRadius: 4, border: '1px solid rgba(var(--ink-rgb),0.08)' }
@@ -466,7 +466,7 @@ export default function AdminChat() {
             </>
           ) : (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40, color: 'rgba(var(--ink-rgb),0.3)' }}>
-              <div style={{ width: 72, height: 72, borderRadius: 22, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f87171', marginBottom: 20 }}>
+              <div style={{ width: 72, height: 72, borderRadius: 16, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f87171', marginBottom: 20 }}>
                 <MessageIcon />
               </div>
               <h3 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Admin Messaging Hub</h3>

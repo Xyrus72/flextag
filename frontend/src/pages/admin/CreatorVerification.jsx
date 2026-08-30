@@ -42,7 +42,7 @@ const STATUS_TONES = {
 const PANEL = {
   background: 'rgba(var(--ink-rgb),0.03)',
   border: '1px solid rgba(var(--ink-rgb),0.07)',
-  borderRadius: 20,
+  borderRadius: 16,
   backdropFilter: 'blur(20px)',
 }
 
@@ -768,7 +768,7 @@ const CreatorVerification = () => {
   const panel = {
     background: 'rgba(var(--ink-rgb),0.03)',
     border: '1px solid rgba(var(--ink-rgb),0.07)',
-    borderRadius: 20,
+    borderRadius: 16,
     backdropFilter: 'blur(20px)',
   }
 
@@ -938,11 +938,11 @@ const CreatorVerification = () => {
               <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                 <PrecheckBadge value={selectedCreator.igPrecheck} />
                 {selectedCreator.igVerified ? (
-                  <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(34,197,94,0.12)', color: '#4ade80', padding: '5px 14px', borderRadius: 20, border: '1px solid rgba(34,197,94,0.25)' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(34,197,94,0.12)', color: '#4ade80', padding: '5px 14px', borderRadius: 16, border: '1px solid rgba(34,197,94,0.25)' }}>
                     ✅ IG Verified
                   </span>
                 ) : (
-                  <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(245,158,11,0.12)', color: '#fbbf24', padding: '5px 14px', borderRadius: 20, border: '1px solid rgba(245,158,11,0.25)' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(245,158,11,0.12)', color: '#fbbf24', padding: '5px 14px', borderRadius: 16, border: '1px solid rgba(245,158,11,0.25)' }}>
                     ⏳ Unverified
                   </span>
                 )}

@@ -25,8 +25,7 @@ const MainLayout = () => {
         <Outlet />
       </main>
 
-      {/* Hide global footer on landing — it has its own built-in footer */}
-      {!isLanding && <Footer />}
+      <Footer />
     </div>
   )
 }

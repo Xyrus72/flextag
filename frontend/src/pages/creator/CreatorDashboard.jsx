@@ -6,6 +6,7 @@ import { getOrders } from '../../services/orders'
 import ReferralCard from '../../components/ReferralCard'
 import DetectedPosts from '../../components/DetectedPosts'
 import ActivationChecklist from '../../components/ActivationChecklist'
+import { Wallet, Megaphone, CheckCircle2, Heart, ShoppingBag, Camera, Trophy } from 'lucide-react'
 
 const CreatorDashboard = () => {
   const { user } = useAuth()
@@ -32,10 +33,10 @@ const CreatorDashboard = () => {
   }, [])
 
   const kpis = [
-    { label: 'Total Earned',     value: `৳${stats.totalEarned.toLocaleString()}`, icon: '💰', color: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)',  text: '#4ade80',  sub: 'Lifetime cashback' },
-    { label: 'Active Campaigns', value: String(stats.activeCampaigns),            icon: '📢', color: 'rgba(124,58,237,0.12)', border: 'rgba(124,58,237,0.25)', text: '#a78bfa', sub: 'In progress' },
-    { label: 'Completed Posts',  value: String(stats.completedPosts),             icon: '📱', color: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.25)',  text: '#67e8f9', sub: 'Verified posts' },
-    { label: 'Avg Engagement',   value: stats.engagementRate ? `${stats.engagementRate}%` : '—', icon: '❤️', color: 'rgba(236,72,153,0.12)', border: 'rgba(236,72,153,0.25)', text: '#f9a8d4', sub: 'Engagement rate' },
+    { label: 'Total Earned',     value: `৳${stats.totalEarned.toLocaleString()}`, Icon: Wallet, color: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)',  text: '#4ade80',  sub: 'Lifetime cashback' },
+    { label: 'Active Campaigns', value: String(stats.activeCampaigns),            Icon: Megaphone, color: 'rgba(124,58,237,0.12)', border: 'rgba(124,58,237,0.25)', text: '#a78bfa', sub: 'In progress' },
+    { label: 'Completed Posts',  value: String(stats.completedPosts),             Icon: CheckCircle2, color: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.25)',  text: '#67e8f9', sub: 'Verified posts' },
+    { label: 'Avg Engagement',   value: stats.engagementRate ? `${stats.engagementRate}%` : '—', Icon: Heart, color: 'rgba(236,72,153,0.12)', border: 'rgba(236,72,153,0.25)', text: '#f9a8d4', sub: 'Engagement rate' },
   ]
 
   const tierInfo = {
@@ -46,7 +47,7 @@ const CreatorDashboard = () => {
   }
   const tier = tierInfo[user?.tier] || tierInfo.bronze
 
-  const panel = { background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:20, padding:24, backdropFilter:'blur(20px)' }
+  const panel = { background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:16, padding:24, backdropFilter:'blur(20px)' }
 
   return (
     <div className="page-root">
@@ -69,7 +70,7 @@ const CreatorDashboard = () => {
         {kpis.map(s => (
           <div key={s.label} className="stat-card" style={{ background:`rgba(var(--ink-rgb),0.03)`, borderColor:`rgba(var(--ink-rgb),0.07)` }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-              <div style={{ width:44, height:44, borderRadius:12, background:s.color, border:`1px solid ${s.border}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>{s.icon}</div>
+              <div style={{ width:40, height:40, borderRadius:10, background:s.color, border:`1px solid ${s.border}`, display:'flex', alignItems:'center', justifyContent:'center' }}><s.Icon size={17} strokeWidth={1.75} style={{ color: s.text }} /></div>
               {loading && <div className="spinner" style={{ width:16, height:16, borderWidth:2 }} />}
             </div>
             <p style={{ fontSize:28, fontWeight:800, color: 'var(--text)', letterSpacing:'-0.03em', marginBottom:4 }}>{loading ? '—' : s.value}</p>
@@ -141,16 +142,16 @@ const CreatorDashboard = () => {
             <h2 style={{ fontSize:15, fontWeight:700, color: 'var(--text)', margin:'0 0 16px' }}>Quick Actions</h2>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
               {[
-                { to:'/creator/catalog',     label:'Shop',      icon:'🛍️' },
-                { to:'/creator/submit-post', label:'Submit',    icon:'📱' },
-                { to:'/creator/wallet',      label:'Wallet',    icon:'💳' },
-                { to:'/creator/leaderboard', label:'Rankings',  icon:'🏆' },
+                { to:'/creator/catalog',     label:'Shop',      Icon: ShoppingBag },
+                { to:'/creator/submit-post', label:'Submit',    Icon: Camera },
+                { to:'/creator/wallet',      label:'Wallet',    Icon: Wallet },
+                { to:'/creator/leaderboard', label:'Rankings',  Icon: Trophy },
               ].map(q => (
                 <Link key={q.to} to={q.to} style={{ padding:'14px 8px', borderRadius:12, textAlign:'center', background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.07)', textDecoration:'none', transition:'all 0.2s', display:'block' }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(124,58,237,0.3)'; e.currentTarget.style.background='rgba(124,58,237,0.06)' }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(var(--ink-rgb),0.07)'; e.currentTarget.style.background='rgba(var(--ink-rgb),0.03)' }}
                 >
-                  <p style={{ fontSize:22, marginBottom:6 }}>{q.icon}</p>
+                  <p style={{ marginBottom:8, display:'flex', justifyContent:'center' }}><q.Icon size={19} strokeWidth={1.75} style={{ color: 'var(--violet-ink)' }} /></p>
                   <p style={{ fontSize:10, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(var(--ink-rgb),0.4)', margin:0 }}>{q.label}</p>
                 </Link>
               ))}

@@ -117,9 +117,9 @@ const BrandWallet = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 14, marginBottom: 26 }}>
         {cards.map(c => (
-          <div key={c.label} style={{ padding: 22, borderRadius: 20, background: c.grad, border: `1px solid ${c.border}` }}>
+          <div key={c.label} style={{ padding: 22, borderRadius: 16, background: c.grad, border: `1px solid ${c.border}` }}>
             <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.4)', marginBottom: 8 }}>{c.label}</p>
-            <p style={{ fontSize: 28, fontWeight: 900, color: c.color, letterSpacing: '-0.03em' }}>{loading ? '—' : `৳${c.value.toLocaleString()}`}</p>
+            <p style={{ fontSize: 28, fontWeight: 800, color: c.color, letterSpacing: '-0.03em' }}>{loading ? '—' : `৳${c.value.toLocaleString()}`}</p>
             <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.3)', marginTop: 4 }}>{c.sub}</p>
           </div>
         ))}
@@ -127,7 +127,7 @@ const BrandWallet = () => {
 
       <div style={{ display: 'grid', gap: 20, gridTemplateColumns: '1fr' }} className="lg:grid-cols-3">
         {/* Ledger */}
-        <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 20, padding: 24, gridColumn: 'span 2' }} className="lg:col-span-2">
+        <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 16, padding: 24, gridColumn: 'span 2' }} className="lg:col-span-2">
           <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: '0 0 18px' }}>Account activity</h2>
           {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}><div className="spinner" /></div>
@@ -159,7 +159,7 @@ const BrandWallet = () => {
         </div>
 
         {/* Add funds */}
-        <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 20, padding: 24, height: 'fit-content' }}>
+        <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 16, padding: 24, height: 'fit-content' }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: '0 0 16px' }}>Add funds</h2>
 
           <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>

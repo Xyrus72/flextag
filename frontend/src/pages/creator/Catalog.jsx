@@ -5,6 +5,7 @@ import StarRating from '../../components/StarRating'
 import { useT } from '../../context/LanguageContext'
 import WishlistButton from '../../components/WishlistButton'
 import { getWishlist } from '../../services/users'
+import { Package } from 'lucide-react'
 
 const Catalog = () => {
   const t = useT()
@@ -78,7 +79,7 @@ const Catalog = () => {
         <p className="page-subtitle">{t('page.catalog.subtitle')}</p>
       </div>
 
-      <div style={{ background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)', borderRadius: 20, padding: 20, marginBottom: 24 }}>
+      <div style={{ background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)', borderRadius: 16, padding: 20, marginBottom: 24 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
           <div>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.6)', marginBottom: 6 }}>Search</label>
@@ -150,10 +151,10 @@ const Catalog = () => {
         {categories.map(c => (
           <button key={c} onClick={() => withSpinner(setCategory)(c)} style={{
             padding: '8px 18px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
-            background: category === c ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
+            background: category === c ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.04)',
             color: category === c ? '#fff' : 'rgba(var(--ink-rgb),0.45)',
             border: category === c ? 'none' : '1px solid rgba(var(--ink-rgb),0.08)',
-            boxShadow: category === c ? '0 0 20px rgba(124,58,237,0.3)' : 'none',
+            boxShadow: category === c ? 'none' : 'none',
           }}>
             {c}
           </button>
@@ -178,7 +179,7 @@ const Catalog = () => {
             return (
               <Link key={p._id} to={`/creator/product/${p._id}`} style={{ textDecoration: 'none' }}>
                 <div style={{
-                  borderRadius: 18, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)',
+                  borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)',
                   overflow: 'hidden', transition: 'all 0.2s', cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                   opacity: capReached ? 0.7 : 1
                 }}
@@ -189,7 +190,7 @@ const Catalog = () => {
                     {p.image && (p.image.startsWith('http') || p.image.startsWith('/')) ? (
                       <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                      <span>{p.image || '📦'}</span>
+                      <Package size={22} strokeWidth={1.5} style={{ color: 'rgba(var(--ink-rgb),0.25)' }} />
                     )}
                     <div style={{ position: 'absolute', top: 10, right: 10, padding: '4px 10px', borderRadius: 8, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', fontSize: 11, fontWeight: 800 }}>
                       {cashbackRate}% back

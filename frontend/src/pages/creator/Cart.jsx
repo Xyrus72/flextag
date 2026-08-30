@@ -4,6 +4,7 @@ import { placeOrder } from '../../services/orders'
 import { initCheckout } from '../../services/checkout'
 import { getAddresses } from '../../services/users'
 import { useAuth } from '../../context/AuthContext'
+import { Package } from 'lucide-react'
 
 const CART_KEY = 'flextag_cart'
 
@@ -87,7 +88,7 @@ ${a.street}, ${a.city}${a.zip ? ', ' + a.zip : ''}, ${a.country}`
     } finally { setPlacing(false) }
   }
 
-  const panel = { background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:20, padding:24, backdropFilter:'blur(20px)' }
+  const panel = { background:'rgba(var(--ink-rgb),0.04)', border:'1px solid rgba(var(--ink-rgb),0.08)', borderRadius:16, padding:24, backdropFilter:'blur(20px)' }
 
   return (
     <div className="page-root">
@@ -108,9 +109,9 @@ ${a.street}, ${a.city}${a.zip ? ', ' + a.zip : ''}, ${a.country}`
           {/* Items */}
           <div style={{ display:'flex', flexDirection:'column', gap:12 }} className="lg:col-span-2">
             {items.map(item => (
-              <div key={item._id} style={{ display:'flex', alignItems:'center', gap:16, padding:'16px 20px', borderRadius:18, ...panel }} >
+              <div key={item._id} style={{ display:'flex', alignItems:'center', gap:16, padding:'16px 20px', borderRadius:14, ...panel }} >
                 <div style={{ width:60, height:60, borderRadius:14, background:'rgba(var(--ink-rgb),0.05)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:28, flexShrink:0, overflow: 'hidden' }}>
-                  {item.image?.startsWith('http') ? <img src={item.image} alt={item.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : (item.image || '📦')}
+                  {item.image?.startsWith('http') ? <img src={item.image} alt={item.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <Package size={22} strokeWidth={1.5} style={{ color: 'rgba(var(--ink-rgb),0.25)' }} />}
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
                   <p style={{ fontSize:14, fontWeight:600, color: 'var(--text)', margin:'0 0 4px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{item.name}</p>
@@ -166,7 +167,7 @@ ${a.street}, ${a.city}${a.zip ? ', ' + a.zip : ''}, ${a.country}`
               </div>
               <div style={{ borderTop:'1px solid rgba(var(--ink-rgb),0.08)', paddingTop:14, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                 <span style={{ fontWeight:600, color: 'var(--text)', fontSize:13 }}>Net Cost After Cashback</span>
-                <span style={{ fontSize:22, fontWeight:900, background:'linear-gradient(135deg,#7c3aed,#06b6d4)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>৳{netCost.toLocaleString()}</span>
+                <span style={{ fontSize:22, fontWeight:800, background:'linear-gradient(135deg,#7c3aed,#06b6d4)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>৳{netCost.toLocaleString()}</span>
               </div>
             </div>
 

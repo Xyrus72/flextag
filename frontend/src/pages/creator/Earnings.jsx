@@ -45,9 +45,9 @@ const Earnings = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 26 }}>
         {cards.map(c => (
-          <div key={c.label} style={{ padding: 22, borderRadius: 20, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)' }}>
+          <div key={c.label} style={{ padding: 22, borderRadius: 16, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)' }}>
             <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.4)', marginBottom: 8 }}>{c.label}</p>
-            <p style={{ fontSize: 27, fontWeight: 900, color: c.color, letterSpacing: '-0.03em' }}>{loading ? '—' : `৳${c.value.toLocaleString()}`}</p>
+            <p style={{ fontSize: 27, fontWeight: 800, color: c.color, letterSpacing: '-0.03em' }}>{loading ? '—' : `৳${c.value.toLocaleString()}`}</p>
             <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.3)', marginTop: 4 }}>{c.sub}</p>
           </div>
         ))}
@@ -55,7 +55,7 @@ const Earnings = () => {
 
       <div style={{ display: 'grid', gap: 20, gridTemplateColumns: '1fr' }} className="lg:grid-cols-3">
         {/* Monthly chart */}
-        <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 20, padding: 24, gridColumn: 'span 2' }} className="lg:col-span-2">
+        <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 16, padding: 24, gridColumn: 'span 2' }} className="lg:col-span-2">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Cashback by month</h2>
             <div style={{ display: 'flex', gap: 6 }}>
@@ -101,7 +101,7 @@ const Earnings = () => {
 
         {/* By brand + export */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 20, padding: 24 }}>
+          <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 16, padding: 24 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: '0 0 16px' }}>Top brands</h2>
             {loading ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '30px 0' }}><div className="spinner" /></div>
@@ -129,7 +129,7 @@ const Earnings = () => {
             )}
           </div>
 
-          <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 20, padding: 24 }}>
+          <div style={{ background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.08)', borderRadius: 16, padding: 24 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: '0 0 8px' }}>Statement</h2>
             <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.4)', margin: '0 0 14px', lineHeight: 1.6 }}>
               Every transaction as a spreadsheet — useful for your own records, or for anyone asking where the money came from.

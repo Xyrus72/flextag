@@ -217,7 +217,7 @@ export default function Profile() {
         className="lg:grid-cols-2">
 
         {/* ── Profile Card ─────────────────────────────────────── */}
-        <div style={{ borderRadius:20, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28, display:'flex', flexDirection:'column', gap:0 }}>
+        <div style={{ borderRadius:16, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28, display:'flex', flexDirection:'column', gap:0 }}>
           {/* header row */}
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
             <h2 style={{ fontSize:17, fontWeight:700, color: 'var(--text)', margin:0 }}>Personal Info</h2>
@@ -287,7 +287,7 @@ export default function Profile() {
         </div>
 
         {/* ── Shipping Addresses Card ───────────────────────────── */}
-        <div style={{ borderRadius:20, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28 }}>
+        <div style={{ borderRadius:16, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28 }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
             <div>
               <h2 style={{ fontSize:17, fontWeight:700, color: 'var(--text)', margin:0 }}>Shipping Addresses</h2>
@@ -435,7 +435,7 @@ export default function Profile() {
       </div>
 
       {/* ── Email notifications ───────────────────────────────── */}
-      <div style={{ borderRadius:20, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28, marginTop:24 }}>
+      <div style={{ borderRadius:16, background:'rgba(var(--ink-rgb),0.03)', border:'1px solid rgba(var(--ink-rgb),0.06)', padding:28, marginTop:24 }}>
         <h2 style={{ fontSize:17, fontWeight:700, color:'var(--text)', margin:'0 0 6px' }}>Email notifications</h2>
         <p style={{ fontSize:13, color:'rgba(var(--ink-rgb),0.4)', margin:'0 0 18px' }}>
           The bell only reaches you while you are on the site. These reach you when it matters.
@@ -452,7 +452,7 @@ export default function Profile() {
             <button onClick={() => togglePref(row.key)} role="switch" aria-checked={emailPrefs[row.key]} aria-label={row.title}
               style={{
                 width:46, height:26, borderRadius:100, flexShrink:0, cursor:'pointer', position:'relative',
-                background: emailPrefs[row.key] ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.12)',
+                background: emailPrefs[row.key] ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.12)',
                 border:'none', transition:'background 0.2s',
               }}>
               <span style={{

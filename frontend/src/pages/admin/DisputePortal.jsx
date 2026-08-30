@@ -99,7 +99,7 @@ const DisputePortal = () => {
         {['all', 'awaiting_brand', 'investigating', 'resolved'].map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: '8px 18px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: 'none',
-            background: filter === f ? 'linear-gradient(135deg,#7c3aed,#06b6d4)' : 'rgba(var(--ink-rgb),0.04)',
+            background: filter === f ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.04)',
             color: filter === f ? '#fff' : 'rgba(var(--ink-rgb),0.45)',
           }}>
             {(STATUS_STYLE[f]?.label || 'All')} ({counts(f)})
@@ -118,7 +118,7 @@ const DisputePortal = () => {
             const open = openId === d._id
             const f = formFor(d)
             return (
-              <div key={d._id} style={{ borderRadius: 18, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)', overflow: 'hidden' }}>
+              <div key={d._id} style={{ borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)', overflow: 'hidden' }}>
                 <div style={{ padding: 20 }}>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 8 }}>
                     <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: 0 }}>

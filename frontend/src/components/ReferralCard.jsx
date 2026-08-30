@@ -14,7 +14,7 @@ const ReferralCard = () => {
 
   return (
     <div style={{
-      padding: 18, borderRadius: 18, marginBottom: 20,
+      padding: 18, borderRadius: 14, marginBottom: 20,
       background: 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(6,182,212,0.08))',
       border: '1px solid rgba(124,58,237,0.25)',
     }}>

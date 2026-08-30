@@ -4,6 +4,7 @@ import { getWishlist } from '../../services/users'
 import WishlistButton from '../../components/WishlistButton'
 import StarRating from '../../components/StarRating'
 import { useT } from '../../context/LanguageContext'
+import { Package } from 'lucide-react'
 
 /**
  * Saved products.
@@ -54,13 +55,13 @@ const Wishlist = () => {
             return (
               <Link key={p._id} to={`/creator/product/${p._id}`} style={{ textDecoration: 'none' }}>
                 <div style={{
-                  borderRadius: 18, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)',
+                  borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)',
                   overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column', opacity: unavailable ? 0.65 : 1,
                 }}>
                   <div style={{ aspectRatio: '1.2', background: 'rgba(var(--ink-rgb),0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44, position: 'relative' }}>
                     {p.image && (p.image.startsWith('http') || p.image.startsWith('/')) ? (
                       <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (<span>{p.image || '📦'}</span>)}
+                    ) : (<Package size={22} strokeWidth={1.5} style={{ color: 'rgba(var(--ink-rgb),0.25)' }} />)}
                     <div style={{ position: 'absolute', top: 10, left: 10 }}>
                       <WishlistButton productId={p._id} saved onChange={() => drop(p._id)} size={16} floating />
                     </div>
