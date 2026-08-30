@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Plus } from 'lucide-react'
 
 const existingTickets = [
   { id: 'T-201', subject: 'Payment not received', category: 'Payout', status: 'open', date: '2026-06-30', message: 'My cashback for GlowUp campaign was verified 5 days ago but not credited.' },
@@ -6,7 +7,7 @@ const existingTickets = [
   { id: 'T-203', subject: 'Order not received', category: 'Shipping', status: 'resolved', date: '2026-06-20', message: 'Placed order 12 days ago, still no delivery.' },
 ]
 
-const statusConfig = { open: 'bg-yellow-500/10 text-yellow-400', in_progress: 'bg-blue-500/10 text-blue-400', resolved: 'bg-emerald-500/10 text-emerald-400' }
+const statusConfig = { open: 'warning', in_progress: 'info', resolved: 'success' }
 
 const Tickets = () => {
   const [tickets, setTickets] = useState(existingTickets)
@@ -24,56 +25,54 @@ const Tickets = () => {
   return (
     <div className="page-root">
       <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">Support Tickets</h1>
-          <p className="text-zinc-500 mt-1">Submit and track your support requests</p>
+        <div className="page-header" style={{ marginBottom: 0 }}>
+          <h1 className="page-title">Support tickets</h1>
+          <p className="page-subtitle">Submit and track your support requests</p>
         </div>
-        <button onClick={() => setShowNew(!showNew)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 text-white text-sm font-bold shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all">
-          + New Ticket
+        <button onClick={() => setShowNew(!showNew)} className="btn-primary">
+          <Plus size={15} strokeWidth={2} /> New ticket
         </button>
       </div>
 
       {showNew && (
-        <div className="mb-6 p-6 rounded-2xl bg-white/[0.03] border border-white/5 space-y-4">
-          <h2 className="text-lg font-bold text-white">New Support Ticket</h2>
+        <div className="mb-6 space-y-4" style={{ padding: 24, borderRadius: 16, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.06)' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>New support ticket</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Subject</label>
+              <label className="field-label">Subject</label>
               <input value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} placeholder="Brief description"
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none placeholder:text-zinc-600" />
+                className="field-input" />
             </div>
             <div>
-              <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Category</label>
-              <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none">
+              <label className="field-label">Category</label>
+              <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="field-select">
                 {['General', 'Payout', 'Verification', 'Shipping', 'Account', 'Bug Report'].map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>
           <div>
-            <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Message</label>
+            <label className="field-label">Message</label>
             <textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} rows={4} placeholder="Describe your issue in detail..."
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none resize-none placeholder:text-zinc-600" />
+              className="field-input" style={{ resize: 'none' }} />
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setShowNew(false)} className="px-6 py-3 rounded-xl bg-white/5 text-zinc-400 font-semibold border border-white/5 hover:bg-white/10 transition-all">Cancel</button>
-            <button onClick={submitTicket} className="px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 text-white font-bold shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all">Submit Ticket</button>
+            <button onClick={() => setShowNew(false)} className="btn-ghost">Cancel</button>
+            <button onClick={submitTicket} className="btn-primary">Submit ticket</button>
           </div>
         </div>
       )}
 
       <div className="space-y-3">
         {tickets.map(t => (
-          <div key={t.id} className="p-5 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all">
+          <div key={t.id} style={{ padding: 20, borderRadius: 16, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.06)' }}>
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-sm font-mono text-zinc-500">{t.id}</span>
-              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize ${statusConfig[t.status]}`}>{t.status.replace('_', ' ')}</span>
-              <span className="px-2 py-0.5 rounded-full bg-white/5 text-zinc-400 text-[10px] font-medium">{t.category}</span>
-              <span className="text-xs text-zinc-600 ml-auto">{t.date}</span>
+              <span className="tnum" style={{ fontSize: 13, fontFamily: 'monospace', color: 'var(--text-muted)' }}>{t.id}</span>
+              <span className={`badge badge-${statusConfig[t.status]}`}>{t.status.replace('_', ' ')}</span>
+              <span className="badge badge-neutral">{t.category}</span>
+              <span className="tnum" style={{ fontSize: 12, color: 'var(--text-dim)', marginLeft: 'auto' }}>{t.date}</span>
             </div>
-            <p className="text-sm font-semibold text-white mb-1">{t.subject}</p>
-            <p className="text-sm text-zinc-400">{t.message}</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', margin: '0 0 4px' }}>{t.subject}</p>
+            <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>{t.message}</p>
           </div>
         ))}
       </div>

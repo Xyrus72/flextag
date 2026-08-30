@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { CheckCircle2 } from 'lucide-react'
 import { getPosts, approvePost, rejectPost } from '../../services/posts'
 import { verifyInstagramPost } from '../../services/instagram'
 
@@ -289,13 +290,16 @@ const PostReview = () => {
 
   return (
     <div className="page-root">
-      <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Post Review</h1>
-      <p className="text-zinc-500 mb-6">Approve or reject creator post submissions</p>
+      <div className="page-header">
+        <div className="page-label"><span>Content Review</span></div>
+        <h1 className="page-title">Post Review</h1>
+        <p className="page-subtitle">Approve or reject creator post submissions</p>
+      </div>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {['pending', 'approved', 'rejected', 'all'].map((f) => (
           <button key={f} type="button" onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${filter === f ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white' : 'bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10'}`}>
+            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${filter === f ? 'bg-violet-600 text-white' : 'bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10'}`}>
             {/* the list is already filtered server-side, so only the active tab has a meaningful count */}
             {f}{f === filter && f !== 'all' && !loading ? ` (${posts.length})` : ''}
           </button>
@@ -308,11 +312,11 @@ const PostReview = () => {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+          <div className="spinner" />
         </div>
       ) : posts.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-4xl mb-3">✅</p>
+          <CheckCircle2 className="w-9 h-9 mx-auto mb-3 text-zinc-600" strokeWidth={1.5} />
           <p className="text-lg text-zinc-400">No {filter !== 'all' ? filter : ''} posts</p>
         </div>
       ) : (
@@ -324,8 +328,8 @@ const PostReview = () => {
             const rowError = errors[p._id]
             return (
               <div key={p._id} className="rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden hover:border-white/10 transition-all">
-                <div className="flex items-center gap-4 p-5 cursor-pointer" onClick={() => setExpandedId(expanded ? null : p._id)}>
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500/20 to-cyan-500/20 border border-violet-500/20 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                <button type="button" className="flex items-center gap-4 p-5 cursor-pointer" style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', font: 'inherit' }} onClick={() => setExpandedId(expanded ? null : p._id)}>
+                  <div className="w-12 h-12 rounded-full bg-violet-500/20 border border-violet-500/20 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                     {(p.creatorId?.name || 'C')[0]}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -348,7 +352,7 @@ const PostReview = () => {
                     className={`text-zinc-500 flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}>
                     <polyline points="6 9 12 15 18 9"/>
                   </svg>
-                </div>
+                </button>
 
                 {expanded && (
                   <div className="px-5 pb-5 pt-0 border-t border-white/5 space-y-4">
@@ -400,7 +404,7 @@ const PostReview = () => {
                         <div className="flex gap-3">
                           <button type="button" onClick={() => handleApprove(p._id)} disabled={!!busy}
                             className="px-5 py-2 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20 hover:bg-emerald-500/20 transition-all disabled:opacity-40">
-                            {busy === 'approving' ? '...' : '✓ Approve & Release Cashback'}
+                            {busy === 'approving' ? '...' : '✓ Approve & release cashback'}
                           </button>
                           <button type="button" onClick={() => handleReject(p._id)} disabled={!!busy}
                             className="px-5 py-2 rounded-lg bg-red-500/10 text-red-400 text-xs font-bold border border-red-500/20 hover:bg-red-500/20 transition-all disabled:opacity-40">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Package } from 'lucide-react'
 import { getCategories, createCategory, updateCategory, deleteCategory } from '../../services/admin'
 
 const Categories = () => {
@@ -58,14 +59,14 @@ const Categories = () => {
 
   return (
     <div className="page-root">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">Category Manager</h1>
-          <p className="text-zinc-500 mt-1">Manage product categories for the catalog</p>
-        </div>
-        <button onClick={() => setShowAdd(!showAdd)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 text-white text-sm font-bold shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all">
-          + Add Category
+      <div className="page-header" style={{ marginBottom: 24 }}>
+        <div className="page-label"><span>Catalog</span></div>
+        <h1 className="page-title">Category Manager</h1>
+        <p className="page-subtitle">Manage product categories for the catalog</p>
+      </div>
+      <div className="flex justify-end mb-6">
+        <button onClick={() => setShowAdd(!showAdd)} className="btn-primary">
+          Add category
         </button>
       </div>
 
@@ -90,13 +91,12 @@ const Categories = () => {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+          <div className="spinner" />
         </div>
       ) : categories.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-4xl mb-3">📦</p>
-          <p className="text-lg text-zinc-400">No categories yet</p>
-          <p className="text-sm text-zinc-600">Click "Add Category" to create one</p>
+        <div className="empty-state">
+          <Package size={28} strokeWidth={1.5} style={{ opacity: 0.5, marginBottom: 10 }} />
+          <p>No categories yet — click "Add category" to create one</p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -105,14 +105,15 @@ const Categories = () => {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-3xl">{c.icon}</span>
                 <button onClick={() => toggleActive(c._id, c.active)} disabled={toggling[c._id]}
-                  className={`w-10 h-5 rounded-full transition-all ${c.active ? 'bg-emerald-500' : 'bg-zinc-700'} relative`}>
+                  className="w-10 h-5 rounded-full transition-all relative"
+                  style={{ background: c.active ? '#22c55e' : 'rgba(var(--ink-rgb),0.15)' }}>
                   <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${c.active ? 'left-5' : 'left-0.5'}`} />
                 </button>
               </div>
               <p className="text-lg font-bold text-white">{c.name}</p>
               <p className="text-xs text-zinc-500 mt-1">{c.products || 0} products · {c.active ? 'Active' : 'Inactive'}</p>
               <div className="flex gap-2 mt-4">
-                <button onClick={() => deleteCat(c._id)} className="text-xs text-zinc-500 hover:text-red-400 transition-colors">Delete</button>
+                <button onClick={() => deleteCat(c._id)} className="btn-danger" style={{ padding: '6px 14px', fontSize: 12 }}>Delete</button>
               </div>
             </div>
           ))}

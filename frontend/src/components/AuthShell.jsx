@@ -161,7 +161,7 @@ const AuthShell = ({ tagline, children }) => {
           <Link to="/" style={{ textDecoration: 'none', display: 'inline-flex' }}>
             <Logo size={32} />
           </Link>
-          <p style={{ fontSize: 14, color: 'rgba(var(--ink-rgb),0.35)', marginTop: 16, fontWeight: 300 }}>{tagline || t('auth.tagline')}</p>
+          <p style={{ fontSize: 14, color: 'rgba(var(--ink-rgb),0.35)', marginTop: 16, fontWeight: 400 }}>{tagline || t('auth.tagline')}</p>
         </div>
 
         {children}

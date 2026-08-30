@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
+import { Building2, Mail, Globe, Tag, Calendar } from 'lucide-react'
 import { getUsers, verifyUser } from '../../services/users'
 
 const statusConfig = {
-  pending:  'bg-yellow-500/10 text-yellow-400',
-  approved: 'bg-emerald-500/10 text-emerald-400',
-  rejected: 'bg-red-500/10 text-red-400',
+  pending:  'warning',
+  approved: 'success',
+  rejected: 'error',
 }
 
 const BrandVerification = () => {
@@ -47,13 +48,16 @@ const BrandVerification = () => {
 
   return (
     <div className="page-root">
-      <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Brand Verification</h1>
-      <p className="text-zinc-500 mb-6">Review and approve brand partner applications</p>
+      <div className="page-header">
+        <div className="page-label"><span>Verification</span></div>
+        <h1 className="page-title">Brand Verification</h1>
+        <p className="page-subtitle">Review and approve brand partner applications</p>
+      </div>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {['pending', 'approved', 'rejected', 'all'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${filter === f ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white' : 'bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10'}`}>
+            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${filter === f ? 'bg-violet-600 text-white' : 'bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10'}`}>
             {f} ({f === 'all' ? brands.length : brands.filter(b => getStatus(b) === f).length})
           </button>
         ))}
@@ -61,12 +65,12 @@ const BrandVerification = () => {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+          <div className="spinner" />
         </div>
       ) : filteredBrands.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-4xl mb-3">🏢</p>
-          <p className="text-lg text-zinc-400">No {filter !== 'all' ? filter : ''} brands found</p>
+        <div className="empty-state">
+          <Building2 size={28} strokeWidth={1.5} style={{ opacity: 0.5, marginBottom: 10 }} />
+          <p>No {filter !== 'all' ? filter : ''} brands found</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -75,19 +79,19 @@ const BrandVerification = () => {
             return (
               <div key={app._id} className="rounded-2xl bg-white/[0.03] border border-white/5 p-6 hover:border-white/10 transition-all">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/20 flex items-center justify-center text-2xl font-bold text-emerald-400 flex-shrink-0">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center text-2xl font-bold text-emerald-400 flex-shrink-0">
                     {(app.companyName || app.name)[0]}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-base font-semibold text-white">{app.companyName || app.name}</p>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${statusConfig[status]}`}>{status}</span>
+                      <span className={`badge badge-${statusConfig[status]}`}>{status}</span>
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">
-                      <span>📧 {app.email}</span>
-                      {app.website    && <span>🌐 {app.website}</span>}
-                      {app.productCategory && <span>📁 {app.productCategory}</span>}
-                      <span>📅 Joined {new Date(app.createdAt).toLocaleDateString()}</span>
+                      <span className="inline-flex items-center gap-1"><Mail size={12} strokeWidth={1.75} /> {app.email}</span>
+                      {app.website    && <span className="inline-flex items-center gap-1"><Globe size={12} strokeWidth={1.75} /> {app.website}</span>}
+                      {app.productCategory && <span className="inline-flex items-center gap-1"><Tag size={12} strokeWidth={1.75} /> {app.productCategory}</span>}
+                      <span className="inline-flex items-center gap-1"><Calendar size={12} strokeWidth={1.75} /> Joined {new Date(app.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
                   {status === 'pending' && (

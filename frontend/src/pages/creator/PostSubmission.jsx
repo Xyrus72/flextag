@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLocation, Link } from 'react-router-dom'
+import { Search } from 'lucide-react'
 import { getOrders } from '../../services/orders'
 import { getPosts, submitPost } from '../../services/posts'
 import { generateCaptions } from '../../services/ai'
@@ -19,7 +20,7 @@ const TONES = {
 
 const STATUS_LABELS = {
   approved: { label: 'Approved',  cls: 'badge-success' },
-  pending:  { label: 'In Review', cls: 'badge-warning' },
+  pending:  { label: 'In review', cls: 'badge-warning' },
   rejected: { label: 'Rejected',  cls: 'badge-error' },
   flagged:  { label: 'Flagged',   cls: 'badge-error' },
 }
@@ -46,7 +47,7 @@ const describeOutcome = ({ platform, verifying, verifyFailed, verification, auto
     return { tone: 'info', icon: 'spinner', title: 'Verifying your post on Instagram…', body: 'This usually takes about 10 seconds — hang tight.' }
   }
   if (platform !== 'instagram' || (!verification && !verifyFailed)) {
-    return { tone: 'success', icon: 'check', title: 'Post Submitted!', body: 'Your post is now under review. Keep it live for the full retention period to earn your cashback.' }
+    return { tone: 'success', icon: 'check', title: 'Post submitted', body: 'Your post is now under review. Keep it live for the full retention period to earn your cashback.' }
   }
   if (verifyFailed) {
     return { tone: 'warning', icon: 'clock', title: 'Submitted for review', body: "Automatic verification isn't available right now; an admin will review it." }
@@ -56,7 +57,7 @@ const describeOutcome = ({ platform, verifying, verifyFailed, verification, auto
       if (autoApproved) {
         // Approval and payment are separate facts: the order may be undelivered / returned / already paid.
         return released
-          ? { tone: 'success', icon: 'check', title: 'Verified — cashback released 🎉', body: 'Every campaign check passed. Keep the post live for the full retention period.' }
+          ? { tone: 'success', icon: 'check', title: 'Verified — cashback released', body: 'Every campaign check passed. Keep the post live for the full retention period.' }
           : { tone: 'warning', icon: 'check', title: 'Approved — cashback on hold', body: 'Every check passed and the post is approved, but the cashback is held because the order is not delivered, is being returned, or was already paid out.' }
       }
       return pendingReason === 'identity'
@@ -84,14 +85,14 @@ const OutcomeIcon = ({ kind, color }) => {
 // pass → ✓ · required failure → ✗ · optional failure → – · could not evaluate (null) → ?
 const checkState = (c) => (c.passed === true ? 'pass' : c.passed === false ? (c.required ? 'fail' : 'soft') : 'unknown')
 const CHECK_GLYPH = {
-  pass:    { mark: '✓', color: '#4ade80' },
+  pass:    { mark: '✓', color: 'var(--green-ink)' },
   fail:    { mark: '✗', color: '#f87171' },
-  soft:    { mark: '–', color: '#fbbf24' },
-  unknown: { mark: '?', color: '#fbbf24' },
+  soft:    { mark: '–', color: 'var(--amber-ink)' },
+  unknown: { mark: '?', color: 'var(--amber-ink)' },
 }
 
 const ChecksList = ({ checks }) => (
-  <ul className="text-left space-y-1.5 mb-4 list-none p-0 m-0">
+  <ul className="text-left mb-4 list-none p-0 m-0" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
     {checks.map(c => {
       const state = checkState(c)
       const glyph = CHECK_GLYPH[state]
@@ -99,8 +100,8 @@ const ChecksList = ({ checks }) => (
         <li key={c.key} className="flex items-start gap-2 text-sm">
           <span style={{ color: glyph.color, fontWeight: 700, flexShrink: 0, width: 14, textAlign: 'center' }}>{glyph.mark}</span>
           <span className="min-w-0">
-            <span className={state === 'fail' ? 'text-white font-semibold' : 'text-zinc-300'}>{c.label}</span>
-            {state !== 'pass' && c.detail && <span className="block text-xs text-zinc-500">{c.detail}</span>}
+            <span style={{ fontSize: 13.5, fontWeight: state === 'fail' ? 600 : 500, color: 'var(--text)' }}>{c.label}</span>
+            {state !== 'pass' && c.detail && <span style={{ display: 'block', fontSize: 12, color: 'rgba(var(--ink-rgb),0.45)', lineHeight: 1.5 }}>{c.detail}</span>}
           </span>
         </li>
       )
@@ -122,9 +123,9 @@ const SnapshotStats = ({ snapshot, source }) => {
   return (
     <div className="grid grid-cols-3 gap-2 mb-4">
       {stats.map(s => (
-        <div key={s.label} className="p-2.5 rounded-lg bg-white/5 border border-white/5 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-zinc-500 m-0">{s.label}</p>
-          <p className="text-sm font-semibold text-white m-0">{s.value}</p>
+        <div key={s.label} className="text-center" style={{ padding: 10, borderRadius: 8, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.06)' }}>
+          <p className="m-0" style={{ fontSize: 11, fontWeight: 500, color: 'rgba(var(--ink-rgb),0.4)' }}>{s.label}</p>
+          <p className="tnum m-0" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{s.value}</p>
         </div>
       ))}
     </div>
@@ -133,7 +134,7 @@ const SnapshotStats = ({ snapshot, source }) => {
 
 const Row = ({ label, last, children }) => (
   <div className={`flex justify-between items-center gap-3 text-sm ${last ? '' : 'mb-2'}`}>
-    <span className="text-zinc-500 shrink-0">{label}</span>
+    <span className="shrink-0" style={{ color: 'var(--text-muted)' }}>{label}</span>
     {children}
   </div>
 )
@@ -150,26 +151,25 @@ const ResultCard = ({ platform, postUrl, post, verification, autoApproved, relea
     <div className="p-4 lg:p-8 min-h-screen flex items-center justify-center">
       <div className="text-center max-w-md w-full">
         <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
-          style={{ background: tone.bg, border: `2px solid ${tone.border}`, boxShadow: `0 0 40px ${tone.bg}` }}>
+          style={{ background: tone.bg, border: `2px solid ${tone.border}` }}>
           <OutcomeIcon kind={outcome.icon} color={tone.text} />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">{outcome.title}</h2>
-        <p className="text-zinc-400 mb-6">{outcome.body}</p>
+        <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text)' }}>{outcome.title}</h2>
+        <p className="mb-6" style={{ color: 'var(--text-muted)' }}>{outcome.body}</p>
 
         {showChecks && <ChecksList checks={checks} />}
         {!verifying && snapshot && <SnapshotStats snapshot={snapshot} source={verification?.source} />}
 
-        <div className="p-4 rounded-xl bg-white/5 border border-white/5 text-left mb-6">
+        <div className="p-4 rounded-xl text-left mb-6" style={{ background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.08)' }}>
           <Row label="Status"><span className={`badge ${status.cls}`}>{status.label}</span></Row>
-          <Row label="Platform"><span className="text-white capitalize">{platform}</span></Row>
+          <Row label="Platform"><span className="capitalize" style={{ color: 'var(--text)' }}>{platform}</span></Row>
           <Row label="Post URL" last>
-            <a href={postUrl} target="_blank" rel="noreferrer" className="text-blue-400 text-xs truncate max-w-[200px]">{postUrl}</a>
+            <a href={postUrl} target="_blank" rel="noreferrer" className="text-xs truncate max-w-[200px]" style={{ color: 'var(--cyan-ink)' }}>{postUrl}</a>
           </Row>
         </div>
         {/* never disabled: a slow verification must not trap the creator on this screen */}
-        <button onClick={onReset}
-          className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-zinc-300 font-semibold hover:bg-white/10 transition-all">
-          Submit Another
+        <button onClick={onReset} className="btn-ghost">
+          Submit another
         </button>
       </div>
     </div>
@@ -360,22 +360,25 @@ const PostSubmission = () => {
 
   return (
     <div className="page-root">
-      <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Submit Post</h1>
-      <p className="text-zinc-500 mb-8">Submit your post URL for cashback verification</p>
+      <div className="page-header">
+        <div className="page-label"><span>Creator tools</span></div>
+        <h1 className="page-title">Submit a post</h1>
+        <p className="page-subtitle">Submit your post URL for cashback verification.</p>
+      </div>
 
       {/* Posts FlexTag already spotted — one tap instead of the form below */}
       <DetectedPosts />
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Submission form */}
-        <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
-          <h2 className="text-lg font-bold text-white mb-5">Post Details</h2>
+        <div className="rounded-2xl p-6" style={{ background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.08)' }}>
+          <h2 className="text-lg font-bold mb-5" style={{ color: 'var(--text)' }}>Post details</h2>
           {error && <p className="text-xs text-red-400 mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20">{error}</p>}
           <div className="space-y-4">
             <div ref={dropdownRef} className="relative">
-              <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Search Order / Product</label>
+              <label className="field-label">Order or product</label>
               {loadingOrders ? (
-                <div className="flex items-center gap-2 text-zinc-500 text-sm"><div className="w-4 h-4 rounded-full border border-zinc-500 border-t-transparent animate-spin" /><span>Loading orders...</span></div>
+                <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}><div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /><span>Loading orders…</span></div>
               ) : (
                 <>
                   <div className="relative">
@@ -385,15 +388,16 @@ const PostSubmission = () => {
                       onFocus={() => setDropdownOpen(true)}
                       onChange={e => { setOrderQuery(e.target.value); setDropdownOpen(true); setSelectedOrderId('') }}
                       placeholder="Type product name, brand, or order ID…"
-                      className="w-full px-4 py-3 pr-10 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 outline-none"
+                      className="field-input"
+                      style={{ paddingRight: 40 }}
                       autoComplete="off"
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-zinc-500 pointer-events-none">🔍</span>
+                    <Search size={14} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgba(var(--ink-rgb),0.35)' }} />
                   </div>
                   {dropdownOpen && (
                     <div className="absolute left-0 right-0 mt-1.5 max-h-56 overflow-y-auto rounded-xl border border-violet-500/30 bg-[var(--bg-2)] shadow-2xl p-1.5 z-50">
                       {filteredOrders.length === 0 ? (
-                        <div className="px-4 py-3 text-sm text-zinc-500 text-center">
+                        <div className="px-4 py-3 text-sm text-center" style={{ color: 'var(--text-muted)' }}>
                           {orders.length ? 'No matching orders' : 'No delivered orders yet'}
                         </div>
                       ) : filteredOrders.map(o => (
@@ -401,10 +405,10 @@ const PostSubmission = () => {
                           type="button"
                           key={o._id}
                           onClick={() => pickOrder(o)}
-                          className={`w-full text-left px-3.5 py-2.5 rounded-lg transition-colors ${selectedOrderId === o._id ? 'bg-violet-500/20' : 'hover:bg-white/5'}`}
+                          className={`w-full text-left px-3.5 py-2.5 rounded-lg transition-colors ${selectedOrderId === o._id ? 'bg-violet-500/20' : 'hover:bg-[rgba(var(--ink-rgb),0.05)]'}`}
                         >
-                          <p className="text-sm font-semibold text-white m-0">{o.product}</p>
-                          <p className="text-[11px] text-zinc-500 m-0 mt-0.5">{o.brand} · <span className="text-violet-400">{o.orderId}</span></p>
+                          <p className="text-sm font-semibold m-0" style={{ color: 'var(--text)' }}>{o.product}</p>
+                          <p className="text-[11px] m-0 mt-0.5" style={{ color: 'var(--text-muted)' }}>{o.brand} · <span className="text-violet-400">{o.orderId}</span></p>
                         </button>
                       ))}
                     </div>
@@ -412,19 +416,19 @@ const PostSubmission = () => {
                 </>
               )}
               {orders.length === 0 && !loadingOrders && (
-                <p className="text-xs text-zinc-600 mt-1">No delivered orders found. Orders must be delivered before you can submit.</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-dim)' }}>No delivered orders found. Orders must be delivered before you can submit.</p>
               )}
             </div>
 
             <div>
-              <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Platform</label>
+              <label className="field-label">Platform</label>
               <div className="flex gap-2">
                 {['instagram', 'tiktok', 'facebook'].map(p => (
                   <button key={p} onClick={() => { setPlatform(p); setError('') }} style={{
                     flex:1, padding:'10px', borderRadius:12, fontSize:13, fontWeight:600, cursor:'pointer',
                     fontFamily:'inherit', textTransform:'capitalize', transition:'all 0.2s', border:'none',
                     background: platform === p ? 'rgba(124,58,237,0.12)' : 'rgba(var(--ink-rgb),0.04)',
-                    color: platform === p ? '#a78bfa' : 'rgba(var(--ink-rgb),0.4)',
+                    color: platform === p ? 'var(--violet-ink)' : 'rgba(var(--ink-rgb),0.4)',
                     outline: platform === p ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(var(--ink-rgb),0.08)',
                   }}>
                     {p}
@@ -434,11 +438,11 @@ const PostSubmission = () => {
             </div>
 
             <div>
-              <label className="text-xs text-zinc-500 font-medium uppercase tracking-wider block mb-1.5">Post URL</label>
+              <label className="field-label">Post link</label>
               <input value={postUrl} onChange={e => { setPostUrl(e.target.value); if (error === IG_URL_HINT) setError('') }}
-                placeholder={platform === 'instagram' ? 'https://www.instagram.com/p/… or /reel/…' : 'https://www.instagram.com/p/...'}
+                placeholder={platform === 'instagram' ? 'https://www.instagram.com/p/… or /reel/…' : 'Paste your public post link…'}
                 className="field-input" />
-              <p className="text-xs text-zinc-600 mt-1">
+              <p className="text-xs mt-1" style={{ color: 'var(--text-dim)' }}>
                 {platform === 'instagram'
                   ? 'Instagram posts are verified automatically — make sure the post is public and includes the campaign hashtags/mention.'
                   : 'Your post must be public and meet campaign requirements'}
@@ -447,52 +451,56 @@ const PostSubmission = () => {
 
             <button onClick={handleSubmit} disabled={!canSubmit}
               className="btn-primary" style={{ width:'100%', padding:14 }}>
-              {submitting ? 'Submitting…' : 'Submit for Verification'}
+              {submitting ? 'Submitting…' : 'Submit for verification'}
             </button>
           </div>
         </div>
 
         {/* Caption assistant */}
-        <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
-          <h2 className="text-lg font-bold text-white mb-1">Caption ideas</h2>
-          <p className="text-xs text-zinc-500 mb-5">Three options in your own voice, campaign hashtags and mention already in place.</p>
+        <div className="rounded-2xl p-6" style={{ background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.08)' }}>
+          <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--text)' }}>Caption ideas</h2>
+          <p className="text-xs mb-5" style={{ color: 'var(--text-muted)' }}>Three options in your own voice, campaign hashtags and mention already in place.</p>
           <div className="space-y-4">
             <div>
-              <label className="text-xs text-zinc-500 font-medium block mb-1.5">Language</label>
+              <label className="field-label">Language</label>
               <div className="grid grid-cols-3 gap-2">
                 {[{ id: 'bangla', label: 'বাংলা' }, { id: 'english', label: 'English' }, { id: 'banglish', label: 'Banglish' }].map(l => (
-                  <button key={l.id} onClick={() => setAiLang(l.id)}
-                    className={`py-2.5 rounded-xl text-sm font-semibold transition-all ${aiLang === l.id ? 'bg-violet-500/15 border border-violet-500/30 text-violet-400' : 'bg-white/5 border border-white/5 text-zinc-500 hover:bg-white/10'}`}>
+                  <button key={l.id} onClick={() => setAiLang(l.id)} style={{
+                    padding: '10px 0', borderRadius: 12, fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: 'none',
+                    transition: 'background 150ms cubic-bezier(0.2,0,0,1), color 150ms cubic-bezier(0.2,0,0,1)',
+                    background: aiLang === l.id ? 'var(--purple)' : 'rgba(var(--ink-rgb),0.04)',
+                    color: aiLang === l.id ? '#fff' : 'var(--text-muted)',
+                  }}>
                     {l.label}
                   </button>
                 ))}
               </div>
             </div>
             <button onClick={generateCaption} disabled={!aiLang || aiLoading || !selectedOrderId}
-              className="w-full py-3 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-400 font-semibold hover:bg-violet-500/25 transition-all disabled:opacity-30">
+              className="btn-primary" style={{ width: '100%', padding: 12 }}>
               {aiLoading ? 'Writing…' : 'Write me three captions'}
             </button>
-            {!selectedOrderId && <p className="text-xs text-zinc-600">Select an order first — the captions are written for that campaign.</p>}
+            {!selectedOrderId && <p className="text-xs" style={{ color: 'var(--text-dim)' }}>Select an order first — the captions are written for that campaign.</p>}
             {aiError && <p className="text-xs text-red-400">{aiError}</p>}
             {aiResult && (
               <div className="space-y-3">
                 {aiResult.source === 'template' ? (
-                  <p className="text-xs text-zinc-500">AI isn't configured on the server, so these are basic starters — the required tags are still correct.</p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>AI isn't configured on the server, so these are basic starters — the required tags are still correct.</p>
                 ) : aiResult.styled ? (
-                  <p className="text-xs text-zinc-500">Written to match the voice of your recent Instagram posts.</p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Written to match the voice of your recent Instagram posts.</p>
                 ) : null}
                 {aiResult.captions.map((c, i) => (
-                  <div key={i} className="p-4 rounded-xl bg-white/5 border border-white/5">
+                  <div key={i} className="p-4 rounded-xl" style={{ background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.08)' }}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-zinc-500 font-medium capitalize">{c.angle}</span>
+                      <span className="text-xs font-medium capitalize" style={{ color: 'var(--text-muted)' }}>{c.angle}</span>
                       <button onClick={() => copyVariant(c.text, i)} className="text-xs text-violet-400 hover:text-violet-300">
                         {aiCopied === i ? 'Copied' : 'Copy'}
                       </button>
                     </div>
-                    <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed m-0">{c.text}</p>
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed m-0" style={{ color: 'rgba(var(--ink-rgb),0.75)' }}>{c.text}</p>
                   </div>
                 ))}
-                <p className="text-xs text-zinc-600">
+                <p className="text-xs" style={{ color: 'var(--text-dim)' }}>
                   Editing it first? <Link to="/creator/caption-validator" className="text-violet-400 hover:text-violet-300">Run your draft through the caption checker</Link> — it runs the same checks as verification.
                 </p>
               </div>

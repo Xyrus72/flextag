@@ -4,7 +4,7 @@ import { getWishlist } from '../../services/users'
 import WishlistButton from '../../components/WishlistButton'
 import StarRating from '../../components/StarRating'
 import { useT } from '../../context/LanguageContext'
-import { Package } from 'lucide-react'
+import { Package, Heart } from 'lucide-react'
 
 /**
  * Saved products.
@@ -41,9 +41,9 @@ const Wishlist = () => {
         <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}><div className="spinner" /></div>
       ) : products.length === 0 ? (
         <div className="empty-state">
-          <p style={{ fontSize: 28, marginBottom: 8 }}>🤍</p>
+          <Heart size={28} strokeWidth={1.5} style={{ color: 'var(--text-dim)', marginBottom: 10 }} />
           <p>Nothing saved yet.</p>
-          <Link to="/creator/catalog" style={{ color: '#67e8f9', fontSize: 13, fontWeight: 600 }}>Browse the catalog →</Link>
+          <Link to="/creator/catalog" style={{ color: 'var(--cyan-ink)', fontSize: 13, fontWeight: 600 }}>Browse the catalog</Link>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 18 }}>
@@ -54,7 +54,7 @@ const Wishlist = () => {
             const unavailable = capReached || p.inStock === false
             return (
               <Link key={p._id} to={`/creator/product/${p._id}`} style={{ textDecoration: 'none' }}>
-                <div style={{
+                <div className="card-hover" style={{
                   borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)',
                   overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column', opacity: unavailable ? 0.65 : 1,
                 }}>
@@ -65,9 +65,11 @@ const Wishlist = () => {
                     <div style={{ position: 'absolute', top: 10, left: 10 }}>
                       <WishlistButton productId={p._id} saved onChange={() => drop(p._id)} size={16} floating />
                     </div>
-                    <div style={{ position: 'absolute', top: 10, right: 10, padding: '4px 10px', borderRadius: 8, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', fontSize: 11, fontWeight: 800 }}>
-                      {p.cashbackRate}% back
-                    </div>
+                    {p.cashbackRate > 0 && (
+                      <div className="tnum" style={{ position: 'absolute', top: 10, right: 10, padding: '4px 10px', borderRadius: 8, background: 'var(--purple)', color: '#fff', fontSize: 11, fontWeight: 700 }}>
+                        {p.cashbackRate}% back
+                      </div>
+                    )}
                     {unavailable && (
                       <div style={{ position: 'absolute', bottom: 10, left: 10, padding: '4px 10px', borderRadius: 8, background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.4)', color: '#f87171', fontSize: 10, fontWeight: 800 }}>
                         {capReached ? 'Cap reached' : 'Out of stock'}
@@ -76,23 +78,23 @@ const Wishlist = () => {
                   </div>
                   <div style={{ padding: 16, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
-                      <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>{p.brand}</p>
+                      <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4, fontWeight: 500 }}>{p.brand}</p>
                       <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 8, lineHeight: 1.3 }}>{p.name}</p>
                       {p.reviews > 0 && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                           <StarRating value={p.rating} size={12} />
-                          <span style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)' }}>{p.rating} ({p.reviews})</span>
+                          <span className="tnum" style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)' }}>{p.rating} ({p.reviews})</span>
                         </div>
                       )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', background: 'rgba(var(--ink-rgb),0.02)', padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(var(--ink-rgb),0.05)' }}>
                       <div>
-                        <span style={{ display: 'block', fontSize: 10, color: 'rgba(var(--ink-rgb),0.3)', textTransform: 'uppercase' }}>Retail</span>
-                        <span style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.4)', textDecoration: 'line-through' }}>৳{price.toLocaleString()}</span>
+                        <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-muted)' }}>Retail</span>
+                        <span className="tnum" style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.4)', textDecoration: 'line-through' }}>৳{price.toLocaleString()}</span>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ display: 'block', fontSize: 10, color: '#4ade80', fontWeight: 700, textTransform: 'uppercase' }}>Net cost</span>
-                        <span style={{ fontSize: 16, fontWeight: 800, color: '#4ade80' }}>৳{netPrice.toLocaleString()}</span>
+                        <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-muted)' }}>Net cost</span>
+                        <span className="tnum" style={{ fontSize: 16, fontWeight: 800, color: 'var(--green-ink)' }}>৳{netPrice.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>

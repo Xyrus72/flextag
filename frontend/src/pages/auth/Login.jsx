@@ -100,9 +100,9 @@ const Login = () => {
           <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(var(--ink-rgb),0.06)', textAlign: 'center' }}>
             <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.3)' }}>
               {t('auth.noAccount')}{' '}
-              <Link to="/register" style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: 600 }}
+              <Link to="/register" style={{ color: 'var(--violet-ink)', textDecoration: 'none', fontWeight: 600 }}
                 onMouseEnter={e => e.target.style.color = '#7c3aed'}
-                onMouseLeave={e => e.target.style.color = '#a78bfa'}
+                onMouseLeave={e => e.target.style.color = 'var(--violet-ink)'}
               >{t('auth.createAccount')}</Link>
             </p>
           </div>

@@ -1,28 +1,11 @@
-
 /**
- * NavIcon — wraps a Lucide icon with a glowing gradient tint.
- * Usage: <NavIcon icon={LayoutDashboard} color="#7c3aed" />
+ * NavIcon — a Lucide icon sized and weighted for the sidebar/nav rail.
+ * Color is inherited (currentColor): the sidebar sets it per active/resting
+ * state, so every icon dims and lights up together instead of carrying its
+ * own fixed hue.
  */
-const NavIcon = ({ icon: Icon, color = '#7c3aed', size = 17 }) => (
-  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-    {/* glow backdrop */}
-    <span style={{
-      position: 'absolute',
-      inset: -4,
-      borderRadius: 8,
-      background: `radial-gradient(circle, ${color}22 0%, transparent 70%)`,
-      pointerEvents: 'none',
-    }} />
-    <Icon
-      size={size}
-      strokeWidth={1.6}
-      style={{
-        color,
-        filter: `drop-shadow(0 0 5px ${color}88)`,
-        position: 'relative',
-      }}
-    />
-  </span>
+const NavIcon = ({ icon: Icon, size = 17 }) => (
+  <Icon size={size} strokeWidth={1.6} style={{ color: 'currentColor' }} />
 )
 
 export default NavIcon

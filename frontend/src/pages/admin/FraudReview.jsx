@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Shield } from 'lucide-react'
 import { getFraudQueue, getFraudDetail, blockUser, unblockUser, vouchUser, rescanFraud } from '../../services/admin'
 
 /**
@@ -12,10 +13,10 @@ import { getFraudQueue, getFraudDetail, blockUser, unblockUser, vouchUser, resca
  */
 
 const LEVEL_STYLE = {
-  high:   { label: 'High risk',   color: '#f87171', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)' },
-  medium: { label: 'Medium risk', color: '#fbbf24', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
-  low:    { label: 'Low risk',    color: '#67e8f9', bg: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.3)' },
-  clear:  { label: 'Clear',       color: '#4ade80', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)' },
+  high:   { label: 'High risk',   color: '#f87171', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)', badge: 'error' },
+  medium: { label: 'Medium risk', color: 'var(--amber-ink)', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', badge: 'warning' },
+  low:    { label: 'Low risk',    color: 'var(--cyan-ink)', bg: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.3)', badge: 'cyan' },
+  clear:  { label: 'Clear',       color: 'var(--green-ink)', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)', badge: 'success' },
 }
 
 const FraudReview = () => {
@@ -112,7 +113,7 @@ const FraudReview = () => {
           background: thresholds.enforce ? 'rgba(34,197,94,0.06)' : 'rgba(245,158,11,0.07)',
           border: `1px solid ${thresholds.enforce ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.25)'}`,
         }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: thresholds.enforce ? '#4ade80' : '#fbbf24' }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: thresholds.enforce ? 'var(--green-ink)' : 'var(--amber-ink)' }}>
             {thresholds.enforce ? 'Rules enforced' : 'Scoring only — nothing is blocked'}
           </span>
           <span style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.45)' }}>
@@ -120,7 +121,7 @@ const FraudReview = () => {
           </span>
           <button onClick={handleRescan} disabled={busyId === 'scan'} style={{
             marginLeft: 'auto', padding: '8px 16px', fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: 'pointer',
-            fontFamily: 'inherit', background: 'rgba(124,58,237,0.15)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.3)',
+            fontFamily: 'inherit', background: 'rgba(124,58,237,0.15)', color: 'var(--violet-ink)', border: '1px solid rgba(124,58,237,0.3)',
           }}>{busyId === 'scan' ? 'Scanning…' : 'Re-scan everyone'}</button>
         </div>
       )}
@@ -130,7 +131,7 @@ const FraudReview = () => {
           padding: '10px 14px', borderRadius: 12, marginBottom: 16, fontSize: 13,
           background: banner.kind === 'ok' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
           border: `1px solid ${banner.kind === 'ok' ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`,
-          color: banner.kind === 'ok' ? '#4ade80' : '#f87171',
+          color: banner.kind === 'ok' ? 'var(--green-ink)' : '#f87171',
         }}>{banner.text}</div>
       )}
 
@@ -149,7 +150,7 @@ const FraudReview = () => {
         <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}><div className="spinner" /></div>
       ) : users.length === 0 ? (
         <div className="empty-state">
-          <p style={{ fontSize: 28, marginBottom: 8 }}>🛡️</p>
+          <Shield size={28} strokeWidth={1.5} style={{ opacity: 0.5, marginBottom: 10 }} />
           <p>Nothing flagged here — the ledger looks clean.</p>
         </div>
       ) : (
@@ -168,9 +169,7 @@ const FraudReview = () => {
                   <div style={{ flex: 1, minWidth: 240 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
                       <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{u.name}</p>
-                      <span style={{ padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 800, color: st.color, background: st.bg, border: `1px solid ${st.border}` }}>
-                        {st.label} · {u.riskScore || 0}
-                      </span>
+                      <span className={`badge badge-${st.badge}`}>{st.label} · {u.riskScore || 0}</span>
                       {u.blocked && <span className="badge badge-error" style={{ fontSize: 9 }}>BLOCKED</span>}
                       {u.riskWhitelisted && <span className="badge badge-success" style={{ fontSize: 9 }}>VOUCHED</span>}
                       {u.igVerified && <span className="badge badge-neutral" style={{ fontSize: 9 }}>IG verified</span>}
@@ -211,9 +210,9 @@ const FraudReview = () => {
                     )}
                     <button onClick={() => handleVouch(u)} disabled={busyId === u._id} style={{
                       padding: '8px 16px', fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
-                      background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.25)',
+                      background: 'rgba(34,197,94,0.1)', color: 'var(--green-ink)', border: '1px solid rgba(34,197,94,0.25)',
                     }}>{u.riskWhitelisted ? 'Revoke vouch' : 'Vouch for them'}</button>
-                    <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.3)', margin: 0, textAlign: 'center' }}>
+                    <p className="tnum" style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.3)', margin: 0, textAlign: 'center' }}>
                       ৳{(u.totalEarnings || 0).toLocaleString()} earned · {u.completedCampaigns || 0} campaigns
                     </p>
                   </div>
@@ -233,13 +232,13 @@ const FraudReview = () => {
                           <div key={sig.code} style={{ padding: 14, borderRadius: 12, background: 'rgba(var(--ink-rgb),0.02)', border: '1px solid rgba(var(--ink-rgb),0.05)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 4 }}>
                               <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{sig.label}</p>
-                              <span style={{ fontSize: 11, fontWeight: 800, color: '#fbbf24', whiteSpace: 'nowrap' }}>+{sig.weight}</span>
+                              <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--amber-ink)', whiteSpace: 'nowrap' }}>+{sig.weight}</span>
                             </div>
                             <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.45)', margin: 0 }}>{sig.detail}</p>
                           </div>
                         ))}
                         {assessment.whitelisted && (
-                          <p style={{ fontSize: 12, color: '#4ade80', margin: 0 }}>
+                          <p style={{ fontSize: 12, color: 'var(--green-ink)', margin: 0 }}>
                             Vouched by an admin — these signals stay visible but do not score.
                           </p>
                         )}

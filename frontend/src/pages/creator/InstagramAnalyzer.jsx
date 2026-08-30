@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
   RefreshCw, ExternalLink, AlertTriangle, CheckCircle2, ChevronDown,
   Users, UserPlus, LayoutGrid, Heart, MessageCircle, Eye, CalendarClock,
-  Activity, Clock, Camera, ShieldCheck, Lock, Globe, BadgeCheck, Briefcase, Sparkles,
+  Activity, Clock, Camera, ShieldCheck, Lock, Globe, BadgeCheck, Briefcase, Sparkles, FileText,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getMyInstagramAudit, runInstagramAudit, startIdentityVerification, checkIdentityVerification, getConnectStatus, startInstagramConnect, disconnectInstagram } from '../../services/instagram'
@@ -44,9 +44,9 @@ const TONE_COLOR = { warning: '#fbbf24', error: '#f87171', success: '#4ade80' }
 
 const BANNER_TONES = {
   error:   { bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.25)',  color: '#f87171', Icon: AlertTriangle },
-  warning: { bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)', color: '#fbbf24', Icon: AlertTriangle },
-  info:    { bg: 'rgba(6,182,212,0.08)',  border: 'rgba(6,182,212,0.25)',  color: '#67e8f9', Icon: null },
-  success: { bg: 'rgba(34,197,94,0.08)',  border: 'rgba(34,197,94,0.25)',  color: '#4ade80', Icon: CheckCircle2 },
+  warning: { bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)', color: 'var(--amber-ink)', Icon: AlertTriangle },
+  info:    { bg: 'rgba(6,182,212,0.08)',  border: 'rgba(6,182,212,0.25)',  color: 'var(--cyan-ink)', Icon: null },
+  success: { bg: 'rgba(34,197,94,0.08)',  border: 'rgba(34,197,94,0.25)',  color: 'var(--green-ink)', Icon: CheckCircle2 },
 }
 
 /* ── Helpers ───────────────────────────────────────────────────────────────── */
@@ -168,7 +168,7 @@ const Avatar = ({ src, name, size = 76 }) => {
   const [failed, setFailed] = useState(false)
   const showImg = Boolean(src) && !failed
   return (
-    <div style={{ width: size, height: size, borderRadius: '50%', padding: 3, background: IG_GRADIENT, flexShrink: 0, boxShadow: '0 0 28px rgba(253,29,29,0.22)' }}>
+    <div style={{ width: size, height: size, borderRadius: '50%', padding: 3, background: IG_GRADIENT, flexShrink: 0 }}>
       <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'var(--bg-2)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: Math.round(size * 0.36), fontWeight: 800, color: 'var(--text)' }}>
         {showImg
           ? <img src={src} alt="" referrerPolicy="no-referrer" onError={() => setFailed(true)} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -244,7 +244,7 @@ const ProfileHeader = ({ profile, username, eligibility, ownerVerified, fetchedA
         <div style={{ flex: 1, minWidth: 220 }}>
           <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>{name || 'Unknown account'}</h2>
           {handle && (
-            <a href={`https://www.instagram.com/${encodeURIComponent(handle)}/`} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#a78bfa', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+            <a href={`https://www.instagram.com/${encodeURIComponent(handle)}/`} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--violet-ink)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
               @{handle} <ExternalLink size={12} />
             </a>
           )}
@@ -277,7 +277,7 @@ const buildKpis = (profile, metrics) => {
 
   return [
     { key: 'followers', icon: Users,        color: '#06b6d4', label: 'Followers',      value: fmtCompact(profile.followers), sub: isNum(profile.followers) && Number(profile.followers) >= 1e4 ? fmtNum(profile.followers) : 'on Instagram' },
-    { key: 'following', icon: UserPlus,     color: '#a78bfa', label: 'Following',      value: fmtCompact(profile.following), sub: ratio != null ? `${ratio}× following / followers` : 'accounts followed', tone: ratio != null && ratio > 2 ? 'warning' : undefined },
+    { key: 'following', icon: UserPlus,     color: 'var(--violet-ink)', label: 'Following',      value: fmtCompact(profile.following), sub: ratio != null ? `${ratio}× following / followers` : 'accounts followed', tone: ratio != null && ratio > 2 ? 'warning' : undefined },
     { key: 'posts',     icon: LayoutGrid,   color: '#7c3aed', label: 'Posts',          value: fmtCompact(profile.posts),     sub: `${fmtNum(metrics.postsAnalyzed ?? 0)} analyzed` },
     { key: 'er',        icon: Activity,     color: '#ec4899', label: 'Engagement rate', value: er == null ? '—' : `${er}%`,
       sub: er == null ? 'could not be measured' : estimatedEr ? `estimated from ${basis} (likes hidden)` : 'likes + comments per post',
@@ -299,8 +299,8 @@ const KpiTile = ({ icon: Icon, color, label, value, sub, tone }) => (
     <div style={{ width: 36, height: 36, borderRadius: 10, background: `${color}1f`, border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
       <Icon size={16} style={{ color }} />
     </div>
-    <p style={{ fontSize: 24, fontWeight: 800, color: TONE_COLOR[tone] || '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.1, fontStyle: value === 'hidden' ? 'italic' : 'normal' }}>{value}</p>
-    <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.3)', margin: '6px 0 0' }}>{label}</p>
+    <p style={{ fontSize: 24, fontWeight: 800, color: TONE_COLOR[tone] || 'var(--text)', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.1, fontStyle: value === 'hidden' ? 'italic' : 'normal' }}>{value}</p>
+    <p style={{ fontSize: 12, fontWeight: 500, letterSpacing: 0, textTransform: 'none', color: 'rgba(var(--ink-rgb),0.45)', margin: '6px 0 0' }}>{label}</p>
     {sub && <p style={{ fontSize: 11, color: TONE_COLOR[tone] || 'rgba(var(--ink-rgb),0.4)', margin: '4px 0 0' }}>{sub}</p>}
   </div>
 )
@@ -328,14 +328,13 @@ const HealthGauge = ({ score, grade }) => {
           initial={{ strokeDashoffset: c }}
           animate={{ strokeDashoffset: c * (1 - s / 100) }}
           transition={{ duration: 1.1, delay: 0.25, ease: EASE }}
-          style={{ filter: `drop-shadow(0 0 8px ${color}99)` }}
         />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
         <span style={{ fontSize: 36, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.04em', lineHeight: 1 }}>{Math.round(s)}</span>
-        <span style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.35)', letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 4 }}>/ 100</span>
+        <span style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.35)', letterSpacing: 0, textTransform: 'none', marginTop: 4 }}>/ 100</span>
       </div>
-      <div style={{ position: 'absolute', right: 4, bottom: 4, width: 36, height: 36, borderRadius: '50%', background: 'var(--bg-2)', border: `2px solid ${color}`, color, fontWeight: 800, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 14px ${color}66` }}>
+      <div style={{ position: 'absolute', right: 4, bottom: 4, width: 36, height: 36, borderRadius: '50%', background: 'var(--bg-2)', border: `2px solid ${color}`, color, fontWeight: 800, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {grade || '?'}
       </div>
     </div>
@@ -362,7 +361,7 @@ const BreakdownBar = ({ item, index }) => {
           initial={{ width: 0 }}
           animate={{ width: `${ratio * 100}%` }}
           transition={{ duration: 0.9, delay: 0.3 + index * 0.08, ease: EASE }}
-          style={{ height: '100%', borderRadius: 6, background: color, boxShadow: `0 0 10px ${color}66` }}
+          style={{ height: '100%', borderRadius: 6, background: color }}
         />
       </div>
       {item.detail && <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', margin: '6px 0 0', lineHeight: 1.45 }}>{item.detail}</p>}
@@ -373,7 +372,7 @@ const BreakdownBar = ({ item, index }) => {
 const FlagList = ({ flags }) => {
   if (!flags.length) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 12, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#4ade80', fontSize: 12, fontWeight: 500 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 12, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: 'var(--green-ink)', fontSize: 12, fontWeight: 500 }}>
         <CheckCircle2 size={14} style={{ flexShrink: 0 }} /> No red flags detected
       </div>
     )
@@ -381,7 +380,7 @@ const FlagList = ({ flags }) => {
   return (
     <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
       {flags.map((flag, i) => (
-        <li key={`${i}-${flag}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', borderRadius: 12, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#fbbf24', fontSize: 12, lineHeight: 1.45 }}>
+        <li key={`${i}-${flag}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', borderRadius: 12, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: 'var(--amber-ink)', fontSize: 12, lineHeight: 1.45 }}>
           <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
           <span>{flag}</span>
         </li>
@@ -403,7 +402,7 @@ const HealthCard = ({ health, delay }) => {
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flex: '0 0 auto', marginInline: 'auto' }}>
           <HealthGauge score={health.score} grade={grade} />
-          <span style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.3)' }}>Health score</span>
+          <span style={{ fontSize: 12, fontWeight: 500, letterSpacing: 0, textTransform: 'none', color: 'rgba(var(--ink-rgb),0.45)' }}>Health score</span>
         </div>
         <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: 16 }}>
           {breakdown.length
@@ -412,7 +411,7 @@ const HealthCard = ({ health, delay }) => {
         </div>
       </div>
       <div style={{ marginTop: 20 }}>
-        <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.3)', margin: '0 0 8px' }}>Flags</p>
+        <p style={{ fontSize: 12, fontWeight: 500, letterSpacing: 0, textTransform: 'none', color: 'rgba(var(--ink-rgb),0.45)', margin: '0 0 8px' }}>Flags</p>
         <FlagList flags={flags} />
       </div>
     </Panel>
@@ -437,11 +436,11 @@ const AudienceCard = ({ audience, depth, delay }) => {
     <Panel delay={delay}>
       <SectionTitle icon={Users} color="#06b6d4">Audience quality</SectionTitle>
       <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 48, fontWeight: 800, color: q.color, letterSpacing: '-0.04em', lineHeight: 1, textShadow: pct != null ? `0 0 24px ${q.color}55` : 'none' }}>
+        <span style={{ fontSize: 48, fontWeight: 800, color: q.color, letterSpacing: '-0.04em', lineHeight: 1 }}>
           {pct == null ? '—' : `${pct}%`}
         </span>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.35)' }}>estimated fake followers</span>
+          <span style={{ fontSize: 12, fontWeight: 500, letterSpacing: 0, textTransform: 'none', color: 'rgba(var(--ink-rgb),0.45)' }}>Estimated fake followers</span>
           <span className={`badge ${q.badge}`} style={{ alignSelf: 'flex-start' }}>{q.label}</span>
         </div>
       </div>
@@ -459,7 +458,7 @@ const AudienceCard = ({ audience, depth, delay }) => {
                   <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{s.label || s.key}</p>
                   {s.detail && <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', margin: '3px 0 0', lineHeight: 1.45 }}>{s.detail}</p>}
                 </div>
-                <span style={{ fontSize: 13, fontWeight: 700, color: active ? '#fbbf24' : 'rgba(var(--ink-rgb),0.5)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: active ? 'var(--amber-ink)' : 'rgba(var(--ink-rgb),0.5)', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   {s.value == null || s.value === '' ? '—' : String(s.value)}
                 </span>
               </div>
@@ -505,7 +504,7 @@ const PostRow = ({ post }) => {
       <td style={TD_NUM}>{post.views == null ? '—' : fmtNum(post.views)}</td>
       <td style={{ textAlign: 'right' }}>
         {post.url && (
-          <a href={post.url} target="_blank" rel="noreferrer" aria-label="Open post on Instagram" style={{ color: '#a78bfa', display: 'inline-flex', padding: 4 }}>
+          <a href={post.url} target="_blank" rel="noreferrer" aria-label="Open post on Instagram" style={{ color: 'var(--violet-ink)', display: 'inline-flex', padding: 4 }}>
             <ExternalLink size={14} />
           </a>
         )}
@@ -523,7 +522,7 @@ const PostsTable = ({ posts, metrics, delay }) => {
       </SectionTitle>
       {posts.length === 0 ? (
         <div className="empty-state" style={{ padding: '40px 24px' }}>
-          <p>🗒️</p>
+          <p><FileText size={28} style={{ color: 'rgba(var(--ink-rgb),0.3)' }} strokeWidth={1.5} /></p>
           <p>No recent posts were found on this account</p>
         </div>
       ) : (
@@ -584,7 +583,7 @@ const CommentSamples = ({ comments, delay }) => {
         <div style={{ padding: '0 24px 20px', maxHeight: 420, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {comments.map((c, i) => (
             <div key={`${c.shortcode || ''}-${c.username || ''}-${i}`} style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 12, background: 'rgba(var(--ink-rgb),0.02)', border: '1px solid rgba(var(--ink-rgb),0.05)' }}>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', color: '#a78bfa', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', color: 'var(--violet-ink)', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {initialOf(c.username)}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -606,30 +605,30 @@ const CommentSamples = ({ comments, delay }) => {
 
 const NoHandleState = () => (
   <div className="empty-state" style={{ maxWidth: 620, margin: '0 auto' }}>
-    <p>📸</p>
+    <p><Camera size={28} style={{ color: 'rgba(var(--ink-rgb),0.3)' }} strokeWidth={1.5} /></p>
     <p>Add your Instagram handle in Profile first</p>
-    <Link to="/creator/profile" className="btn-primary" style={{ marginTop: 18, textDecoration: 'none' }}>Go to Profile</Link>
+    <Link to="/creator/profile" className="btn-primary" style={{ marginTop: 18, textDecoration: 'none' }}>Go to profile</Link>
   </div>
 )
 
 const RunAuditCard = ({ handle, running, onRun, precheckPending }) => (
   <Panel style={{ maxWidth: 620, margin: '0 auto', padding: '40px 32px', textAlign: 'center' }}>
-    <div style={{ width: 60, height: 60, borderRadius: 14, background: IG_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', boxShadow: '0 0 32px rgba(253,29,29,0.25)' }}>
+    <div style={{ width: 60, height: 60, borderRadius: 14, background: IG_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
       <InstagramGlyph size={28} />
     </div>
     <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>Run your first audit</h2>
     <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.5)', lineHeight: 1.6, margin: '10px auto 0', maxWidth: 460 }}>
-      We&apos;ll pull the latest posts and a follower sample for <strong style={{ color: '#a78bfa' }}>@{handle}</strong> to score account health,
+      We&apos;ll pull the latest posts and a follower sample for <strong style={{ color: 'var(--violet-ink)' }}>@{handle}</strong> to score account health,
       estimate fake followers and confirm your FlexTag eligibility. Takes about 15 seconds.
     </p>
     {precheckPending && (
-      <p style={{ fontSize: 12, color: '#fbbf24', margin: '10px auto 0', maxWidth: 460 }}>
+      <p style={{ fontSize: 12, color: 'var(--amber-ink)', margin: '10px auto 0', maxWidth: 460 }}>
         Your handle hasn&apos;t been checked yet — running the audit also confirms eligibility.
       </p>
     )}
     <button type="button" className="btn-primary" disabled={running} onClick={onRun} style={{ marginTop: 22, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
       {running
-        ? <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2, borderColor: 'rgba(var(--ink-rgb),0.3)', borderTopColor: '#fff' }} /> Pulling your latest posts… ~15 s</>
+        ? <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2, borderColor: 'rgba(11,10,20,0.2)', borderTopColor: 'var(--btn-fg)' }} /> Pulling your latest posts… ~15 s</>
         : <><Activity size={15} /> Run my audit</>}
     </button>
   </Panel>
@@ -695,7 +694,7 @@ const ConnectCard = ({ onConnected }) => {
 
   return (
     <Panel delay={0} style={{ border: '1px solid rgba(6,182,212,0.35)', background: 'rgba(6,182,212,0.06)' }}>
-      <SectionTitle icon={ShieldCheck} color="#67e8f9" right={state.connected ? <span style={{ color: '#4ade80', fontWeight: 700 }}>Connected</span> : 'Recommended'}>
+      <SectionTitle icon={ShieldCheck} color="var(--cyan-ink)" right={state.connected ? <span style={{ color: 'var(--green-ink)', fontWeight: 700 }}>Connected</span> : 'Recommended'}>
         {state.connected ? `Connected as @${state.username}` : 'Connect your Instagram'}
       </SectionTitle>
       {msg && <Banner tone={msg.tone} text={msg.text} />}
@@ -754,7 +753,7 @@ const IdentityCard = ({ handle, onVerified }) => {
 
   return (
     <Panel delay={0} style={{ border: '1px solid rgba(124,58,237,0.35)', background: 'rgba(124,58,237,0.06)' }}>
-      <SectionTitle icon={ShieldCheck} color="#a78bfa" right={phase === 'done' ? <span style={{ color: '#4ade80', fontWeight: 700 }}>Verified</span> : 'Required for instant cashback'}>
+      <SectionTitle icon={ShieldCheck} color="var(--violet-ink)" right={phase === 'done' ? <span style={{ color: 'var(--green-ink)', fontWeight: 700 }}>Verified</span> : 'Required for instant cashback'}>
         Prove you own @{handle}
       </SectionTitle>
       {msg && <Banner tone={msg.tone} text={msg.text} />}
@@ -775,7 +774,7 @@ const IdentityCard = ({ handle, onVerified }) => {
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button type="button" className="btn-primary" disabled={busy} onClick={check} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
               {phase === 'checking'
-                ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, borderColor: 'rgba(var(--ink-rgb),0.3)', borderTopColor: '#fff' }} /> Checking your bio…</>
+                ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, borderColor: 'rgba(11,10,20,0.2)', borderTopColor: 'var(--btn-fg)' }} /> Checking your bio…</>
                 : <><ShieldCheck size={14} /> Verify now</>}
             </button>
           </div>
@@ -787,7 +786,7 @@ const IdentityCard = ({ handle, onVerified }) => {
           </p>
           <button type="button" className="btn-primary" disabled={busy} onClick={start} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
             {phase === 'loading'
-              ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, borderColor: 'rgba(var(--ink-rgb),0.3)', borderTopColor: '#fff' }} /> One moment…</>
+              ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, borderColor: 'rgba(11,10,20,0.2)', borderTopColor: 'var(--btn-fg)' }} /> One moment…</>
               : <><ShieldCheck size={14} /> Get my code</>}
           </button>
         </div>
@@ -898,7 +897,7 @@ const InstagramAnalyzer = () => {
     <div className="page-root">
       <div className="page-header">
         <div className="page-label"><span>Creator · Instagram</span></div>
-        <h1 className="page-title">Account Audit</h1>
+        <h1 className="page-title">Account audit</h1>
         <p className="page-subtitle">
           {shownHandle
             ? <>Health, audience quality and recent performance for <strong style={{ color: 'var(--text)' }}>@{shownHandle}</strong></>

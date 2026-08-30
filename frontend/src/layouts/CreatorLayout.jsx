@@ -25,24 +25,24 @@ const InstagramGlyph = ({ size = 17, strokeWidth = 1.6, style, ...rest }) => (
 )
 
 const icons = {
-  dashboard:   <NavIcon icon={LayoutDashboard} color="#7c3aed" />,
-  catalog:     <NavIcon icon={ShoppingBag}      color="#06b6d4" />,
-  cart:        <NavIcon icon={ShoppingCart}     color="#f59e0b" />,
-  wishlist:    <NavIcon icon={Heart}            color="#ec4899" />,
-  orders:      <NavIcon icon={Package}          color="#10b981" />,
-  post:        <NavIcon icon={Upload}           color="#8b5cf6" />,
-  caption:     <NavIcon icon={Wand2}            color="#ec4899" />,
-  tracker:     <NavIcon icon={Clock4}           color="#06b6d4" />,
-  wallet:      <NavIcon icon={Wallet}           color="#22c55e" />,
-  earnings:    <NavIcon icon={LineChart}        color="#4ade80" />,
-  leaderboard: <NavIcon icon={TrendingUp}       color="#f97316" />,
-  portfolio:   <NavIcon icon={Briefcase}        color="#a78bfa" />,
-  profile:     <NavIcon icon={UserCircle2}      color="#7c3aed" />,
-  faq:         <NavIcon icon={HelpCircle}       color="#64748b" />,
-  ticket:      <NavIcon icon={Ticket}           color="#64748b" />,
-  chat:        <NavIcon icon={MessageSquare}    color="#06b6d4" />,
-  disputes:    <NavIcon icon={ShieldAlert}      color="#ef4444" />,
-  instagram:   <NavIcon icon={InstagramGlyph}   color="#fd1d1d" />,
+  dashboard:   <NavIcon icon={LayoutDashboard} />,
+  catalog:     <NavIcon icon={ShoppingBag} />,
+  cart:        <NavIcon icon={ShoppingCart} />,
+  wishlist:    <NavIcon icon={Heart} />,
+  orders:      <NavIcon icon={Package} />,
+  post:        <NavIcon icon={Upload} />,
+  caption:     <NavIcon icon={Wand2} />,
+  tracker:     <NavIcon icon={Clock4} />,
+  wallet:      <NavIcon icon={Wallet} />,
+  earnings:    <NavIcon icon={LineChart} />,
+  leaderboard: <NavIcon icon={TrendingUp} />,
+  portfolio:   <NavIcon icon={Briefcase} />,
+  profile:     <NavIcon icon={UserCircle2} />,
+  faq:         <NavIcon icon={HelpCircle} />,
+  ticket:      <NavIcon icon={Ticket} />,
+  chat:        <NavIcon icon={MessageSquare} />,
+  disputes:    <NavIcon icon={ShieldAlert} />,
+  instagram:   <NavIcon icon={InstagramGlyph} />,
 }
 
 // Labels are translated per render so the sidebar follows the language toggle.
@@ -62,7 +62,7 @@ const creatorLinks = (t) => [
   { path: '/creator/profile',             label: t('menu.profile'),          icon: icons.profile },
   { path: '/creator/instagram-analyzer',  label: t('menu.accountAudit'),     icon: icons.instagram, badge: 'IG' },
   { path: '/creator/disputes',            label: t('menu.disputes'),         icon: icons.disputes, badgeKey: 'disputes' },
-  { path: '/support/chat',                label: t('menu.liveChat'),         icon: icons.chat, badge: '●' },
+  { path: '/support/chat',                label: t('menu.liveChat'),         icon: icons.chat },
 ]
 
 const CreatorLayout = () => {

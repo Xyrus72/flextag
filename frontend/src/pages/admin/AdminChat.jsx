@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { User, Building2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useSocket } from '../../context/SocketContext'
 import {
@@ -22,9 +23,9 @@ const RefreshIcon = () => <Icon d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3
 const UsersIcon   = () => <Icon d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
 
 const ROLE_BADGE = {
-  admin:   { label: 'Admin',   bg: 'rgba(239,68,68,0.15)',   text: '#f87171', border: 'rgba(239,68,68,0.3)' },
-  brand:   { label: 'Brand',   bg: 'rgba(16,185,129,0.15)',  text: '#34d399', border: 'rgba(16,185,129,0.3)' },
-  creator: { label: 'Creator', bg: 'rgba(124,58,237,0.15)',  text: '#a78bfa', border: 'rgba(124,58,237,0.3)' },
+  admin:   { label: 'Admin',   bg: 'rgba(239,68,68,0.15)',   text: '#f87171', border: 'rgba(239,68,68,0.3)', badge: 'error' },
+  brand:   { label: 'Brand',   bg: 'rgba(16,185,129,0.15)',  text: '#34d399', border: 'rgba(16,185,129,0.3)', badge: 'success' },
+  creator: { label: 'Creator', bg: 'rgba(124,58,237,0.15)',  text: '#a78bfa', border: 'rgba(124,58,237,0.3)', badge: 'info' },
 }
 
 const Avatar = ({ user, size = 40 }) => {
@@ -32,10 +33,10 @@ const Avatar = ({ user, size = 40 }) => {
   const name = user?.companyName || user?.name || 'U'
   const role = user?.role || 'creator'
   const gradient = role === 'brand'
-    ? 'linear-gradient(135deg,#10b981,#0d9488)'
+    ? '#10b981'
     : role === 'admin'
-    ? 'linear-gradient(135deg,#ef4444,#dc2626)'
-    : 'linear-gradient(135deg,#7c3aed,#06b6d4)'
+    ? '#ef4444'
+    : '#7c3aed'
   return (
     <div style={{ width: size, height: size, borderRadius: Math.round(size * 0.3), background: gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.4, fontWeight: 800, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
       {src ? <img src={src} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : name[0].toUpperCase()}
@@ -264,7 +265,7 @@ export default function AdminChat() {
               {totalUnread} unread
             </span>
           )}
-          <span style={{ padding: '6px 14px', borderRadius: 999, background: 'rgba(124,58,237,0.12)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.25)', fontSize: 12, fontWeight: 700 }}>
+          <span style={{ padding: '6px 14px', borderRadius: 999, background: 'rgba(124,58,237,0.12)', color: 'var(--violet-ink)', border: '1px solid rgba(124,58,237,0.25)', fontSize: 12, fontWeight: 700 }}>
             <UsersIcon /> {conversations.length} conversations
           </span>
           <button onClick={loadConversations}
@@ -302,6 +303,8 @@ export default function AdminChat() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--text)', fontSize: 13, flex: 1 }}
+                onFocus={e => { e.target.parentElement.style.borderColor = 'rgba(124,58,237,0.5)'; e.target.parentElement.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.1)' }}
+                onBlur={e => { e.target.parentElement.style.borderColor = 'rgba(var(--ink-rgb),0.08)'; e.target.parentElement.style.boxShadow = 'none' }}
               />
             </div>
           </div>
@@ -323,8 +326,9 @@ export default function AdminChat() {
                   : ''
 
                 return (
-                  <div key={conv._id} onClick={() => { setLoadingMsgs(true); setActiveConv(conv) }} style={{
+                  <button type="button" key={conv._id} onClick={() => { setLoadingMsgs(true); setActiveConv(conv) }} style={{
                     padding: '11px 13px', borderRadius: 14, cursor: 'pointer', transition: 'all 0.2s',
+                    width: '100%', textAlign: 'left', font: 'inherit',
                     background: isSelected ? 'rgba(124,58,237,0.12)' : 'rgba(var(--ink-rgb),0.02)',
                     border: isSelected ? '1px solid rgba(124,58,237,0.35)' : '1px solid rgba(var(--ink-rgb),0.04)',
                   }}>
@@ -338,9 +342,7 @@ export default function AdminChat() {
                           <span style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.3)', flexShrink: 0 }}>{timeAgo}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ padding: '1px 6px', borderRadius: 5, fontSize: 9, fontWeight: 700, background: badge.bg, color: badge.text, border: `1px solid ${badge.border}`, flexShrink: 0 }}>
-                            {badge.label}
-                          </span>
+                          <span className={`badge badge-${badge.badge}`} style={{ flexShrink: 0 }}>{badge.label}</span>
                           <span style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {conv.lastMessage || 'No messages yet'}
                           </span>
@@ -352,7 +354,7 @@ export default function AdminChat() {
                         </span>
                       )}
                     </div>
-                  </div>
+                  </button>
                 )
               })
             )}
@@ -372,16 +374,14 @@ export default function AdminChat() {
                       {partner?.companyName || partner?.name}
                     </h2>
                     {partner && (
-                      <span style={{ padding: '2px 8px', borderRadius: 999, fontSize: 10, fontWeight: 700, background: ROLE_BADGE[partner.role]?.bg, color: ROLE_BADGE[partner.role]?.text, border: `1px solid ${ROLE_BADGE[partner.role]?.border}` }}>
-                        {partner.role?.toUpperCase()}
-                      </span>
+                      <span className={`badge badge-${ROLE_BADGE[partner.role]?.badge || 'neutral'}`}>{partner.role}</span>
                     )}
                     {partner?.isVerified && (
                       <span style={{ padding: '2px 8px', borderRadius: 999, fontSize: 10, fontWeight: 700, background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}>✓ Verified</span>
                     )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }} />
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399' }} />
                     <span style={{ fontSize: 11, color: '#34d399', fontWeight: 600 }}>
                       {typingUser ? `${typingUser} is typing…` : 'Live – Real-Time Database Chat'}
                     </span>
@@ -390,7 +390,7 @@ export default function AdminChat() {
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ margin: 0, fontSize: 11, color: 'rgba(var(--ink-rgb),0.3)' }}>{partner?.email}</p>
                   {partner?.instagramHandle && (
-                    <p style={{ margin: '2px 0 0', fontSize: 11, color: '#a78bfa' }}>@{partner.instagramHandle}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--violet-ink)' }}>@{partner.instagramHandle}</p>
                   )}
                 </div>
               </div>
@@ -399,7 +399,7 @@ export default function AdminChat() {
               <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {loadingMsgs ? (
                   <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid rgba(124,58,237,0.3)', borderTopColor: '#7c3aed', animation: 'spin 0.8s linear infinite' }} />
+                    <div className="spinner" />
                   </div>
                 ) : messages.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(var(--ink-rgb),0.25)' }}>
@@ -422,11 +422,11 @@ export default function AdminChat() {
                           <div style={{
                             padding: '11px 16px', borderRadius: 14, fontSize: 14, lineHeight: 1.55,
                             ...(isMe
-                              ? { background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', borderBottomRightRadius: 4 }
+                              ? { background: 'var(--purple)', color: '#fff', borderBottomRightRadius: 4 }
                               : { background: 'rgba(var(--ink-rgb),0.06)', color: '#e4e4e7', borderBottomLeftRadius: 4, border: '1px solid rgba(var(--ink-rgb),0.08)' }
                             )
                           }}>
-                            {!isMe && <p style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa', margin: '0 0 4px' }}>{senderName}</p>}
+                            {!isMe && <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--violet-ink)', margin: '0 0 4px' }}>{senderName}</p>}
                             {msg.text}
                           </div>
                           <p style={{ fontSize: 10, color: 'rgba(var(--ink-rgb),0.3)', marginTop: 4, textAlign: isMe ? 'right' : 'left' }}>
@@ -443,7 +443,7 @@ export default function AdminChat() {
               {/* Admin Input Bar */}
               <div style={{ padding: '14px 18px', borderTop: '1px solid rgba(var(--ink-rgb),0.06)', background: 'rgba(0,0,0,0.25)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }} />
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }} />
                   <span style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.4)', fontWeight: 600 }}>
                     Replying as FlexTag Admin
                   </span>
@@ -454,11 +454,10 @@ export default function AdminChat() {
                     onChange={handleInputChange}
                     placeholder={`Reply to ${partner?.companyName || partner?.name || 'user'}…`}
                     style={{ flex: 1, padding: '12px 16px', borderRadius: 12, background: 'rgba(var(--ink-rgb),0.05)', border: '1px solid rgba(var(--ink-rgb),0.1)', color: 'var(--text)', fontSize: 14, outline: 'none', fontFamily: 'inherit' }}
-                    onFocus={e => e.target.style.borderColor = 'rgba(239,68,68,0.5)'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(var(--ink-rgb),0.1)'}
+                    onFocus={e => { e.target.style.borderColor = 'rgba(239,68,68,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.1)' }}
+                    onBlur={e => { e.target.style.borderColor = 'rgba(var(--ink-rgb),0.1)'; e.target.style.boxShadow = 'none' }}
                   />
-                  <button type="submit" disabled={!input.trim() || sending}
-                    style={{ padding: '12px 22px', borderRadius: 12, background: 'linear-gradient(135deg,#ef4444,#dc2626)', color: '#fff', border: 'none', cursor: 'pointer', opacity: (!input.trim() || sending) ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 14, fontFamily: 'inherit' }}>
+                  <button type="submit" disabled={!input.trim() || sending} className="btn-primary">
                     <SendIcon /> Send
                   </button>
                 </form>
@@ -475,11 +474,11 @@ export default function AdminChat() {
               </p>
               <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, width: '100%', maxWidth: 380 }}>
                 {[
-                  { icon: '👤', label: 'Creator Conversations', count: roleCounts.creator, color: '#a78bfa' },
-                  { icon: '🏢', label: 'Brand Conversations',   count: roleCounts.brand,   color: '#34d399' },
+                  { Icon: User,     label: 'Creator Conversations', count: roleCounts.creator, color: 'var(--violet-ink)' },
+                  { Icon: Building2, label: 'Brand Conversations',   count: roleCounts.brand,   color: '#34d399' },
                 ].map(card => (
                   <div key={card.label} style={{ padding: '16px 18px', borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)', textAlign: 'center' }}>
-                    <div style={{ fontSize: 28, marginBottom: 6 }}>{card.icon}</div>
+                    <card.Icon size={28} strokeWidth={1.5} style={{ color: card.color, marginBottom: 6, display: 'inline-block' }} />
                     <div style={{ fontSize: 24, fontWeight: 800, color: card.color }}>{card.count}</div>
                     <div style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.4)', marginTop: 2 }}>{card.label}</div>
                   </div>

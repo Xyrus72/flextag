@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Mail, Inbox, Package, AlertTriangle } from 'lucide-react'
 import { getOrders } from '../../services/orders'
 import { getPosts } from '../../services/posts'
 
@@ -35,7 +36,7 @@ const CampaignTracker = () => {
                 name:      o.product,
                 brand:     o.brand,
                 cashback:  o.cashbackAmount,
-                image:     o.image || '📦',
+                image:     o.image || null,
                 status:    'retention',
                 retentionDaysLeft:  retDaysLeft,
                 retentionDaysTotal: retDaysTotal,
@@ -47,7 +48,7 @@ const CampaignTracker = () => {
               name:         o.product,
               brand:        o.brand,
               cashback:     o.cashbackAmount,
-              image:        o.image || '📦',
+              image:        o.image || null,
               status:       post ? `post_${post.status}` : (o.status === 'delivered' ? 'post_pending' : o.status),
               deadlineHours: hoursLeft,
             }
@@ -71,7 +72,7 @@ const CampaignTracker = () => {
   }
 
   const urgencyColor = (hours) => {
-    if (hours === null) return 'text-zinc-400'
+    if (hours === null) return 'text-[var(--text-muted)]'
     if (hours <= 6)  return 'text-red-400'
     if (hours <= 24) return 'text-yellow-400'
     if (hours <= 48) return 'text-violet-400'
@@ -79,19 +80,18 @@ const CampaignTracker = () => {
   }
 
   const urgencyBg = (hours) => {
-    if (hours === null) return 'bg-white/[0.03] border-white/5'
+    if (hours === null) return 'bg-[rgba(var(--ink-rgb),0.03)] border-[rgba(var(--ink-rgb),0.05)]'
     if (hours <= 6)  return 'bg-red-500/10 border-red-500/20'
     if (hours <= 24) return 'bg-yellow-500/10 border-yellow-500/20'
     if (hours <= 48) return 'bg-violet-500/10 border-violet-500/20'
-    return 'bg-white/[0.03] border-white/5'
+    return 'bg-[rgba(var(--ink-rgb),0.03)] border-[rgba(var(--ink-rgb),0.05)]'
   }
 
   const statusLabel = (s) => {
-    if (s === 'post_pending')   return 'Post Required'
-    if (s === 'post_pending')   return 'Post Required'
+    if (s === 'post_pending')   return 'Post required'
     if (s === 'post_approved')  return 'Verified ✓'
     if (s === 'post_rejected')  return 'Rejected ✗'
-    if (s === 'retention')      return 'In Retention'
+    if (s === 'retention')      return 'In retention'
     if (s === 'processing')     return 'Processing'
     if (s === 'packed')         return 'Packed'
     if (s === 'shipped')        return 'Shipped'
@@ -103,27 +103,27 @@ const CampaignTracker = () => {
     <div className="page-root">
       <div className="page-header">
         <div className="page-label"><span>Tracking</span></div>
-        <h1 className="page-title">Campaign Tracker</h1>
+        <h1 className="page-title">Campaign tracker</h1>
         <p className="page-subtitle">Track your orders and posting deadlines in real-time</p>
       </div>
 
       <div className="p-4 rounded-2xl bg-violet-500/5 border border-violet-500/15 mb-6 flex items-start gap-3">
-        <span className="text-xl flex-shrink-0">📧</span>
+        <Mail size={16} style={{ color: 'var(--violet-ink)', flexShrink: 0, marginTop: 2 }} strokeWidth={1.5} />
         <div>
-          <p className="text-sm font-semibold text-violet-400">Automated Reminders Active</p>
-          <p className="text-xs text-zinc-500 mt-0.5">You'll receive email reminders at 48h, 24h, and 6h before each deadline.</p>
+          <p className="text-sm font-semibold text-violet-400">Automated reminders are on</p>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Reminder emails go out at 48h, 24h, and 6h before each deadline.</p>
         </div>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+          <div className="spinner" />
         </div>
       ) : campaigns.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-4xl mb-3">📭</p>
-          <p className="text-lg text-zinc-400">No active campaigns</p>
-          <p className="text-sm text-zinc-600">Place orders from the catalog to get started</p>
+          <p className="mb-3"><Inbox size={36} style={{ color: 'rgba(var(--ink-rgb),0.3)', margin: '0 auto' }} strokeWidth={1.5} /></p>
+          <p className="text-lg" style={{ color: 'var(--text-muted)' }}>No active campaigns</p>
+          <p className="text-sm" style={{ color: 'var(--text-dim)' }}>Place orders from the catalog to get started</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -132,21 +132,25 @@ const CampaignTracker = () => {
             return (
               <div key={c.id} className={`p-5 rounded-2xl border transition-all ${urgencyBg(c.deadlineHours)}`}>
                 <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-white/5 flex items-center justify-center text-3xl flex-shrink-0">{c.image}</div>
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ background: 'rgba(var(--ink-rgb),0.05)' }}>
+                    {c.image && c.image.startsWith('http')
+                      ? <img src={c.image} alt="" className="w-14 h-14 rounded-xl object-cover" />
+                      : <Package size={22} style={{ color: 'rgba(var(--ink-rgb),0.3)' }} strokeWidth={1.5} />}
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white">{c.name}</p>
-                    <p className="text-xs text-zinc-500 mb-3">{c.brand}</p>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{c.name}</p>
+                    <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>{c.brand}</p>
 
                     {c.status === 'retention' ? (
                       <div className="flex items-center gap-3">
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-zinc-500">Retention Progress</span>
+                            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Retention progress</span>
                             <span className="text-xs text-emerald-400 font-semibold">
                               {Math.round(c.retentionDaysTotal - c.retentionDaysLeft)}/{c.retentionDaysTotal} days
                             </span>
                           </div>
-                          <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
+                          <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'rgba(var(--ink-rgb),0.05)' }}>
                             <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all"
                               style={{ width: `${((c.retentionDaysTotal - c.retentionDaysLeft) / c.retentionDaysTotal) * 100}%` }} />
                           </div>
@@ -158,23 +162,25 @@ const CampaignTracker = () => {
                         <div className="flex items-center gap-2">
                           {[{ v: cd.d, l: 'days' }, { v: cd.h, l: 'hrs' }, { v: cd.m, l: 'min' }].map((t, i) => (
                             <div key={i} className="text-center">
-                              <div className={`text-2xl font-extrabold font-mono ${urgencyColor(c.deadlineHours)}`}>{String(t.v).padStart(2, '0')}</div>
-                              <div className="text-[10px] text-zinc-600 uppercase">{t.l}</div>
+                              <div className={`text-2xl font-extrabold tnum ${urgencyColor(c.deadlineHours)}`}>{String(t.v).padStart(2, '0')}</div>
+                              <div className="text-[10px] uppercase" style={{ color: 'var(--text-dim)' }}>{t.l}</div>
                             </div>
                           ))}
                         </div>
                         {c.deadlineHours <= 6 && (
-                          <span className="px-3 py-1 rounded-full bg-red-500/15 text-red-400 text-xs font-bold animate-pulse">⚠ Urgent</span>
+                          <span className="px-3 py-1 rounded-full bg-red-500/15 text-red-400 text-xs font-bold inline-flex items-center gap-1">
+                            <AlertTriangle size={12} strokeWidth={1.75} /> Urgent
+                          </span>
                         )}
                       </div>
                     ) : (
-                      <p className="text-xs text-zinc-500">{statusLabel(c.status)}</p>
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{statusLabel(c.status)}</p>
                     )}
                   </div>
 
                   <div className="text-right flex-shrink-0">
                     <p className="text-sm font-bold text-emerald-400">৳{c.cashback?.toLocaleString()}</p>
-                    <p className="text-[10px] text-zinc-600 uppercase mt-1">{statusLabel(c.status)}</p>
+                    <p className="text-[10px] uppercase mt-1" style={{ color: 'var(--text-dim)' }}>{statusLabel(c.status)}</p>
                   </div>
                 </div>
               </div>

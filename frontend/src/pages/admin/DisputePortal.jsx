@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Scale } from 'lucide-react'
 import { getDisputes, replyToDispute, investigateDispute, resolveDispute } from '../../services/disputes'
 
 /**
@@ -11,10 +12,10 @@ import { getDisputes, replyToDispute, investigateDispute, resolveDispute } from 
  */
 
 const STATUS_STYLE = {
-  open:           { label: 'Open',           color: '#fbbf24', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
-  awaiting_brand: { label: 'Awaiting brand', color: '#fbbf24', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
-  investigating:  { label: 'Under review',   color: '#67e8f9', bg: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.3)' },
-  resolved:       { label: 'Resolved',       color: '#4ade80', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)' },
+  open:           { label: 'Open',           color: 'var(--amber-ink)', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', badge: 'warning' },
+  awaiting_brand: { label: 'Awaiting brand', color: 'var(--amber-ink)', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', badge: 'warning' },
+  investigating:  { label: 'Under review',   color: 'var(--cyan-ink)', bg: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.3)', badge: 'cyan' },
+  resolved:       { label: 'Resolved',       color: 'var(--green-ink)', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)', badge: 'success' },
 }
 
 const OUTCOMES = [
@@ -91,7 +92,7 @@ const DisputePortal = () => {
           padding: '10px 14px', borderRadius: 12, marginBottom: 16, fontSize: 13,
           background: banner.kind === 'ok' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
           border: `1px solid ${banner.kind === 'ok' ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`,
-          color: banner.kind === 'ok' ? '#4ade80' : '#f87171',
+          color: banner.kind === 'ok' ? 'var(--green-ink)' : '#f87171',
         }}>{banner.text}</div>
       )}
 
@@ -110,7 +111,7 @@ const DisputePortal = () => {
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}><div className="spinner" /></div>
       ) : filtered.length === 0 ? (
-        <div className="empty-state"><p style={{ fontSize: 28, marginBottom: 8 }}>⚖️</p><p>No {filter === 'all' ? '' : STATUS_STYLE[filter]?.label.toLowerCase()} disputes</p></div>
+        <div className="empty-state"><Scale size={28} strokeWidth={1.5} style={{ opacity: 0.5, marginBottom: 10 }} /><p>No {filter === 'all' ? '' : STATUS_STYLE[filter]?.label.toLowerCase()} disputes</p></div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {filtered.map(d => {
@@ -124,17 +125,17 @@ const DisputePortal = () => {
                     <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
                       {d.orderId?.product || 'Order'} · {d.orderId?.orderId || ''}
                     </p>
-                    <span style={{ padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 800, color: st.color, background: st.bg, border: `1px solid ${st.border}` }}>{st.label}</span>
+                    <span className={`badge badge-${st.badge}`}>{st.label}</span>
                     <span style={{ marginLeft: 'auto', fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)' }}>{new Date(d.createdAt).toLocaleString()}</span>
                   </div>
-                  <p style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)', margin: '0 0 10px' }}>
+                  <p className="tnum" style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.35)', margin: '0 0 10px' }}>
                     {d.creatorId?.name || 'Creator'} vs {d.brandId?.companyName || d.brandId?.name || 'Brand'} · ৳{d.amount?.toLocaleString()} · {String(d.type || '').replace(/_/g, ' ')}
                   </p>
                   <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.6)', margin: 0 }}>{d.description}</p>
 
                   {d.status === 'resolved' ? (
                     <div style={{ marginTop: 14, padding: 14, borderRadius: 12, background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)' }}>
-                      <p style={{ fontSize: 12, fontWeight: 800, color: '#4ade80', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      <p className="tnum" style={{ fontSize: 12, fontWeight: 800, color: 'var(--green-ink)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                         {String(d.resolutionType || 'other').replace(/_/g, ' ')}{d.refundAmount > 0 ? ` · ৳${d.refundAmount.toLocaleString()} refunded` : ''}
                       </p>
                       <p style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.6)', margin: 0 }}>{d.resolution}</p>
@@ -148,7 +149,7 @@ const DisputePortal = () => {
                       {d.status !== 'investigating' && (
                         <button onClick={() => act(d._id, () => investigateDispute(d._id))} disabled={busy === d._id} style={{
                           padding: '7px 14px', fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
-                          background: 'rgba(6,182,212,0.1)', color: '#67e8f9', border: '1px solid rgba(6,182,212,0.25)',
+                          background: 'rgba(6,182,212,0.1)', color: 'var(--cyan-ink)', border: '1px solid rgba(6,182,212,0.25)',
                         }}>Take it on</button>
                       )}
                     </div>
@@ -177,7 +178,7 @@ const DisputePortal = () => {
                     {(d.evidence || []).length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
                         {d.evidence.map((url, i) => (
-                          <a key={url} href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#67e8f9' }}>Evidence {i + 1} ↗</a>
+                          <a key={url} href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--cyan-ink)' }}>Evidence {i + 1} ↗</a>
                         ))}
                       </div>
                     )}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { BarChart3 } from 'lucide-react'
 import { getCampaigns } from '../../services/campaigns'
 import { getCampaignReport, shareCampaignReport, unshareCampaignReport } from '../../services/campaigns'
 import { API_URL } from '../../config'
@@ -18,8 +19,8 @@ const Stat = ({ value, label, accent }) => (
     background: accent ? 'rgba(6,182,212,0.08)' : 'rgba(var(--ink-rgb),0.03)',
     border: `1px solid ${accent ? 'rgba(6,182,212,0.4)' : 'rgba(var(--ink-rgb),0.07)'}`,
   }}>
-    <p style={{ fontSize: 24, fontWeight: 800, color: accent ? '#67e8f9' : 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>{value}</p>
-    <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(var(--ink-rgb),0.4)', margin: '6px 0 0' }}>{label}</p>
+    <p className="tnum" style={{ fontSize: 24, fontWeight: 800, color: accent ? 'var(--cyan-ink)' : 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>{value}</p>
+    <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', margin: '6px 0 0' }}>{label}</p>
   </div>
 )
 
@@ -34,6 +35,7 @@ const CampaignReport = () => {
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [shareError, setShareError] = useState('')
 
   useEffect(() => {
     let alive = true
@@ -65,6 +67,7 @@ const CampaignReport = () => {
 
   const toggleShare = async () => {
     setBusy(true)
+    setShareError('')
     try {
       if (shareToken) {
         await unshareCampaignReport(selectedId)
@@ -73,7 +76,9 @@ const CampaignReport = () => {
         const d = await shareCampaignReport(selectedId)
         setShareToken(d.shareToken)
       }
-    } catch { /* row state speaks for itself */ } finally { setBusy(false) }
+    } catch {
+      setShareError('Could not update sharing — try again')
+    } finally { setBusy(false) }
   }
 
   const copyLink = () => {
@@ -115,19 +120,20 @@ const CampaignReport = () => {
             <button onClick={toggleShare} disabled={busy} style={{
               padding: '9px 16px', fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
               background: shareToken ? 'rgba(239,68,68,0.1)' : 'rgba(124,58,237,0.15)',
-              color: shareToken ? '#f87171' : '#a78bfa',
+              color: shareToken ? '#f87171' : 'var(--violet-ink)',
               border: `1px solid ${shareToken ? 'rgba(239,68,68,0.25)' : 'rgba(124,58,237,0.3)'}`,
             }}>
               {busy ? 'Working…' : shareToken ? 'Revoke public link' : 'Make shareable'}
             </button>
           </div>
+          {shareError && <p style={{ width: '100%', fontSize: 12, color: '#f87171', margin: 0 }}>{shareError}</p>}
         </div>
       )}
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}><div className="spinner" /></div>
       ) : !campaigns.length ? (
-        <div className="empty-state"><p style={{ fontSize: 28, marginBottom: 8 }}>📊</p><p>No campaigns yet — the report builds itself as one runs.</p></div>
+        <div className="empty-state"><BarChart3 size={28} strokeWidth={1.5} style={{ opacity: 0.5, marginBottom: 8 }} /><p>No campaigns yet — the report builds itself as one runs.</p></div>
       ) : !r ? (
         <div className="empty-state"><p>Could not load the report.</p></div>
       ) : (
@@ -184,7 +190,7 @@ const CampaignReport = () => {
                     <span style={{ fontSize: 12, color: 'rgba(var(--ink-rgb),0.45)' }}>
                       {p.likes == null ? '—' : `${n(p.likes)} likes`} · {p.comments == null ? '—' : `${n(p.comments)} comments`}{p.views ? ` · ${n(p.views)} views` : ''}
                     </span>
-                    {p.permalink && <a href={p.permalink} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#67e8f9' }}>view ↗</a>}
+                    {p.permalink && <a href={p.permalink} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--cyan-ink)' }}>View</a>}
                   </div>
                 ))}
               </div>

@@ -5,7 +5,7 @@ import StarRating from '../../components/StarRating'
 import { useT } from '../../context/LanguageContext'
 import WishlistButton from '../../components/WishlistButton'
 import { getWishlist } from '../../services/users'
-import { Package } from 'lucide-react'
+import { Package, Search } from 'lucide-react'
 
 const Catalog = () => {
   const t = useT()
@@ -82,18 +82,16 @@ const Catalog = () => {
       <div style={{ background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)', borderRadius: 16, padding: 20, marginBottom: 24 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.6)', marginBottom: 6 }}>Search</label>
+            <label className="field-label">Search</label>
             <div style={{ position: 'relative' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(var(--ink-rgb),0.3)" strokeWidth="2" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
+              <Search size={16} strokeWidth={1.75} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'rgba(var(--ink-rgb),0.3)' }} />
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products or brands..."
                 className="field-input" style={{ paddingLeft: 42 }} />
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.6)', marginBottom: 6 }}>Brand Partner</label>
+            <label className="field-label">Brand partner</label>
             <select value={brand} onChange={e => withSpinner(setBrand)(e.target.value)} className="field-select">
               {brands.map(b => (
                 <option key={b} value={b} style={{ background: 'var(--bg-2)' }}>{b}</option>
@@ -102,12 +100,12 @@ const Catalog = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.6)', marginBottom: 6 }}>Sort By</label>
+            <label className="field-label">Sort by</label>
             <select value={sortBy} onChange={e => withSpinner(setSortBy)(e.target.value)} className="field-select">
-              <option value="cashback" style={{ background: 'var(--bg-2)' }}>Highest Cashback</option>
+              <option value="cashback" style={{ background: 'var(--bg-2)' }}>Highest cashback</option>
               <option value="price_low" style={{ background: 'var(--bg-2)' }}>Price: Low → High</option>
               <option value="price_high" style={{ background: 'var(--bg-2)' }}>Price: High → Low</option>
-              <option value="rating" style={{ background: 'var(--bg-2)' }}>Top Rated</option>
+              <option value="rating" style={{ background: 'var(--bg-2)' }}>Top rated</option>
               <option value="newest" style={{ background: 'var(--bg-2)' }}>Newest</option>
             </select>
           </div>
@@ -116,21 +114,21 @@ const Catalog = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, alignItems: 'center' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <label style={{ fontSize: 12, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.6)' }}>Max Retail Price</label>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#a78bfa' }}>৳{maxPrice.toLocaleString()}</span>
+              <label className="field-label" style={{ marginBottom: 0 }}>Max retail price</label>
+              <span className="tnum" style={{ fontSize: 12, fontWeight: 700, color: 'var(--violet-ink)' }}>৳{maxPrice.toLocaleString()}</span>
             </div>
             <input type="range" min="1000" max="10000" step="500" value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))}
               style={{ width: '100%', accentColor: '#7c3aed', cursor: 'pointer' }} />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.6)', marginBottom: 6 }}>Min Cashback %</label>
+            <label className="field-label">Min cashback %</label>
             <div style={{ display: 'flex', gap: 6 }}>
               {[0, 40, 50, 60].map(val => (
-                <button key={val} onClick={() => withSpinner(setMinCashback)(val)} style={{
+                <button key={val} onClick={() => withSpinner(setMinCashback)(val)} className="tnum" style={{
                   flex: 1, padding: '6px 0', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
                   background: minCashback === val ? 'rgba(124,58,237,0.25)' : 'rgba(var(--ink-rgb),0.04)',
-                  color: minCashback === val ? '#a78bfa' : 'rgba(var(--ink-rgb),0.5)',
+                  color: minCashback === val ? 'var(--violet-ink)' : 'rgba(var(--ink-rgb),0.5)',
                   border: minCashback === val ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(var(--ink-rgb),0.08)'
                 }}>
                   {val === 0 ? 'Any' : `${val}%+`}
@@ -140,8 +138,8 @@ const Catalog = () => {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 14 }}>
-            <button onClick={resetFilters} style={{ background: 'none', border: 'none', color: '#67e8f9', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-              Reset Filters
+            <button onClick={resetFilters} style={{ background: 'none', border: 'none', color: 'var(--cyan-ink)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+              Reset filters
             </button>
           </div>
         </div>
@@ -161,15 +159,15 @@ const Catalog = () => {
         ))}
       </div>
 
-      {loading ? (
+      {loading && products.length === 0 ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}><div className="spinner" /></div>
       ) : products.length === 0 ? (
         <div className="empty-state">
-          <p style={{ fontSize: 28, marginBottom: 8 }}>🔍</p>
+          <Search size={28} strokeWidth={1.5} style={{ color: 'var(--text-dim)', marginBottom: 10 }} />
           <p>No products match your filter criteria.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 18, opacity: loading ? 0.5 : 1, pointerEvents: loading ? 'none' : 'auto', transition: 'opacity 0.15s' }}>
           {products.map(p => {
             const price = p.price || 0
             const cashbackRate = p.cashbackRate || 0
@@ -178,13 +176,11 @@ const Catalog = () => {
 
             return (
               <Link key={p._id} to={`/creator/product/${p._id}`} style={{ textDecoration: 'none' }}>
-                <div style={{
+                <div className="card-hover" style={{
                   borderRadius: 14, background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.07)',
-                  overflow: 'hidden', transition: 'all 0.2s', cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                  overflow: 'hidden', cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                   opacity: capReached ? 0.7 : 1
                 }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.3)'; e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.3)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(var(--ink-rgb),0.07)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
                 >
                   <div style={{ aspectRatio: '1.2', background: 'rgba(var(--ink-rgb),0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44, position: 'relative' }}>
                     {p.image && (p.image.startsWith('http') || p.image.startsWith('/')) ? (
@@ -192,7 +188,7 @@ const Catalog = () => {
                     ) : (
                       <Package size={22} strokeWidth={1.5} style={{ color: 'rgba(var(--ink-rgb),0.25)' }} />
                     )}
-                    <div style={{ position: 'absolute', top: 10, right: 10, padding: '4px 10px', borderRadius: 8, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', color: '#fff', fontSize: 11, fontWeight: 800 }}>
+                    <div style={{ position: 'absolute', top: 10, right: 10, padding: '4px 10px', borderRadius: 8, background: 'var(--purple)', color: '#fff', fontSize: 11, fontWeight: 700 }} className="tnum">
                       {cashbackRate}% back
                     </div>
                     <div style={{ position: 'absolute', bottom: 10, left: 10 }}>
@@ -200,29 +196,31 @@ const Catalog = () => {
                     </div>
                     {capReached && (
                       <div style={{ position: 'absolute', top: 10, left: 10, padding: '4px 10px', borderRadius: 8, background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.4)', color: '#f87171', fontSize: 10, fontWeight: 800 }}>
-                        Cap Reached
+                        Cap reached
                       </div>
                     )}
                   </div>
 
                   <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
-                      <p style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>{p.brand}</p>
+                      <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4, fontWeight: 500 }}>{p.brand}</p>
                       <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 8, lineHeight: 1.3 }}>{p.name}</p>
 
                       {p.reviews > 0 && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                           <StarRating value={p.rating} size={12} />
-                          <span style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)' }}>{p.rating} ({p.reviews})</span>
+                          <span className="tnum" style={{ fontSize: 11, color: 'rgba(var(--ink-rgb),0.35)' }}>{p.rating} ({p.reviews})</span>
                         </div>
                       )}
-                      
+
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                        <span style={{ fontSize: 11, color: '#a78bfa', background: 'rgba(124,58,237,0.15)', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>
-                          {(p.creatorCriteria?.minFollowers || 1000).toLocaleString()}+ Followers
-                        </span>
+                        {p.creatorCriteria?.minFollowers > 0 && (
+                          <span className="tnum" style={{ fontSize: 11, color: 'var(--violet-ink)', background: 'rgba(124,58,237,0.15)', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>
+                            {p.creatorCriteria.minFollowers.toLocaleString()}+ followers
+                          </span>
+                        )}
                         {p.campaignBudget && (
-                          <span style={{ fontSize: 10, color: '#67e8f9', background: 'rgba(6,182,212,0.12)', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>
+                          <span className="tnum" style={{ fontSize: 10, color: 'var(--cyan-ink)', background: 'rgba(6,182,212,0.12)', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>
                             Cap: ৳{(p.campaignBudget / 1000).toFixed(0)}k
                           </span>
                         )}
@@ -232,12 +230,12 @@ const Catalog = () => {
                     <div>
                       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', background: 'rgba(var(--ink-rgb),0.02)', padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(var(--ink-rgb),0.05)' }}>
                         <div>
-                          <span style={{ display: 'block', fontSize: 10, color: 'rgba(var(--ink-rgb),0.3)', textTransform: 'uppercase' }}>Retail</span>
-                          <span style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.4)', textDecoration: 'line-through' }}>৳{price.toLocaleString()}</span>
+                          <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-muted)' }}>Retail</span>
+                          <span className="tnum" style={{ fontSize: 13, color: 'rgba(var(--ink-rgb),0.4)', textDecoration: 'line-through' }}>৳{price.toLocaleString()}</span>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <span style={{ display: 'block', fontSize: 10, color: '#4ade80', fontWeight: 700, textTransform: 'uppercase' }}>Net Cost</span>
-                          <span style={{ fontSize: 16, fontWeight: 800, color: '#4ade80' }}>৳{netPrice.toLocaleString()}</span>
+                          <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-muted)' }}>Net cost</span>
+                          <span className="tnum" style={{ fontSize: 16, fontWeight: 800, color: 'var(--green-ink)' }}>৳{netPrice.toLocaleString()}</span>
                         </div>
                       </div>
                     </div>

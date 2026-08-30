@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { TrendingUp } from 'lucide-react'
 import { getAdminAnalytics } from '../../services/admin'
 
 const COLORS = ['bg-pink-500','bg-violet-500','bg-blue-500','bg-emerald-500','bg-yellow-500','bg-orange-500']
@@ -22,15 +23,17 @@ const PlatformAnalytics = () => {
 
   return (
     <div className="page-root">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">Platform Analytics</h1>
-          <p className="text-zinc-500 mt-1">Historical trends and performance metrics</p>
-        </div>
+      <div className="page-header">
+        <div className="page-label"><span>Analytics</span></div>
+        <h1 className="page-title">Platform Analytics</h1>
+        <p className="page-subtitle">Historical trends and performance metrics</p>
+      </div>
+
+      <div className="flex justify-end mb-6">
         <div className="flex bg-white/5 rounded-xl p-1">
           {['3mo', '6mo', '1yr'].map(p => (
             <button key={p} onClick={() => setPeriod(p)}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${period === p ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
+              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${period === p ? 'bg-violet-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
               {p}
             </button>
           ))}
@@ -41,7 +44,7 @@ const PlatformAnalytics = () => {
       <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6 mb-6">
         <h2 className="text-lg font-bold text-white mb-6">Monthly GMV (৳)</h2>
         {loading ? (
-          <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
+          <div className="flex justify-center py-10"><div className="spinner" /></div>
         ) : monthlyData.length === 0 ? (
           <div className="text-center py-10 text-zinc-500 text-sm">No transactions recorded yet</div>
         ) : (
@@ -63,7 +66,7 @@ const PlatformAnalytics = () => {
         <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
           <h2 className="text-lg font-bold text-white mb-5">Monthly Breakdown</h2>
           {loading ? (
-            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
+            <div className="flex justify-center py-10"><div className="spinner" /></div>
           ) : monthlyData.length === 0 ? (
             <div className="text-center py-10 text-zinc-500 text-sm">No data yet</div>
           ) : (
@@ -97,7 +100,7 @@ const PlatformAnalytics = () => {
         <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
           <h2 className="text-lg font-bold text-white mb-5">Category Distribution</h2>
           {loading ? (
-            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
+            <div className="flex justify-center py-10"><div className="spinner" /></div>
           ) : (data.categoryBreakdown || []).length === 0 ? (
             <div className="text-center py-10 text-zinc-500 text-sm">No campaign categories yet</div>
           ) : (
@@ -120,7 +123,7 @@ const PlatformAnalytics = () => {
           )}
           {totalGMV > 0 && (
             <div className="mt-6 p-4 rounded-xl bg-violet-500/5 border border-violet-500/15">
-              <p className="text-sm font-bold text-violet-400 mb-1">📈 Total Platform GMV</p>
+              <p className="text-sm font-bold text-violet-400 mb-1 flex items-center gap-1.5"><TrendingUp size={14} strokeWidth={1.75} /> Total Platform GMV</p>
               <p className="text-xl font-extrabold text-white">৳{totalGMV.toLocaleString()}</p>
             </div>
           )}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Hourglass, Megaphone, Banknote, BarChart3, CheckCircle2 } from 'lucide-react'
 import { getAdminFinancial } from '../../services/admin'
 import { getPlatformFloat, confirmBankTransfer } from '../../services/brandWallet'
 
@@ -31,25 +32,25 @@ const FinancialDashboard = () => {
 
   return (
     <div className="page-root">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">Financial Health Dashboard</h1>
-          <span className="px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400 text-[10px] font-bold border border-violet-500/20">★ CRITICAL</span>
-        </div>
-        <p className="text-zinc-500">Real-time cashback liability and platform solvency</p>
+      <div className="page-header">
+        <div className="page-label"><span>Finance</span></div>
+        <h1 className="page-title">Financial Health Dashboard</h1>
+        <p className="page-subtitle">Real-time cashback liability and platform solvency</p>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: 'Total Escrow',      value: loading ? '...' : `৳${(totalEscrow || 0).toLocaleString()}`,                           icon: '⏳', color: 'from-yellow-500/15 to-amber-500/15',  border: 'border-yellow-500/20' },
-          { label: 'Active Campaigns',  value: loading ? '...' : String(campaignEscrow.length),                                          icon: '📢', color: 'from-blue-500/15 to-cyan-500/15',     border: 'border-blue-500/20' },
-          { label: 'Upcoming Payouts',  value: loading ? '...' : String(upcomingPayouts.reduce((s, u) => s + u.payouts, 0)),             icon: '💸', color: 'from-violet-500/15 to-cyan-500/15',   border: 'border-violet-500/20' },
-          { label: 'Commission Income', value: loading ? '...' : `৳${(commissionRevenue || 0).toLocaleString()}`,                       icon: '📊', color: 'from-emerald-500/15 to-teal-500/15', border: 'border-emerald-500/20' },
+          { label: 'Total Escrow',      value: `৳${(totalEscrow || 0).toLocaleString()}`,                                  Icon: Hourglass, color: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)', text: 'var(--amber-ink)' },
+          { label: 'Active Campaigns',  value: String(campaignEscrow.length),                                              Icon: Megaphone, color: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.25)',  text: 'var(--cyan-ink)' },
+          { label: 'Upcoming Payouts',  value: String(upcomingPayouts.reduce((s, u) => s + u.payouts, 0)),                  Icon: Banknote,  color: 'rgba(124,58,237,0.12)', border: 'rgba(124,58,237,0.25)', text: 'var(--violet-ink)' },
+          { label: 'Commission Income', value: `৳${(commissionRevenue || 0).toLocaleString()}`,                            Icon: BarChart3, color: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)',  text: 'var(--green-ink)' },
         ].map(s => (
-          <div key={s.label} className={`p-5 rounded-2xl bg-gradient-to-br ${s.color} border ${s.border}`}>
-            <span className="text-2xl block mb-2">{s.icon}</span>
-            <p className="text-2xl font-extrabold text-white">{s.value}</p>
+          <div key={s.label} className="p-5 rounded-2xl" style={{ background: s.color, border: `1px solid ${s.border}` }}>
+            <span style={{ display: 'inline-flex', width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+              <s.Icon size={18} strokeWidth={1.75} style={{ color: s.text }} />
+            </span>
+            <p className="text-2xl font-extrabold text-white tnum">{loading ? '—' : s.value}</p>
             <p className="text-xs text-zinc-500 mt-1">{s.label}</p>
           </div>
         ))}
@@ -64,7 +65,7 @@ const FinancialDashboard = () => {
           </div>
           {float && (
             <div className="text-right">
-              <p className={`text-2xl font-extrabold ${float.float >= (data.totalEscrow || 0) ? 'text-emerald-400' : 'text-yellow-400'}`}>
+              <p className={`text-2xl font-extrabold tnum ${float.float >= (data.totalEscrow || 0) ? 'text-emerald-400' : 'text-yellow-400'}`}>
                 ৳{(float.float || 0).toLocaleString()}
               </p>
               <p className="text-xs text-zinc-500">held for campaigns</p>
@@ -84,7 +85,7 @@ const FinancialDashboard = () => {
                 { l: 'Fees',     v: float.fees,     c: 'text-yellow-400' },
               ].map(m => (
                 <div key={m.l} className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.03]">
-                  <p className={`text-lg font-bold ${m.c}`}>৳{(m.v || 0).toLocaleString()}</p>
+                  <p className={`text-lg font-bold tnum ${m.c}`}>৳{(m.v || 0).toLocaleString()}</p>
                   <p className="text-xs text-zinc-500">{m.l}</p>
                 </div>
               ))}
@@ -100,7 +101,7 @@ const FinancialDashboard = () => {
                         <p className="text-sm text-white">{t.brandId?.companyName || t.brandId?.name || 'Brand'}</p>
                         <p className="text-xs text-zinc-500">{t.desc} · {new Date(t.createdAt).toLocaleDateString()}</p>
                       </div>
-                      <span className="text-sm font-bold text-yellow-400">৳{t.amount.toLocaleString()}</span>
+                      <span className="text-sm font-bold text-yellow-400 tnum">৳{t.amount.toLocaleString()}</span>
                       <button className="btn-primary" style={{ padding: '7px 14px', fontSize: 12 }}
                         disabled={busyId === t._id} onClick={() => confirmTransfer(t)}>
                         {busyId === t._id ? 'Confirming…' : 'Confirm received'}
@@ -118,7 +119,7 @@ const FinancialDashboard = () => {
                   {float.balances.slice(0, 6).map(b => (
                     <div key={b.brandId} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02]">
                       <span className="text-sm text-zinc-300">{b.name}</span>
-                      <span className={`text-sm font-bold ${b.balance <= 0 ? 'text-red-400' : b.balance < 2000 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                      <span className={`text-sm font-bold tnum ${b.balance <= 0 ? 'text-red-400' : b.balance < 2000 ? 'text-yellow-400' : 'text-emerald-400'}`}>
                         ৳{b.balance.toLocaleString()}
                       </span>
                     </div>
@@ -135,10 +136,10 @@ const FinancialDashboard = () => {
         <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
           <h2 className="text-lg font-bold text-white mb-5">Cashback Liability by Campaign</h2>
           {loading ? (
-            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
+            <div className="flex justify-center py-10"><div className="spinner" /></div>
           ) : campaignEscrow.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 rounded-xl border border-dashed border-white/10">
-              <p className="text-3xl mb-2">✅</p>
+              <CheckCircle2 size={28} strokeWidth={1.5} style={{ opacity: 0.5, marginBottom: 10 }} />
               <p className="text-sm text-zinc-400">No pending escrow</p>
             </div>
           ) : (
@@ -160,7 +161,7 @@ const FinancialDashboard = () => {
                       <div className="flex-1 h-2 rounded-full bg-white/5 overflow-hidden">
                         <div className={`h-full rounded-full transition-all ${pct > 80 ? 'bg-red-500' : pct > 60 ? 'bg-yellow-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min(100, pct)}%` }} />
                       </div>
-                      <span className="text-xs text-zinc-400 w-20 text-right">৳{d.escrow.toLocaleString()}</span>
+                      <span className="text-xs text-zinc-400 w-20 text-right tnum">৳{d.escrow.toLocaleString()}</span>
                     </div>
                   </div>
                 )
@@ -174,14 +175,14 @@ const FinancialDashboard = () => {
           <h2 className="text-lg font-bold text-white">Solvency Status</h2>
 
           {loading ? (
-            <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" /></div>
+            <div className="flex justify-center py-10"><div className="spinner" /></div>
           ) : (
             <>
               <div className={`p-5 rounded-2xl ${commissionRevenue >= totalEscrow ? 'bg-emerald-500/5 border border-emerald-500/15' : 'bg-red-500/5 border border-red-500/15'}`}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className={`w-3 h-3 rounded-full ${commissionRevenue >= totalEscrow ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
                   <p className={`text-sm font-bold ${commissionRevenue >= totalEscrow ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {commissionRevenue >= totalEscrow ? 'Platform Solvent ✓' : '⚠ Potential Shortfall'}
+                    {commissionRevenue >= totalEscrow ? 'Platform solvent' : 'Potential shortfall'}
                   </p>
                 </div>
                 <p className="text-xs text-zinc-500">
