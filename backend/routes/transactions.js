@@ -186,7 +186,7 @@ router.get('/payouts', requireAuth, requireRole('admin'), async (req, res) => {
       payoutStatus: r.payoutStatus || 'queued',
       balance: r.status === 'pending' ? (await walletBalance(r.userId?._id || r.userId, { excludeTxId: r._id })).available : null,
     })))
-    res.json({ payouts: payoutRows, summary, ...payouts.providerInfo(), minWithdrawal: MIN_WITHDRAWAL })
+    res.json({ payouts: payoutRows, summary, ...payouts.providerInfo(), minWithdrawal: await minWithdrawal() })
   } catch (err) {
     console.error('[payouts GET]', err)
     res.status(500).json({ message: 'Server error.' })
